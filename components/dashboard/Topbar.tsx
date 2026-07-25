@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  PanelLeft,
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationCenter } from './NotificationCenter';
@@ -18,7 +19,7 @@ import { useState, useRef, useEffect } from 'react';
 
 export function Topbar() {
   const pathname = usePathname();
-  const { toggleMobile, isCollapsed } = useSidebarStore();
+  const { toggleMobile, isCollapsed, toggleCollapsed } = useSidebarStore();
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +53,7 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md transition-all sm:px-6">
-      {/* Left section: Mobile menu + Breadcrumbs */}
+      {/* Left section: Mobile menu + Mobile Brand + Desktop sidebar toggle + Breadcrumbs */}
       <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={toggleMobile}
@@ -60,6 +61,29 @@ export function Topbar() {
           title="Toggle Menu"
         >
           <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Mobile Brand / Company Name */}
+        <Link href="/dashboard" className="flex items-center gap-2 md:hidden">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-xs font-black text-white shadow-md shadow-blue-500/20">
+            D
+          </div>
+          <span className="text-sm font-bold tracking-tight text-slate-900">
+            DEVIREEN
+          </span>
+        </Link>
+
+        <button
+          onClick={toggleCollapsed}
+          className="hidden rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 md:flex"
+          title={
+            isCollapsed
+              ? 'Expand Sidebar (Ctrl+\\)'
+              : 'Collapse Sidebar (Ctrl+\\)'
+          }
+          aria-label="Toggle sidebar"
+        >
+          <PanelLeft className="h-4 w-4" />
         </button>
 
         {/* Breadcrumbs */}
@@ -93,7 +117,7 @@ export function Topbar() {
       </div>
 
       {/* Center/Right section: Search, Actions, Profile */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <GlobalSearch />
         <QuickActions />
         <NotificationCenter />

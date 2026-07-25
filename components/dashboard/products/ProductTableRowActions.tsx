@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Edit, Trash2, Copy, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { deleteProductAction, updateProductAction, createProductAction } from '@/actions/product.actions';
+import {
+  deleteProductAction,
+  updateProductAction,
+  createProductAction,
+} from '@/actions/product.actions';
 import { useToastStore } from '@/lib/store/toast-store';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
@@ -20,13 +24,21 @@ export function ProductTableRowActions({ product }: { product: any }) {
     try {
       const result = await deleteProductAction(product.id);
       if (result.success) {
-        addToast({ title: 'Deleted', description: 'Product deleted successfully', variant: 'success' });
+        addToast({
+          title: 'Deleted',
+          description: 'Product deleted successfully',
+          variant: 'success',
+        });
         setDeleteConfirmOpen(false);
       } else {
         throw new Error(result.error);
       }
     } catch (err: any) {
-      addToast({ title: 'Error', description: err.message, variant: 'destructive' });
+      addToast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -55,12 +67,20 @@ export function ProductTableRowActions({ product }: { product: any }) {
 
       const result = await createProductAction(duplicateData);
       if (result.success) {
-        addToast({ title: 'Duplicated', description: 'Product duplicated as draft', variant: 'success' });
+        addToast({
+          title: 'Duplicated',
+          description: 'Product duplicated as draft',
+          variant: 'success',
+        });
       } else {
         throw new Error(result.error);
       }
     } catch (err: any) {
-      addToast({ title: 'Error', description: err.message, variant: 'destructive' });
+      addToast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -69,18 +89,24 @@ export function ProductTableRowActions({ product }: { product: any }) {
   const handleTogglePublish = async () => {
     setIsProcessing(true);
     try {
-      const result = await updateProductAction(product.id, { is_active: !product.is_active });
+      const result = await updateProductAction(product.id, {
+        is_active: !product.is_active,
+      });
       if (result.success) {
-        addToast({ 
-          title: result.data.is_active ? 'Published' : 'Unpublished', 
-          description: `Product is now ${result.data.is_active ? 'visible' : 'hidden'}`, 
-          variant: 'success' 
+        addToast({
+          title: result.data.is_active ? 'Published' : 'Unpublished',
+          description: `Product is now ${result.data.is_active ? 'visible' : 'hidden'}`,
+          variant: 'success',
         });
       } else {
         throw new Error(result.error);
       }
     } catch (err: any) {
-      addToast({ title: 'Error', description: err.message, variant: 'destructive' });
+      addToast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -89,47 +115,54 @@ export function ProductTableRowActions({ product }: { product: any }) {
   return (
     <>
       <div className="flex items-center justify-end gap-1">
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className={`h-8 w-8 p-0 ${product.is_active ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
           onClick={handleTogglePublish}
           disabled={isProcessing}
-          title={product.is_active ? "Unpublish" : "Publish"}
+          title={product.is_active ? 'Unpublish' : 'Publish'}
         >
-          {product.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          {product.is_active ? (
+            <Eye className="h-4 w-4" />
+          ) : (
+            <EyeOff className="h-4 w-4" />
+          )}
           <span className="sr-only">Toggle Publish</span>
         </Button>
 
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
           onClick={handleDuplicate}
           disabled={isProcessing}
           title="Duplicate"
         >
-          <Copy className="w-4 h-4" />
+          <Copy className="h-4 w-4" />
           <span className="sr-only">Duplicate</span>
         </Button>
 
         <Link href={`/dashboard/products/${product.id}`}>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit">
-            <Edit className="w-4 h-4" />
-            <span className="sr-only">Edit</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 border-blue-200 bg-blue-50/60 px-2.5 text-xs font-semibold text-blue-600 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+            title="Edit product"
+          >
+            <Edit className="mr-1 h-3.5 w-3.5" /> Edit
           </Button>
         </Link>
-        
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 border-red-200 bg-red-50/60 px-2.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-600 hover:bg-red-600 hover:text-white"
           onClick={() => setDeleteConfirmOpen(true)}
           disabled={isProcessing}
-          title="Delete"
+          title="Delete product"
         >
-          <Trash2 className="w-4 h-4" />
-          <span className="sr-only">Delete</span>
+          <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
         </Button>
       </div>
 

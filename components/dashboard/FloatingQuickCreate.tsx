@@ -74,7 +74,10 @@ export function FloatingQuickCreate() {
   ];
 
   return (
-    <div className="fixed right-6 bottom-6 z-40" ref={containerRef}>
+    <div
+      className="fixed right-5 bottom-20 z-40 md:right-6 md:bottom-6"
+      ref={containerRef}
+    >
       {/* Speed Dial Menu Items */}
       {isOpen && (
         <div className="animate-in fade-in slide-in-from-bottom-4 mb-3 flex flex-col items-end gap-2 duration-200">

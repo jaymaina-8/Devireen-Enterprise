@@ -109,10 +109,12 @@ export function GlobalSearch() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex w-40 items-center gap-2 rounded-lg border border-slate-200/60 bg-slate-100 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-slate-200/80 md:w-56"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-slate-100 p-1.5 text-xs text-slate-400 transition-colors hover:bg-slate-200/80 sm:w-40 sm:justify-start sm:px-3 md:w-56"
+        title="Search system (Ctrl+K)"
+        aria-label="Search system"
       >
-        <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-        <span className="truncate">Search system...</span>
+        <Search className="h-4 w-4 shrink-0 text-slate-400" />
+        <span className="hidden truncate sm:inline">Search system...</span>
         <kbd className="pointer-events-none ml-auto hidden h-5 items-center gap-1 rounded border border-slate-300 bg-white px-1.5 font-mono text-[10px] font-medium text-slate-500 select-none sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>

@@ -220,19 +220,19 @@ export default async function HomePage() {
               <form
                 action="/products"
                 method="GET"
-                className="border-primary-200 hover:border-primary-400 focus-within:border-primary-600 focus-within:ring-primary-100 mt-7 flex items-center rounded-xl border-2 bg-white shadow-sm transition-all duration-200 focus-within:ring-4"
+                className="border-primary-200 hover:border-primary-400 focus-within:border-primary-600 focus-within:ring-primary-100 mt-7 flex max-w-full items-center rounded-xl border-2 bg-white shadow-sm transition-all duration-200 focus-within:ring-4"
               >
-                <Search className="text-text-muted ml-4 h-5 w-5 shrink-0" />
+                <Search className="text-text-muted ml-3 h-5 w-5 shrink-0 sm:ml-4" />
                 <input
                   type="text"
                   name="q"
                   placeholder="Search — printer paper, exercise books, pens..."
-                  className="text-text-main placeholder:text-text-muted w-full bg-transparent px-3 py-3.5 text-sm focus:outline-none"
+                  className="text-text-main placeholder:text-text-muted w-full min-w-0 bg-transparent px-2 py-3.5 text-xs focus:outline-none sm:px-3 sm:text-sm"
                   aria-label="Search products"
                 />
                 <button
                   type="submit"
-                  className="bg-primary-600 hover:bg-primary-700 mr-2 shrink-0 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all active:scale-[0.98]"
+                  className="bg-primary-600 hover:bg-primary-700 mr-1.5 shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-all active:scale-[0.98] sm:mr-2 sm:px-4 sm:text-sm"
                   aria-label="Search"
                 >
                   Search

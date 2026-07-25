@@ -80,48 +80,81 @@ export function Sidebar() {
       )}
     >
       {/* Header / Workspace Brand */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-800/80 px-4">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2.5 overflow-hidden"
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 font-black text-white shadow-md shadow-blue-500/20">
-            D
-          </div>
-          {!collapsed && (
-            <div className="flex min-w-0 flex-col transition-opacity duration-200">
-              <span className="flex items-center gap-1.5 text-sm font-bold tracking-tight text-white">
-                DEVIREEN{' '}
-                <span className="rounded border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-blue-400 uppercase">
-                  PRO
-                </span>
-              </span>
-              <span className="truncate text-[11px] text-slate-400">
-                Enterprise Operations
-              </span>
-            </div>
-          )}
-        </Link>
-
-        {!collapsed && (
+      <div
+        className={clsx(
+          'flex h-16 items-center border-b border-slate-800/80 transition-all duration-300',
+          collapsed ? 'justify-center px-0' : 'justify-between px-3.5'
+        )}
+      >
+        {collapsed ? (
           <button
             onClick={toggleCollapsed}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-800/60 hover:text-white"
-            title="Collapse Sidebar (Ctrl+\)"
+            className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 font-black text-white shadow-md shadow-blue-500/20 transition-all hover:ring-2 hover:ring-blue-400/50"
+            title="Expand Sidebar (Ctrl+\\)"
+            aria-label="Expand Sidebar"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <span className="text-sm font-black transition-opacity group-hover:opacity-0">
+              D
+            </span>
+            <ChevronRight className="absolute h-4 w-4 text-white opacity-0 transition-opacity group-hover:opacity-100" />
           </button>
+        ) : (
+          <>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2.5 overflow-hidden"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 font-black text-white shadow-md shadow-blue-500/20">
+                D
+              </div>
+              <div
+                className={clsx(
+                  'flex flex-col overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out',
+                  collapsed
+                    ? 'pointer-events-none max-w-0 opacity-0'
+                    : 'max-w-xs opacity-100'
+                )}
+              >
+                <span className="flex items-center gap-1.5 text-sm font-bold tracking-tight text-white">
+                  DEVIREEN{' '}
+                  <span className="rounded border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-blue-400 uppercase">
+                    PRO
+                  </span>
+                </span>
+                <span className="truncate text-[11px] text-slate-400">
+                  Enterprise Operations
+                </span>
+              </div>
+            </Link>
+
+            <button
+              onClick={toggleCollapsed}
+              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-800/60 hover:text-white"
+              title="Collapse Sidebar (Ctrl+\\)"
+              aria-label="Collapse sidebar"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          </>
         )}
       </div>
 
       {/* Main Navigation List */}
-      <nav className="custom-scrollbar flex-1 space-y-6 overflow-y-auto px-3 py-4">
+      <nav
+        className={clsx(
+          'custom-scrollbar flex-1 space-y-6 overflow-y-auto py-4',
+          collapsed ? 'px-2' : 'px-3'
+        )}
+      >
         <div>
-          {!collapsed && (
-            <div className="mb-2 px-3 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
-              Command Center
-            </div>
-          )}
+          <div
+            className={clsx(
+              'mb-2 overflow-hidden px-3 text-[10px] font-semibold tracking-wider whitespace-nowrap text-slate-500 uppercase transition-all duration-300 ease-in-out',
+              collapsed ? 'mb-0 max-h-0 py-0 opacity-0' : 'max-h-6 opacity-100'
+            )}
+          >
+            Command Center
+          </div>
 
           <ul className="space-y-1">
             {mainNavItems.map((item) => {
@@ -136,7 +169,8 @@ export function Sidebar() {
                     href={item.href}
                     className={twMerge(
                       clsx(
-                        'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                        'relative flex items-center rounded-lg py-2.5 text-sm font-medium transition-all duration-150',
+                        collapsed ? 'justify-center gap-0 px-0' : 'gap-3 px-3',
                         isActive
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                           : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
@@ -150,14 +184,22 @@ export function Sidebar() {
                       )}
                     />
 
-                    {!collapsed && (
-                      <span className="flex-1 truncate">{item.name}</span>
-                    )}
+                    <span
+                      className={clsx(
+                        'flex-1 truncate overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out',
+                        collapsed ? 'max-w-0 opacity-0' : 'max-w-xs opacity-100'
+                      )}
+                    >
+                      {item.name}
+                    </span>
 
-                    {!collapsed && item.badge && (
+                    {item.badge && (
                       <span
                         className={clsx(
-                          'rounded-full px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+                          'shrink-0 overflow-hidden rounded-full px-1.5 py-0.5 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase transition-all duration-300 ease-in-out',
+                          collapsed
+                            ? 'max-w-0 border-0 px-0 opacity-0'
+                            : 'max-w-xs opacity-100',
                           item.badgeVariant === 'info' &&
                             'border border-blue-500/30 bg-blue-500/20 text-blue-400',
                           item.badgeVariant === 'warning' &&
@@ -179,7 +221,7 @@ export function Sidebar() {
 
                   {/* Tooltip for Collapsed Sidebar */}
                   {collapsed && (
-                    <div className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 flex -translate-y-1/2 items-center gap-2 rounded-md border border-slate-700/80 bg-slate-900 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    <div className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 flex -translate-x-1 -translate-y-1/2 items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-2xl transition-all duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100">
                       <span>{item.name}</span>
                       {item.badge && (
                         <span className="py-0.2 rounded-full bg-blue-500 px-1.5 text-[9px] font-bold text-white">
@@ -195,51 +237,67 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Expand Button for Collapsed State */}
-      {collapsed && (
-        <div className="flex justify-center border-t border-slate-800/80 p-3">
-          <button
-            onClick={toggleCollapsed}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800/60 hover:text-white"
-            title="Expand Sidebar (Ctrl+\)"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      )}
-
       {/* Footer Profile & Store Link */}
-      {!collapsed && (
-        <div className="space-y-3 border-t border-slate-800/80 bg-slate-950/80 p-3">
-          <Link
-            href="/"
-            target="_blank"
-            className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-900 hover:text-white"
-          >
-            <span className="flex items-center gap-2">
-              <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
-              View Live Store
-            </span>
-            <span className="font-mono text-[10px] text-slate-500">v1.4.0</span>
-          </Link>
+      <div className="border-t border-slate-800/80 bg-slate-950/80 p-3">
+        <Link
+          href="/"
+          target="_blank"
+          className={clsx(
+            'mb-3 flex items-center justify-between overflow-hidden rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-xs font-medium whitespace-nowrap text-slate-300 transition-all duration-300 ease-in-out hover:bg-slate-900 hover:text-white',
+            collapsed
+              ? 'mb-0 max-h-0 border-0 py-0 opacity-0'
+              : 'max-h-12 opacity-100'
+          )}
+          title="View Live Store"
+        >
+          <span className="flex items-center gap-2">
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+            View Live Store
+          </span>
+          <span className="font-mono text-[10px] text-slate-500">v1.4.0</span>
+        </Link>
 
-          <div className="flex items-center justify-between px-2 pt-1">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-inner">
-                AD
-              </div>
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-xs font-semibold text-slate-200">
-                  Devireen Admin
-                </span>
-                <span className="truncate text-[10px] text-slate-400">
-                  admin@devireen.com
-                </span>
-              </div>
+        <div
+          className={clsx(
+            'group relative flex items-center',
+            collapsed ? 'justify-center px-0' : 'justify-between px-1'
+          )}
+        >
+          <div
+            className={clsx(
+              'flex min-w-0 items-center',
+              collapsed ? 'justify-center gap-0' : 'gap-2.5'
+            )}
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-inner">
+              AD
+            </div>
+            <div
+              className={clsx(
+                'flex min-w-0 flex-col overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out',
+                collapsed ? 'max-w-0 opacity-0' : 'max-w-xs opacity-100'
+              )}
+            >
+              <span className="truncate text-xs font-semibold text-slate-200">
+                Devireen Admin
+              </span>
+              <span className="truncate text-[10px] text-slate-400">
+                admin@devireen.com
+              </span>
             </div>
           </div>
+
+          {/* Tooltip for collapsed profile avatar */}
+          {collapsed && (
+            <div className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 flex -translate-x-1 -translate-y-1/2 flex-col rounded-lg border border-slate-700/80 bg-slate-900 px-3 py-2 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-2xl transition-all duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100">
+              <span className="font-bold">Devireen Admin</span>
+              <span className="text-[10px] text-slate-400">
+                admin@devireen.com
+              </span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </aside>
   );
 }

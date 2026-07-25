@@ -1,9 +1,10 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { DatabaseError } from '@/lib/errors/DatabaseError';
 import { logger } from '@/lib/logger';
 
 export class SettingsRepository {
-  static async getSettings() {
+  static getSettings = cache(async () => {
     try {
       const supabase = await createClient();
       const { data, error } = await supabase
@@ -18,19 +19,27 @@ export class SettingsRepository {
 
       return data;
     } catch (error: any) {
-      if (error?.digest === 'DYNAMIC_SERVER_USAGE' || error?.message === 'NEXT_REDIRECT' || error?.message === 'NEXT_NOT_FOUND') {
+      if (
+        error?.digest === 'DYNAMIC_SERVER_USAGE' ||
+        error?.message === 'NEXT_REDIRECT' ||
+        error?.message === 'NEXT_NOT_FOUND'
+      ) {
         throw error;
       }
       logger.error('Error fetching settings', error);
       return null;
     }
-  }
+  });
 
   static async updateSettings(settingsData: any) {
     try {
       const supabase = await createClient();
-      
-      const { data: existing } = await supabase.from('settings').select('id').limit(1).maybeSingle();
+
+      const { data: existing } = await supabase
+        .from('settings')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
 
       let error;
       if (existing) {

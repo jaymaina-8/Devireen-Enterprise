@@ -18,19 +18,25 @@ export function CustomerTableRowActions({ customer }: { customer: any }) {
   const handleToggleStatus = async () => {
     setIsProcessing(true);
     try {
-      const result = await updateCustomerAction(customer.id, { is_active: !customer.is_active });
+      const result = await updateCustomerAction(customer.id, {
+        is_active: !customer.is_active,
+      });
       if (result.success) {
-        addToast({ 
-          title: result.data.is_active ? 'Unblocked' : 'Blocked', 
-          description: `Customer is now ${result.data.is_active ? 'Active' : 'Blocked'}`, 
-          variant: 'success' 
+        addToast({
+          title: result.data.is_active ? 'Unblocked' : 'Blocked',
+          description: `Customer is now ${result.data.is_active ? 'Active' : 'Blocked'}`,
+          variant: 'success',
         });
         setBlockConfirmOpen(false);
       } else {
         throw new Error(result.error);
       }
     } catch (err: any) {
-      addToast({ title: 'Error', description: err.message, variant: 'destructive' });
+      addToast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -39,29 +45,46 @@ export function CustomerTableRowActions({ customer }: { customer: any }) {
   return (
     <>
       <div className="flex items-center justify-end gap-1">
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className={`h-8 w-8 p-0 ${customer.is_active ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
-          onClick={() => customer.is_active ? setBlockConfirmOpen(true) : handleToggleStatus()}
+          onClick={() =>
+            customer.is_active
+              ? setBlockConfirmOpen(true)
+              : handleToggleStatus()
+          }
           disabled={isProcessing}
-          title={customer.is_active ? "Block Customer" : "Unblock Customer"}
+          title={customer.is_active ? 'Block Customer' : 'Unblock Customer'}
         >
-          {customer.is_active ? <ShieldBan className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+          {customer.is_active ? (
+            <ShieldBan className="h-4 w-4" />
+          ) : (
+            <ShieldCheck className="h-4 w-4" />
+          )}
           <span className="sr-only">Toggle Status</span>
         </Button>
 
         <Link href={`/dashboard/customers/${customer.id}`}>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View Details">
-            <Eye className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            title="View Details"
+          >
+            <Eye className="h-4 w-4" />
             <span className="sr-only">View</span>
           </Button>
         </Link>
-        
+
         <Link href={`/dashboard/customers/${customer.id}/edit`}>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit">
-            <Edit className="w-4 h-4" />
-            <span className="sr-only">Edit</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 border-blue-200 bg-blue-50/60 px-2.5 text-xs font-semibold text-blue-600 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+            title="Edit customer"
+          >
+            <Edit className="mr-1 h-3.5 w-3.5" /> Edit
           </Button>
         </Link>
       </div>

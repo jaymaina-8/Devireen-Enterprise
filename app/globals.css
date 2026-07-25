@@ -1,5 +1,12 @@
 @import 'tailwindcss';
 
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
 @theme {
   /* ─── Enterprise Red Brand Palette ─── */
   --color-primary-50: hsl(0 86% 97%); /* #FEF2F2 */

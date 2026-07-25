@@ -167,8 +167,8 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Main Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-xs shadow-2xs">
-        <div className="custom-scrollbar max-h-[600px] overflow-x-auto overflow-y-auto">
+      <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-xs shadow-2xs">
+        <div className="custom-scrollbar max-h-[600px] w-full max-w-full overflow-x-auto overflow-y-auto">
           <table className="w-full border-collapse text-left">
             <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 backdrop-blur-xs">
               {table.getHeaderGroups().map((headerGroup) => (
