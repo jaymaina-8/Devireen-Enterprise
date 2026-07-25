@@ -168,9 +168,11 @@ export default async function HomePage() {
     fetchCategories(),
   ]);
 
-  const featuredProducts =
-    products?.filter((p: any) => p.stock_status === 'IN_STOCK').slice(0, 4) ||
-    [];
+  const inStockProducts =
+    products?.filter((p: any) => p.stock_status === 'IN_STOCK') || [];
+  const featuredProducts = (
+    inStockProducts.length > 0 ? inStockProducts : products || []
+  ).slice(0, 8);
 
   // Show all active categories from the DB (up to 6), sorted by name.
   // No need to hardcode slugs — any category added in the dashboard will appear automatically.
@@ -482,7 +484,7 @@ export default async function HomePage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
               {featuredProducts.map((product: any, i: number) => {
                 const primaryImage =
                   product.product_images?.find((img: any) => img.is_primary) ||
