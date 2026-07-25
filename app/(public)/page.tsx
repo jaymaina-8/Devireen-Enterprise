@@ -76,6 +76,7 @@ const testimonials = [
     role: 'Procurement Manager',
     company: 'KCB Group',
     rating: 5,
+    avatarUrl: '/images/testimonial_grace.png',
   },
   {
     quote:
@@ -84,6 +85,7 @@ const testimonials = [
     role: 'Head of Operations',
     company: 'Alliance Schools',
     rating: 5,
+    avatarUrl: '/images/testimonial_james.png',
   },
   {
     quote:
@@ -92,6 +94,7 @@ const testimonials = [
     role: 'Office Administrator',
     company: 'Nairobi Hospital',
     rating: 5,
+    avatarUrl: '/images/testimonial_amina.png',
   },
 ];
 
@@ -667,6 +670,7 @@ export default async function HomePage() {
                   role={t.role}
                   company={t.company}
                   rating={t.rating}
+                  avatarUrl={t.avatarUrl}
                 />
               </AnimatedSection>
             ))}
