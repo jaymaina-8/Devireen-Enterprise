@@ -7,7 +7,7 @@ export class ProductRepository {
     const supabase = await createClient();
     let dbQuery = supabase
       .from('products')
-      .select('*, categories!inner(name, slug), brands(name), product_images(url, is_primary)')
+      .select('*, categories!inner(name, slug), brands(name), product_images(url, is_primary, alt_text)')
       .eq('is_active', true)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -34,7 +34,7 @@ export class ProductRepository {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('products')
-      .select('*, categories(*), brands(*), product_images(*)')
+      .select('*, categories(*), brands(*), product_images(*, alt_text)')
       .eq('slug', slug)
       .is('deleted_at', null)
       .single();

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { Button } from "@/components/ui/Button";
-import { ShoppingCart, Eye } from "lucide-react";
-import { ProductImage } from "@/components/products/ProductImage";
-import { Price } from "@/components/products/Price";
-import { StockIndicator, StockStatus } from "@/components/products/StockIndicator";
-import { useQuoteCart } from "@/lib/store/quote-cart";
-import { toast } from "@/lib/store/toast-store";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
+import * as React from 'react';
+import { Button } from '@/components/ui/Button';
+import { ShoppingCart, Eye, Check } from 'lucide-react';
+import { ProductImage } from '@/components/products/ProductImage';
+import { Price } from '@/components/products/Price';
+import { StockIndicator, StockStatus } from '@/components/products/StockIndicator';
+import { useQuoteCart } from '@/lib/store/quote-cart';
+import { toast } from '@/lib/store/toast-store';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
   id: string;
@@ -17,40 +17,73 @@ interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
   name: string;
   sku: string;
   price: number;
+  bulkPrice?: number | null;
   originalPrice?: number;
   imageUrl?: string | null;
   stockStatus: StockStatus;
+  addQuantity?: number;
+  addLabel?: string;
 }
 
-export function ProductCard({ id, slug, name, sku, price, originalPrice, imageUrl, stockStatus, className, ...props }: ProductCardProps) {
+export function ProductCard({
+  id,
+  slug,
+  name,
+  sku,
+  price,
+  bulkPrice,
+  originalPrice,
+  imageUrl,
+  stockStatus,
+  addQuantity = 1,
+  addLabel = "Add to Cart",
+  className,
+  ...props
+}: ProductCardProps) {
   const addItem = useQuoteCart((state) => state.addItem);
+  const items = useQuoteCart((state) => state.items);
+  const isInCart = items.some((item) => item.id === id);
 
-  const handleAddToQuote = (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ id, name, sku, price, imageUrl, quantity: 1 });
+    addItem({ id, name, sku, price, bulkPrice: bulkPrice ?? null, imageUrl, quantity: addQuantity });
     toast({
-      title: "Added to Cart",
+      title: 'Added to Cart',
       description: `${name} has been added to your cart.`,
-      variant: "success",
+      variant: 'success',
     });
   };
 
   const productUrl = slug ? `/products/${slug}` : '#';
+  const hasBulkPrice = bulkPrice != null && bulkPrice !== price;
 
   return (
-    <div className={cn("group flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-border-strong", className)} {...props}>
+    <div
+      className={cn(
+        'group flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-border-strong',
+        className
+      )}
+      {...props}
+    >
       {/* Image Area */}
       <Link href={productUrl} className="block relative aspect-square overflow-hidden bg-background">
         <ProductImage src={imageUrl} alt={name} className="absolute inset-0 h-full w-full mix-blend-multiply p-4 img-zoom" />
-        {/* Stock & Discount Badges */}
+
+        {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
           <StockIndicator status={stockStatus} />
+          {hasBulkPrice && (
+            <div className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm w-fit">
+              BULK PRICE
+            </div>
+          )}
           {originalPrice && originalPrice > price && (
             <div className="bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded shadow-sm w-fit">
               {Math.round(((originalPrice - price) / originalPrice) * 100)}% OFF
             </div>
           )}
         </div>
+
         {/* Quick View Hint */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="bg-white/90 backdrop-blur-sm text-text-main text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
@@ -68,15 +101,29 @@ export function ProductCard({ id, slug, name, sku, price, originalPrice, imageUr
         </Link>
         <div className="mt-2">
           <Price amount={price} originalAmount={originalPrice} showVat={true} />
+          {hasBulkPrice && (
+            <p className="text-[10px] text-emerald-600 font-medium mt-0.5">
+              Bulk: KSh {bulkPrice!.toLocaleString()}
+            </p>
+          )}
         </div>
         <Button
-          variant="primary"
-          className="mt-4 w-full px-2 sm:px-4"
+          variant={isInCart ? "outline" : "primary"}
+          className={cn("mt-4 w-full px-2 sm:px-4", isInCart && "border-primary-600 text-primary-600 bg-primary-50 hover:bg-primary-100")}
           disabled={stockStatus === 'OUT_OF_STOCK' || stockStatus === 'DISCONTINUED'}
-          onClick={handleAddToQuote}
+          onClick={handleAddToCart}
         >
-          <ShoppingCart className="mr-2 h-4 w-4 shrink-0" />
-          <span>Add to Cart</span>
+          {isInCart ? (
+            <>
+              <Check className="mr-2 h-4 w-4 shrink-0" />
+              <span>{addQuantity > 1 ? `Added ${addQuantity}` : "Added to Cart"}</span>
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="mr-2 h-4 w-4 shrink-0" />
+              <span>{addLabel}</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

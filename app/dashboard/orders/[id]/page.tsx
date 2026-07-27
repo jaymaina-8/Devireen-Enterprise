@@ -2,10 +2,21 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { ArrowLeft, Printer, FileText, Download } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  MessageSquare,
+  Truck,
+  Store,
+  MapPin,
+  User,
+  Mail,
+  Phone,
+} from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { OrderTimeline } from '@/components/dashboard/orders/OrderTimeline';
+import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 
 export const metadata = {
   title: 'Order Details | Devireen Enterprise',
@@ -21,21 +32,12 @@ async function getOrderById(id: string) {
 
   if (!order) return null;
 
-  // Ideally, an order has order_items. We'll fetch them if the table exists, otherwise mock or ignore
-  // Since we haven't strictly created order_items yet in this phase, let's try fetching just in case,
-  // If it fails, fallback to empty array.
-  let items = [];
-  try {
-    const { data } = await supabase
-      .from('order_items')
-      .select('*, products(name, sku)')
-      .eq('order_id', id);
-    if (data) items = data;
-  } catch (e) {
-    // Ignore if table doesn't exist yet
-  }
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('*, products(name, sku, price, bulk_price)')
+    .eq('order_id', id);
 
-  return { ...order, items };
+  return { ...order, items: items || [] };
 }
 
 export default async function OrderDetailsPage({
@@ -44,21 +46,49 @@ export default async function OrderDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = await getOrderById(id);
+  const [order, settings] = await Promise.all([
+    getOrderById(id),
+    SettingsRepository.getSettings(),
+  ]);
 
   if (!order) {
     notFound();
   }
 
+  const isDelivery = order.fulfillment_type === 'DELIVERY';
+  const isPickup = order.fulfillment_type === 'PICKUP';
+  const isBulk = order.pricing_model === 'BULK';
+
+  const customerName =
+    order.customer_name ||
+    (order.customers
+      ? `${order.customers.first_name || ''} ${order.customers.last_name || ''}`.trim() ||
+        order.customers.company_name
+      : 'Guest');
+
+  const customerEmail = order.customer_email || order.customers?.contact_email || '';
+  const customerPhone = order.customer_phone || order.customers?.contact_phone || '';
+
   const getStatusVariant = (status: string) => {
     if (status === 'PENDING') return 'warning';
-    if (status === 'CANCELLED') return 'error';
+    if (status === 'CANCELLED' || status === 'REFUNDED') return 'error';
     return 'success';
   };
 
+  const whatsappPhone = (settings?.whatsapp_number || '254708037929').replace(/\D/g, '');
+  const mapsUrl = settings?.google_maps_url || '';
+  const shopAddress = settings?.physical_address || '';
+
+  const whatsappText =
+    `*Order ${order.invoice_number || order.id.substring(0, 8).toUpperCase()}*\n` +
+    `Customer: ${customerName}\n` +
+    `Fulfillment: ${order.fulfillment_type || 'N/A'}\n` +
+    `Total: KSh ${order.total_amount?.toLocaleString()}`;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/orders">
             <Button variant="outline" size="sm" className="h-8 w-8 p-0">
@@ -66,54 +96,69 @@ export default async function OrderDetailsPage({
             </Button>
           </Link>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold text-gray-900">
-                Order #{order.id.substring(0, 8).toUpperCase()}
+                {order.invoice_number || `Order #${order.id.substring(0, 8).toUpperCase()}`}
               </h1>
-              <Badge variant={getStatusVariant(order.status) as any}>
-                {order.status}
-              </Badge>
-              <Badge
-                variant={
-                  order.payment_status === 'PAID' ? 'success' : 'warning'
-                }
-              >
+              <Badge variant={getStatusVariant(order.status) as any}>{order.status}</Badge>
+              <Badge variant={order.payment_status === 'PAID' ? 'success' : 'warning'}>
                 {order.payment_status}
               </Badge>
+              {isBulk && (
+                <Badge variant="success" className="text-[10px]">
+                  BULK PRICING
+                </Badge>
+              )}
             </div>
-            <p className="text-gray-500">
-              Placed on{' '}
+            <p className="text-gray-500 text-sm mt-0.5">
               {format(new Date(order.created_at), 'MMMM d, yyyy h:mm a')}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <Printer className="mr-2 h-4 w-4" /> Print
-          </Button>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" /> Export
-          </Button>
+        <div className="flex gap-3 flex-wrap">
+          {order.invoice_number && (
+            <a href={`/api/invoice/${order.id}`} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Download Invoice
+              </Button>
+            </a>
+          )}
+          <a
+            href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappText)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" className="text-green-600 border-green-300 hover:bg-green-50">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              WhatsApp {order.whatsapp_sent && '(Sent ✓)'}
+            </Button>
+          </a>
         </div>
       </div>
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+        {/* Main content */}
         <div className="space-y-6 xl:col-span-2">
+          {/* Items table */}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Order Items
-              </h2>
+            <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Order Items</h2>
+              {isBulk && (
+                <span className="text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-1">
+                  ★ Bulk pricing applied
+                </span>
+              )}
             </div>
             <div className="p-0">
               <table className="w-full text-left text-sm text-gray-600">
                 <thead className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase">
                   <tr>
                     <th className="px-6 py-3 font-medium">Product</th>
-                    <th className="px-6 py-3 text-right font-medium">Price</th>
+                    <th className="px-6 py-3 text-right font-medium">Unit Price</th>
                     <th className="px-6 py-3 text-right font-medium">Qty</th>
-                    <th className="px-6 py-3 text-right font-medium">Total</th>
+                    <th className="px-6 py-3 text-right font-medium">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -124,29 +169,20 @@ export default async function OrderDetailsPage({
                           <div className="font-medium text-gray-900">
                             {item.products?.name || 'Unknown Product'}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            SKU: {item.products?.sku || 'N/A'}
-                          </div>
+                          <div className="text-xs text-gray-500">SKU: {item.products?.sku || 'N/A'}</div>
                         </td>
                         <td className="px-6 py-4 text-right font-mono">
-                          {item.unit_price?.toLocaleString()}
+                          KSh {item.unit_price?.toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          {item.quantity}
-                        </td>
+                        <td className="px-6 py-4 text-right">{item.quantity}</td>
                         <td className="px-6 py-4 text-right font-medium text-gray-900">
-                          {(
-                            item.quantity * (item.unit_price || 0)
-                          ).toLocaleString()}
+                          KSh {(item.quantity * (item.unit_price || 0)).toLocaleString()}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-8 text-center text-gray-500"
-                      >
+                      <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                         No items found for this order.
                       </td>
                     </tr>
@@ -154,77 +190,141 @@ export default async function OrderDetailsPage({
                 </tbody>
               </table>
             </div>
-            <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-5">
-              <div className="mb-2 flex items-center justify-between text-sm text-gray-600">
-                <span>Subtotal</span>
-                <span>KSh {order.total_amount?.toLocaleString() || 0}</span>
+            <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-5 space-y-2">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Subtotal (excl. VAT)</span>
+                <span>KSh {(order.total_amount / 1.16).toFixed(2)}</span>
               </div>
-              <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
-                <span>Tax & Shipping</span>
-                <span>Calculated at checkout</span>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>VAT (16%)</span>
+                <span>KSh {(order.total_amount - order.total_amount / 1.16).toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-lg font-bold text-gray-900">
-                <span>Total</span>
+              <div className="flex items-center justify-between border-t border-gray-200 pt-3 text-lg font-bold text-gray-900">
+                <span>Grand Total</span>
                 <span>KSh {order.total_amount?.toLocaleString() || 0}</span>
               </div>
             </div>
           </div>
+
+          {/* Fulfillment details */}
+          {(isDelivery || isPickup) && (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5 flex items-center gap-3">
+                {isDelivery ? (
+                  <Truck className="h-5 w-5 text-blue-500" />
+                ) : (
+                  <Store className="h-5 w-5 text-amber-500" />
+                )}
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {isDelivery ? 'Delivery Details' : 'Pickup Details'}
+                </h2>
+              </div>
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {isDelivery && (
+                  <>
+                    {order.delivery_address && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase mb-1">Delivery Address</p>
+                        <p className="text-sm text-gray-900">{order.delivery_address}</p>
+                      </div>
+                    )}
+                    {order.county && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase mb-1">County / Area</p>
+                        <p className="text-sm text-gray-900">{order.county}</p>
+                      </div>
+                    )}
+                    {order.courier_service && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase mb-1">Courier Service</p>
+                        <p className="text-sm font-semibold text-gray-900">{order.courier_service}</p>
+                      </div>
+                    )}
+                    {order.delivery_notes && (
+                      <div className="sm:col-span-2">
+                        <p className="text-xs font-medium text-gray-500 uppercase mb-1">Delivery Notes</p>
+                        <p className="text-sm text-gray-700 italic">{order.delivery_notes}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+                {isPickup && (shopAddress || mapsUrl) && (
+                  <div className="sm:col-span-2 flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-1">Pickup Location</p>
+                      <p className="text-sm text-gray-900">{shopAddress || 'Our premises'}</p>
+                      {mapsUrl && (
+                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">
+                          Open in Maps →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Sidebar */}
         <div className="space-y-6">
+          {/* Customer info */}
           <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="border-b pb-3 text-base font-semibold text-gray-900">
-              Customer Information
-            </h2>
-            {order.customers ? (
-              <div className="space-y-3 text-sm">
-                <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase">
-                    Company Name
-                  </div>
-                  <div className="mt-1 font-medium text-gray-900">
-                    {order.customers.company_name}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase">
-                    Contact Person
-                  </div>
-                  <div className="mt-1 text-gray-900">
-                    {order.customers.first_name} {order.customers.last_name}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase">
-                    Email
-                  </div>
-                  <div className="mt-1 text-blue-600">
-                    {order.customers.contact_email}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase">
-                    Phone
-                  </div>
-                  <div className="mt-1 text-gray-900">
-                    {order.customers.phone_number || 'N/A'}
-                  </div>
-                </div>
+            <h2 className="border-b pb-3 text-base font-semibold text-gray-900">Customer</h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-2">
+                <User className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-900 font-medium">{customerName}</span>
               </div>
-            ) : (
-              <div className="text-sm text-gray-500">Guest Order</div>
-            )}
+              {customerEmail && (
+                <div className="flex items-start gap-2">
+                  <Mail className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <a href={`mailto:${customerEmail}`} className="text-blue-600 hover:underline break-all">
+                    {customerEmail}
+                  </a>
+                </div>
+              )}
+              {customerPhone && (
+                <div className="flex items-start gap-2">
+                  <Phone className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <a href={`tel:${customerPhone}`} className="text-gray-900">
+                    {customerPhone}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
 
-            {order.quote_id && (
-              <div className="border-t border-gray-100 pt-4">
-                <Link
-                  href={`/dashboard/quotes/${order.quote_id}`}
-                  className="flex items-center text-sm text-blue-600 hover:underline"
-                >
-                  <FileText className="mr-2 h-4 w-4" /> View Original Quote
-                </Link>
+          {/* Order meta */}
+          <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="border-b pb-3 text-base font-semibold text-gray-900">Order Info</h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Invoice #</span>
+                <span className="font-mono font-medium text-gray-900">{order.invoice_number || '—'}</span>
               </div>
-            )}
+              <div className="flex justify-between">
+                <span className="text-gray-500">Pricing</span>
+                <span className="font-medium text-gray-900">{order.pricing_model || 'RETAIL'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">WhatsApp</span>
+                <span className={order.whatsapp_sent ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                  {order.whatsapp_sent ? 'Sent ✓' : 'Not sent'}
+                </span>
+              </div>
+              {order.quote_id && (
+                <div className="pt-2 border-t border-gray-100">
+                  <Link
+                    href={`/dashboard/quotes/${order.quote_id}`}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    View Original Quote →
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           <OrderTimeline

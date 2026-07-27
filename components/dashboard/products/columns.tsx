@@ -84,18 +84,24 @@ export const columns: ColumnDef<any>[] = [
   {
     accessorKey: 'price',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Price" />
+      <DataTableColumnHeader column={column} title="Pricing" />
     ),
     cell: ({ row }) => {
       const product = row.original;
       return (
-        <div>
-          <div className="text-xs font-bold text-slate-900 sm:text-sm">
-            KSh {product.price?.toLocaleString()}
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-medium text-slate-400 uppercase">Retail</span>
+            <span className="text-xs font-bold text-slate-900">
+              KSh {product.price?.toLocaleString()}
+            </span>
           </div>
-          {product.sale_price && (
-            <div className="text-[11px] text-red-500 line-through">
-              KSh {product.sale_price.toLocaleString()}
+          {product.bulk_price != null && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-medium text-emerald-500 uppercase">Bulk</span>
+              <span className="text-xs font-semibold text-emerald-700">
+                KSh {product.bulk_price.toLocaleString()}
+              </span>
             </div>
           )}
         </div>

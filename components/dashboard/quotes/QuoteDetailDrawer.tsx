@@ -65,8 +65,8 @@ export function QuoteDetailDrawer({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownload = () => {
+    window.location.href = `/api/quote/${quote.id}`;
   };
 
   return (
@@ -116,10 +116,10 @@ export function QuoteDetailDrawer({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handlePrint}
+                onClick={handleDownload}
                 className="h-8 gap-1.5 border-slate-700 bg-slate-800 text-xs text-slate-200 hover:bg-slate-700"
               >
-                <Printer className="h-3.5 w-3.5" /> Print / PDF
+                <Printer className="h-3.5 w-3.5" /> Download PDF
               </Button>
 
               {quote.status !== 'FULFILLED' && (

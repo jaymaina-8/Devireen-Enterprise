@@ -173,11 +173,34 @@ export default async function ProductDetailsPage(props: {
             {/* ─── Purchase Panel ─── */}
             <div className="bg-surface border-border-subtle mb-8 rounded-2xl border p-6 lg:sticky lg:top-24">
               <div className="mb-6">
-                <Price
-                  amount={product.price}
-                  showVat={true}
-                  className="text-3xl"
-                />
+                {/* Pricing Display */}
+                {product.sale_price ? (
+                  <div className="space-y-2">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-sm font-medium text-text-muted uppercase tracking-wider">Sale Price</span>
+                      <Price
+                        amount={product.sale_price}
+                        showVat={true}
+                        className="text-3xl text-primary-600"
+                      />
+                    </div>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-sm font-medium text-text-muted uppercase tracking-wider">Regular Price</span>
+                      <span className="text-xl font-medium text-text-muted line-through">
+                        KSh {product.price.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-sm font-medium text-text-muted uppercase tracking-wider">Price</span>
+                    <Price
+                      amount={product.price}
+                      showVat={true}
+                      className="text-3xl"
+                    />
+                  </div>
+                )}
               </div>
 
               <AddToQuoteButton
@@ -185,7 +208,7 @@ export default async function ProductDetailsPage(props: {
                   id: product.id,
                   name: product.name,
                   sku: product.sku,
-                  price: product.price,
+                  price: product.sale_price || product.price,
                   imageUrl: primaryImage,
                 }}
                 disabled={
@@ -195,8 +218,7 @@ export default async function ProductDetailsPage(props: {
               />
 
               <p className="text-text-muted mt-4 text-center text-xs">
-                Add this item to your quote cart to request bulk pricing and
-                availability confirmation.
+                Add to cart, then choose delivery or pickup at checkout.
               </p>
 
               {/* Trust Indicators */}
@@ -215,7 +237,7 @@ export default async function ProductDetailsPage(props: {
                 </div>
                 <div className="text-text-muted flex items-center gap-2 text-xs">
                   <Package className="text-primary-500 h-4 w-4 shrink-0" />
-                  <span>Bulk Discounts</span>
+                  <span>Secure Packaging</span>
                 </div>
               </div>
             </div>

@@ -26,6 +26,8 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
   const [name, setName] = useState(initialData?.name || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
   const [price, setPrice] = useState(initialData?.price || '');
+  const [salePrice, setSalePrice] = useState(initialData?.sale_price || '');
+  const [bulkPrice, setBulkPrice] = useState(initialData?.bulk_price || '');
   const [categoryId, setCategoryId] = useState(initialData?.category_id || '');
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const supabase = createClient();
@@ -57,6 +59,7 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
       brand_id: formData.get('brand_id') || null,
       price: Number(formData.get('price')),
       sale_price: formData.get('sale_price') ? Number(formData.get('sale_price')) : null,
+      bulk_price: formData.get('bulk_price') ? Number(formData.get('bulk_price')) : null,
       stock_status: formData.get('stock_status'),
       is_active: formData.get('is_active') === 'on',
       is_featured: formData.get('is_featured') === 'on',
@@ -190,11 +193,18 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
                 <div className="space-y-2">
                   <Label htmlFor="price">Regular Price (KSh) *</Label>
-                  <Input id="price" name="price" type="number" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} />
+                  <Input id="price" name="price" type="number" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
+                  <p className="text-xs text-gray-500">Standard public-facing unit price.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sale_price">Sale Price (KSh)</Label>
-                  <Input id="sale_price" name="sale_price" type="number" step="0.01" defaultValue={initialData?.sale_price} />
+                  <Input id="sale_price" name="sale_price" type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="Optional" />
+                  <p className="text-xs text-gray-500">Discounted public price. Overrides regular price if set.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bulk_price">Bulk Price (KSh)</Label>
+                  <Input id="bulk_price" name="bulk_price" type="number" step="0.01" value={bulkPrice} onChange={(e) => setBulkPrice(e.target.value)} placeholder="Optional" />
+                  <p className="text-xs text-gray-500">Wholesale rate shown when bulk pricing is active.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stock_status">Stock Status *</Label>
@@ -271,7 +281,15 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
                 <p className="text-xs text-gray-500">{categories.find(c => c.id === categoryId)?.name || 'Category'}</p>
                 <h4 className="font-medium text-gray-900 line-clamp-2">{name || 'Product Name'}</h4>
                 <div className="flex items-center gap-2 pt-1">
-                  <span className="font-bold text-gray-900">KSh {price ? Number(price).toLocaleString() : '0.00'}</span>
+                  <span className="font-bold text-gray-900">KSh {salePrice ? Number(salePrice).toLocaleString() : (price ? Number(price).toLocaleString() : '0.00')}</span>
+                  {salePrice && (
+                    <span className="text-xs text-gray-500 line-through">KSh {Number(price).toLocaleString()}</span>
+                  )}
+                  {bulkPrice && (
+                    <span className="text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
+                      Bulk: KSh {Number(bulkPrice).toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

@@ -10,20 +10,22 @@ import {
   Package,
   Truck,
   Shield,
+  ShieldCheck,
   ArrowRight,
   UserCheck,
+  Download,
 } from "lucide-react";
 
 export const metadata = {
   title: "Wholesale & Bulk Orders | Devireen Enterprise",
-  description: "Browse our wholesale catalog and enjoy a 20% flat discount on all bulk orders.",
+  description: "Browse our wholesale catalog and enjoy exclusive bulk pricing.",
 };
 
 const benefits = [
   {
     icon: <Percent className="h-6 w-6" />,
-    title: "Flat 20% Discount",
-    description: "Enjoy an automatic 20% off retail pricing on all items in our wholesale catalog.",
+    title: "Exclusive Bulk Pricing",
+    description: "Enjoy special wholesale rates on all items in our wholesale catalog.",
   },
   {
     icon: <Truck className="h-6 w-6" />,
@@ -45,40 +47,122 @@ const benefits = [
 export default async function BulkOrdersPage() {
   const { data: products } = await fetchProducts();
 
-  // For this page, we display all IN_STOCK products
-  const availableProducts = products?.filter((p: any) => p.stock_status !== "DISCONTINUED") || [];
+  // For this page, we display all IN_STOCK products that have a bulk price set
+  const availableProducts = products?.filter((p: any) => p.stock_status !== "DISCONTINUED" && p.bulk_price != null) || [];
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden min-h-[400px] flex items-center bg-primary-700">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-600 via-primary-700 to-black opacity-80 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-1/2 h-full opacity-30 mix-blend-overlay">
-          <Image
-            src="/images/hero_main.png"
-            alt="Wholesale inventory"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-        <div className="relative z-10 container mx-auto px-4 py-16 md:py-24">
-          <AnimatedSection animation="fade-up">
-            <TrustBadge label="B2B Wholesale Portal" variant="subtle" className="bg-white/10 text-white border-white/20 mb-6" />
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white max-w-3xl leading-tight tracking-tight mb-6">
-              Exclusive wholesale pricing for your organization
-            </h1>
-            <p className="text-lg md:text-xl text-primary-100 max-w-2xl mb-8 leading-relaxed">
-              Browse our complete catalog with an automatic <strong className="text-white">20% discount</strong> applied. Add items to your quote for fast processing and priority delivery.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="#catalog">
-                <Button size="lg" variant="secondary" className="bg-white text-primary-700 hover:bg-gray-50 font-bold px-8">
-                  View Wholesale Catalog
-                </Button>
-              </Link>
-            </div>
-          </AnimatedSection>
+      <section className="bg-hero-gradient border-border-subtle border-b">
+        <div className="container mx-auto px-4 py-16 md:py-20 lg:py-24">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+
+            {/* Left — Copy */}
+            <AnimatedSection animation="fade-up">
+              {/* Trust badges */}
+              <div className="mb-6 flex flex-wrap gap-2">
+                <TrustBadge
+                  label="B2B Wholesale Portal"
+                  icon={<Shield className="h-3.5 w-3.5" />}
+                />
+                <TrustBadge
+                  label="500+ Products"
+                  icon={<Package className="h-3.5 w-3.5" />}
+                />
+                <TrustBadge
+                  label="Priority Delivery"
+                  icon={<Truck className="h-3.5 w-3.5" />}
+                />
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-text-main text-4xl leading-[1.1] font-extrabold tracking-tight md:text-5xl lg:text-[3.25rem]">
+                Exclusive Wholesale Pricing{" "}
+                <span className="text-primary-600">
+                  for Your Organization
+                </span>
+              </h1>
+
+              {/* Description */}
+              <p className="text-text-body mt-5 text-lg leading-relaxed">
+                Browse our complete catalogue with{" "}
+                <strong>exclusive bulk rates</strong> applied — built for
+                schools, hospitals, NGOs, corporates and government
+                institutions across Kenya.
+              </p>
+
+              {/* Industry tags */}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {["Schools", "Hospitals", "NGOs", "Corporates", "Government"].map(
+                  (tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100"
+                    >
+                      {tag}
+                    </span>
+                  )
+                )}
+              </div>
+
+              {/* CTAs */}
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Link href="#catalog">
+                  <Button size="lg" variant="primary">
+                    View Wholesale Catalog
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <a href="/api/catalog" download>
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Full Catalog (PDF)
+                  </Button>
+                </a>
+              </div>
+            </AnimatedSection>
+
+            {/* Right — Hero image + floating accent cards */}
+            <AnimatedSection
+              animation="slide-left"
+              delay={200}
+              className="relative hidden lg:block"
+            >
+              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl">
+                <Image
+                  src="/images/hero_main.png"
+                  alt="Wholesale office supplies and stationery products"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
+                />
+              </div>
+
+              {/* Floating card — bottom left */}
+              <div className="bg-surface border-border-subtle absolute -bottom-4 -left-4 flex items-center gap-3 rounded-xl border p-4 shadow-lg">
+                <div className="bg-success/10 text-success flex h-10 w-10 items-center justify-center rounded-full">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-text-main text-sm font-bold">Trusted by 200+</div>
+                  <div className="text-text-muted text-xs">organizations across Kenya</div>
+                </div>
+              </div>
+
+              {/* Floating card — top right */}
+              <div className="bg-surface border-border-subtle absolute -top-4 -right-4 flex items-center gap-2.5 rounded-xl border p-3 shadow-lg">
+                <div className="bg-primary-50 text-primary-600 flex h-8 w-8 items-center justify-center rounded-full">
+                  <Percent className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-text-main text-xs font-bold">Up to 40% off</div>
+                  <div className="text-text-muted text-xs">vs. retail pricing</div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+          </div>
         </div>
       </section>
 
@@ -109,7 +193,7 @@ export default async function BulkOrdersPage() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
             <div>
               <h2 className="text-3xl font-bold text-text-main tracking-tight">Wholesale Products</h2>
-              <p className="text-text-muted mt-2">All prices reflect a 20% volume discount.</p>
+              <p className="text-text-muted mt-2">All items are sold in sets of 1 Dozen (12 pieces).</p>
             </div>
             <div className="text-sm font-medium text-primary-600 bg-primary-50 px-4 py-2 rounded-lg">
               {availableProducts.length} Products Available
@@ -119,9 +203,6 @@ export default async function BulkOrdersPage() {
           {availableProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
               {availableProducts.map((product: any) => {
-                // Apply a 20% discount for wholesale
-                const originalPrice = product.price;
-                const wholesalePrice = originalPrice * 0.8;
                 const primaryImage = product.product_images?.find((img: any) => img.is_primary) || product.product_images?.[0];
 
                 return (
@@ -131,10 +212,12 @@ export default async function BulkOrdersPage() {
                       slug={product.slug}
                       name={product.name}
                       sku={product.sku}
-                      price={wholesalePrice}
-                      originalPrice={originalPrice}
+                      price={product.bulk_price}
+                      originalPrice={product.price}
                       imageUrl={primaryImage?.url || "/placeholder.svg"}
                       stockStatus={product.stock_status}
+                      addQuantity={12}
+                      addLabel="Add 1 Dozen"
                     />
                   </AnimatedSection>
                 );

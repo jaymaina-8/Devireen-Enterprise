@@ -64,15 +64,18 @@ export interface Database {
           sku: string
           name: string
           description: string | null
+          short_description: string | null
           category_id: string
           brand_id: string | null
           price: number
           sale_price: number | null
+          bulk_price: number | null
           stock_status: 'IN_STOCK' | 'OUT_OF_STOCK' | 'PRE_ORDER' | 'DISCONTINUED'
           attributes: Json
           seo_title: string | null
           seo_description: string | null
           is_active: boolean
+          is_featured: boolean
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -113,6 +116,51 @@ export interface Database {
           updated_at: string
         }
       }
+      orders: {
+        Row: {
+          id: string
+          quote_id: string | null
+          customer_id: string | null
+          // Guest customer fields
+          customer_name: string | null
+          customer_email: string | null
+          customer_phone: string | null
+          // Fulfillment
+          fulfillment_type: 'DELIVERY' | 'PICKUP' | null
+          delivery_address: string | null
+          county: string | null
+          courier_service: string | null
+          delivery_notes: string | null
+          // Pricing
+          pricing_model: 'RETAIL' | 'BULK'
+          // Status
+          status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED'
+          payment_status: 'UNPAID' | 'PARTIAL' | 'PAID' | 'REFUNDED'
+          total_amount: number
+          // Invoice
+          invoice_number: string | null
+          invoice_url: string | null
+          whatsapp_sent: boolean
+          // Addresses (legacy)
+          shipping_address: string | null
+          billing_address: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: string
+          quantity: number
+          unit_price: number
+          created_at: string
+          updated_at: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -123,6 +171,10 @@ export interface Database {
     Enums: {
       stock_status: 'IN_STOCK' | 'OUT_OF_STOCK' | 'PRE_ORDER' | 'DISCONTINUED'
       quote_status: 'DRAFT' | 'PENDING' | 'REVIEWING' | 'APPROVED' | 'REJECTED' | 'FULFILLED'
+      order_status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED'
+      payment_status: 'UNPAID' | 'PARTIAL' | 'PAID' | 'REFUNDED'
+      fulfillment_type: 'DELIVERY' | 'PICKUP'
+      pricing_model: 'RETAIL' | 'BULK'
     }
   }
 }

@@ -147,7 +147,8 @@ export default async function ProductsPage({
                     slug={product.slug}
                     name={product.name}
                     sku={product.sku}
-                    price={product.price}
+                    price={product.sale_price || product.price}
+                    originalPrice={product.sale_price ? product.price : undefined}
                     imageUrl={primaryImage?.url || null}
                     stockStatus={product.stock_status as StockStatus}
                   />
