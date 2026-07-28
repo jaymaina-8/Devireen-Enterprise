@@ -193,7 +193,7 @@ export default async function BulkOrdersPage() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
             <div>
               <h2 className="text-3xl font-bold text-text-main tracking-tight">Wholesale Products</h2>
-              <p className="text-text-muted mt-2">All items are sold in sets of 1 Dozen (12 pieces).</p>
+              <p className="text-text-muted mt-2">All items are sold in wholesale bulk units as specified per product.</p>
             </div>
             <div className="text-sm font-medium text-primary-600 bg-primary-50 px-4 py-2 rounded-lg">
               {availableProducts.length} Products Available
@@ -216,8 +216,8 @@ export default async function BulkOrdersPage() {
                       originalPrice={product.price}
                       imageUrl={primaryImage?.url || "/placeholder.svg"}
                       stockStatus={product.stock_status}
-                      addQuantity={12}
-                      addLabel="Add 1 Dozen"
+                      addQuantity={1}
+                      addLabel={`Add 1 ${product.bulk_unit || 'Dozen'}`}
                     />
                   </AnimatedSection>
                 );
@@ -238,7 +238,7 @@ export default async function BulkOrdersPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-white mb-4">Need something not listed?</h2>
           <p className="text-primary-100 mb-8 max-w-2xl mx-auto text-lg">
-            Our sourcing team can acquire specific items in bulk tailored to your organization's exact requirements.
+            Our sourcing team can acquire specific items in bulk tailored to your organization&apos;s exact requirements.
           </p>
           <Link href="/contact">
             <Button size="lg" variant="secondary" className="bg-white text-primary-700 hover:bg-gray-50 px-8">

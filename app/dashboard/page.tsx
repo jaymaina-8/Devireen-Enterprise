@@ -264,19 +264,20 @@ export default async function DashboardOverview() {
         </div>
 
         <div className="relative z-10 flex items-center gap-3">
-          <Link href="/dashboard/quotes/new">
-            <Button className="rounded-xl border-0 bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:bg-blue-500">
+          <Button asChild className="rounded-xl border-0 bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:bg-blue-500">
+            <Link href="/dashboard/quotes/new">
               <Plus className="mr-1.5 h-4 w-4" /> Create Quote
-            </Button>
-          </Link>
-          <Link href="/dashboard/products/new">
-            <Button
-              variant="outline"
-              className="rounded-xl border-white/20 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/20"
-            >
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-xl border-white/20 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/20"
+          >
+            <Link href="/dashboard/products/new">
               <Package className="mr-1.5 h-4 w-4" /> Add Product
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Ambient background glow */}

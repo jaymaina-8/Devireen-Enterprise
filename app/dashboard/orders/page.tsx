@@ -36,7 +36,7 @@ export default async function OrdersPage() {
       <DataTable
         columns={columns}
         data={orders}
-        searchKey="customer_name"
+        searchKey="customer"
         searchPlaceholder="Search by customer name..."
       />
     </div>

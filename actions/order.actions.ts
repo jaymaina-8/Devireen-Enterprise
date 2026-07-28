@@ -81,3 +81,29 @@ export async function markOrderWhatsAppSentAction(orderId: string) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Updates an order's status (e.g. PENDING -> SHIPPED).
+ */
+export async function updateOrderStatusAction(orderId: string, status: string) {
+  try {
+    const order = await OrderRepository.updateOrderStatus(orderId, status);
+    revalidatePath('/dashboard/orders');
+    return { success: true, data: order };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Updates an order's payment status (e.g. UNPAID -> PAID).
+ */
+export async function updateOrderPaymentStatusAction(orderId: string, paymentStatus: string) {
+  try {
+    const order = await OrderRepository.updateOrderPaymentStatus(orderId, paymentStatus);
+    revalidatePath('/dashboard/orders');
+    return { success: true, data: order };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

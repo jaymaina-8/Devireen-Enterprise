@@ -6,6 +6,64 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { DataTableColumnHeader } from '@/components/ui/DataTable';
 import { Truck, Store, Download } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
+import { updateOrderStatusAction, updateOrderPaymentStatusAction } from '@/actions/order.actions';
+import { useToastStore } from '@/lib/store/toast-store';
+import { useState } from 'react';
+
+const StatusCell = ({ order }: { order: any }) => {
+  const [status, setStatus] = useState(order.status);
+  const { addToast } = useToastStore();
+
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value;
+    setStatus(newStatus);
+    const res = await updateOrderStatusAction(order.id, newStatus);
+    if (!res.success) {
+      setStatus(order.status); // revert
+      addToast({ title: 'Error', description: res.error || 'Failed to update status', variant: 'destructive' });
+    } else {
+      addToast({ title: 'Updated', description: 'Order status updated', variant: 'success' });
+    }
+  };
+
+  return (
+    <Select value={status} onChange={handleStatusChange} className="w-[120px] text-xs h-8">
+      <option value="PENDING">PENDING</option>
+      <option value="PROCESSING">PROCESSING</option>
+      <option value="SHIPPED">SHIPPED</option>
+      <option value="DELIVERED">DELIVERED</option>
+      <option value="CANCELLED">CANCELLED</option>
+      <option value="REFUNDED">REFUNDED</option>
+    </Select>
+  );
+};
+
+const PaymentStatusCell = ({ order }: { order: any }) => {
+  const [status, setStatus] = useState(order.payment_status);
+  const { addToast } = useToastStore();
+
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value;
+    setStatus(newStatus);
+    const res = await updateOrderPaymentStatusAction(order.id, newStatus);
+    if (!res.success) {
+      setStatus(order.payment_status); // revert
+      addToast({ title: 'Error', description: res.error || 'Failed to update payment status', variant: 'destructive' });
+    } else {
+      addToast({ title: 'Updated', description: 'Payment status updated', variant: 'success' });
+    }
+  };
+
+  return (
+    <Select value={status} onChange={handleStatusChange} className="w-[110px] text-xs h-8">
+      <option value="UNPAID">UNPAID</option>
+      <option value="PARTIAL">PARTIAL</option>
+      <option value="PAID">PAID</option>
+      <option value="REFUNDED">REFUNDED</option>
+    </Select>
+  );
+};
 
 export const columns: ColumnDef<any>[] = [
   {
@@ -25,6 +83,7 @@ export const columns: ColumnDef<any>[] = [
   },
   {
     id: 'customer',
+    accessorFn: (row) => row.customer_name || row.customers?.company_name || 'Guest',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Customer" />,
     cell: ({ row }) => {
       const order = row.original;
@@ -79,28 +138,14 @@ export const columns: ColumnDef<any>[] = [
     accessorKey: 'status',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => {
-      const status = row.original.status;
-      const variantMap: Record<string, any> = {
-        PENDING: 'warning',
-        PROCESSING: 'default',
-        SHIPPED: 'default',
-        DELIVERED: 'success',
-        CANCELLED: 'error',
-        REFUNDED: 'error',
-      };
-      return <Badge variant={variantMap[status] || 'default'}>{status}</Badge>;
+      return <StatusCell order={row.original} />;
     },
   },
   {
     accessorKey: 'payment_status',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Payment" />,
     cell: ({ row }) => {
-      const paymentStatus = row.original.payment_status;
-      return (
-        <Badge variant={paymentStatus === 'UNPAID' ? 'error' : 'success'}>
-          {paymentStatus}
-        </Badge>
-      );
+      return <PaymentStatusCell order={row.original} />;
     },
   },
   {

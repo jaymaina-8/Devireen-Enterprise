@@ -134,4 +134,42 @@ export class OrderRepository {
       .update({ whatsapp_sent: true })
       .eq('id', orderId);
   }
+
+  /**
+   * Updates an order's status.
+   */
+  static async updateOrderStatus(id: string, status: string) {
+    const supabase = await createAdminClient();
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id)
+      .select('id, status')
+      .single();
+
+    if (error) {
+      logger.error(`Failed to update order status ${id}`, error);
+      throw new DatabaseError(`Failed to update order status: ${error.message}`);
+    }
+    return data;
+  }
+
+  /**
+   * Updates an order's payment status.
+   */
+  static async updateOrderPaymentStatus(id: string, payment_status: string) {
+    const supabase = await createAdminClient();
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ payment_status })
+      .eq('id', id)
+      .select('id, payment_status')
+      .single();
+
+    if (error) {
+      logger.error(`Failed to update order payment status ${id}`, error);
+      throw new DatabaseError(`Failed to update order payment status: ${error.message}`);
+    }
+    return data;
+  }
 }

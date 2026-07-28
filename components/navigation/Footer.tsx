@@ -234,7 +234,9 @@ export function Footer({ settings }: { settings?: any }) {
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-primary-500 shrink-0 mt-0.5" />
-                <span>{settings?.physical_address || "Nairobi CBD, Kenya"}</span>
+                <a href={settings?.google_maps_url || "https://www.google.com/maps/place/Devireen+Enterprise./@-1.28181,36.825743,17z/data=!3m1!4b1!4m6!3m5!1s0x182f118fa27150b5:0xe0fb2ec5aa188109!8m2!3d-1.2818154!4d36.8283179!16s%2Fg%2F11nth4f4zs"} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  {settings?.physical_address || "Nairobi CBD, Kenya"}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-primary-500 shrink-0" />

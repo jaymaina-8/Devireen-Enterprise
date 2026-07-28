@@ -28,6 +28,7 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
   const [price, setPrice] = useState(initialData?.price || '');
   const [salePrice, setSalePrice] = useState(initialData?.sale_price || '');
   const [bulkPrice, setBulkPrice] = useState(initialData?.bulk_price || '');
+  const [bulkUnit, setBulkUnit] = useState(initialData?.bulk_unit || 'Dozen');
   const [categoryId, setCategoryId] = useState(initialData?.category_id || '');
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const supabase = createClient();
@@ -60,6 +61,7 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
       price: Number(formData.get('price')),
       sale_price: formData.get('sale_price') ? Number(formData.get('sale_price')) : null,
       bulk_price: formData.get('bulk_price') ? Number(formData.get('bulk_price')) : null,
+      bulk_unit: formData.get('bulk_unit') || 'Dozen',
       stock_status: formData.get('stock_status'),
       is_active: formData.get('is_active') === 'on',
       is_featured: formData.get('is_featured') === 'on',
@@ -205,6 +207,11 @@ export function ProductForm({ initialData, categories, brands }: ProductFormProp
                   <Label htmlFor="bulk_price">Bulk Price (KSh)</Label>
                   <Input id="bulk_price" name="bulk_price" type="number" step="0.01" value={bulkPrice} onChange={(e) => setBulkPrice(e.target.value)} placeholder="Optional" />
                   <p className="text-xs text-gray-500">Wholesale rate shown when bulk pricing is active.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bulk_unit">Bulk Unit</Label>
+                  <Input id="bulk_unit" name="bulk_unit" value={bulkUnit} onChange={(e) => setBulkUnit(e.target.value)} placeholder="e.g. Dozen, Box" />
+                  <p className="text-xs text-gray-500">The unit label for bulk orders.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stock_status">Stock Status *</Label>

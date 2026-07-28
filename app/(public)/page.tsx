@@ -26,6 +26,7 @@ import {
   DollarSign,
   Star,
   CheckCircle2,
+  MapPin,
 } from 'lucide-react';
 import { StockStatus } from '@/components/products/StockIndicator';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -307,17 +308,32 @@ export default async function HomePage() {
       <section className="bg-surface border-border-subtle border-b py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-6xl">
-            <div className="border-border-subtle relative flex justify-center overflow-hidden rounded-2xl border bg-gray-50 shadow-xl">
+            <a
+              href="https://www.google.com/maps/place/Devireen+Enterprise./@-1.28181,36.825743,17z/data=!3m1!4b1!4m6!3m5!1s0x182f118fa27150b5:0xe0fb2ec5aa188109!8m2!3d-1.2818154!4d36.8283179!16s%2Fg%2F11nth4f4zs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block border-border-subtle relative overflow-hidden rounded-2xl border bg-gray-50 shadow-xl"
+            >
               <Image
                 src="/images/storefront.jpg"
                 alt="Devireen Stationers Wholesale & Retail Storefront"
                 width={1200}
                 height={900}
-                className="h-auto w-full object-contain"
+                className="h-auto w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
                 sizes="(max-width: 1200px) 100vw, 1200px"
                 priority
               />
-            </div>
+              {/* Persistent Overlay Message */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 sm:p-8 flex items-end">
+                <div className="text-white transform transition-transform duration-300 group-hover:-translate-y-1">
+                  <div className="flex items-center gap-2 font-bold text-lg sm:text-xl mb-1">
+                    <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary-500" />
+                    Visit Our Store
+                  </div>
+                  <p className="text-sm sm:text-base text-white/90 font-medium">Click here for Google Maps directions to Devireen Enterprise</p>
+                </div>
+              </div>
+            </a>
           </div>
         </div>
       </section>
