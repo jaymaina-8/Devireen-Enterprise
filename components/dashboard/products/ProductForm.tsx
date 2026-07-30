@@ -153,18 +153,10 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="max-w-6xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           {initialData ? 'Edit Product' : 'Add Product'}
         </h1>
-        <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Product'}
-          </Button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 pb-12 lg:grid-cols-3">
@@ -497,6 +489,15 @@ export function ProductForm({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-4 border-t border-gray-200 pt-6 pb-8">
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : 'Save Product'}
+        </Button>
       </div>
     </form>
   );
