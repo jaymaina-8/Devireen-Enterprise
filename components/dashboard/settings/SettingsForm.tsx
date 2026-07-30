@@ -246,6 +246,28 @@ export function SettingsForm({ settings }: { settings: any }) {
                   Applied automatically to line items.
                 </p>
               </div>
+
+              <div className="space-y-1.5">
+                <div className="mt-6 flex items-center justify-between">
+                  <Label
+                    htmlFor="enable_vat"
+                    className="cursor-pointer font-semibold text-slate-700"
+                  >
+                    Enable VAT Sitewide
+                  </Label>
+                  <input
+                    type="checkbox"
+                    id="enable_vat"
+                    name="enable_vat"
+                    defaultChecked={settings.enable_vat !== false}
+                    className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-slate-400">
+                  If disabled, VAT will not be calculated on quotes and
+                  invoices.
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-end border-t border-slate-100 pt-4">

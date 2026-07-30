@@ -21,7 +21,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products', hasMegaMenu: true },
   { href: '/products', label: 'Categories', hasMegaMenu: true },
-  { href: '/bulk-orders', label: 'Bulk Orders' },
+  { href: '/wholesale', label: 'Wholesale' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];

@@ -10,14 +10,14 @@ import {
 import React from 'react';
 
 // ─── Brand tokens ──────────────────────────────────────────────────────────
-const RED    = '#DC2626';
-const RED50  = '#FEF2F2';
-const DARK   = '#111827';
-const INK    = '#374151';
-const MUTED  = '#6B7280';
-const RULE   = '#E5E7EB';
-const BG     = '#F9FAFB';
-const GREEN  = '#059669';
+const RED = '#DC2626';
+const RED50 = '#FEF2F2';
+const DARK = '#111827';
+const INK = '#374151';
+const MUTED = '#6B7280';
+const RULE = '#E5E7EB';
+const BG = '#F9FAFB';
+const GREEN = '#059669';
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -121,10 +121,10 @@ const styles = StyleSheet.create({
   tableCellGreen: { fontFamily: 'Helvetica-Bold', color: GREEN },
 
   // Column widths
-  colNo:      { width: 22, textAlign: 'center' },
+  colNo: { width: 22, textAlign: 'center' },
   colProduct: { flex: 4 },
-  colPrice:   { flex: 2, textAlign: 'right' },
-  colBulk:    { flex: 2, textAlign: 'right' },
+  colPrice: { flex: 2, textAlign: 'right' },
+  colWholesale: { flex: 2, textAlign: 'right' },
   colSavings: { flex: 1.5, textAlign: 'center' },
 
   // ── Summary box ───────────────────────────────────────────────────────────
@@ -202,8 +202,8 @@ function fmt(amount: number): string {
   })}`;
 }
 
-function savingsPct(retail: number, bulk: number): string {
-  const pct = Math.round(((retail - bulk) / retail) * 100);
+function savingsPct(retail: number, wholesale: number): string {
+  const pct = Math.round(((retail - wholesale) / retail) * 100);
   return `${pct}%`;
 }
 
@@ -215,10 +215,10 @@ interface CatalogDocumentProps {
 }
 
 function CatalogDocument({ products, settings }: CatalogDocumentProps) {
-  const companyName    = settings?.company_name    || 'Devireen Enterprise';
+  const companyName = settings?.company_name || 'Devireen Enterprise';
   const companyAddress = settings?.physical_address || 'Nairobi, Kenya';
-  const companyEmail   = settings?.email            || 'sales@devireen.co.ke';
-  const companyPhone   = Array.isArray(settings?.phone_numbers)
+  const companyEmail = settings?.email || 'sales@devireen.co.ke';
+  const companyPhone = Array.isArray(settings?.phone_numbers)
     ? settings.phone_numbers[0]
     : settings?.phone_numbers || '+254 708 037929';
   const logoUrl = settings?.logo_url || null;
@@ -230,7 +230,10 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
 
   return React.createElement(
     Document,
-    { title: `${companyName} — Wholesale Product Catalog`, author: companyName },
+    {
+      title: `${companyName} — Wholesale Product Catalog`,
+      author: companyName,
+    },
     React.createElement(
       Page,
       { size: 'A4', style: styles.page },
@@ -244,7 +247,11 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
           { style: styles.headerLeft },
           logoUrl
             ? React.createElement(Image, { src: logoUrl, style: styles.logo })
-            : React.createElement(Text, { style: styles.companyName }, companyName),
+            : React.createElement(
+                Text,
+                { style: styles.companyName },
+                companyName
+              ),
           React.createElement(
             Text,
             { style: styles.companyMeta },
@@ -294,11 +301,31 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
         React.createElement(
           View,
           { style: styles.tableHeader },
-          React.createElement(Text, { style: [styles.tableHeaderCell, styles.colNo] }, '#'),
-          React.createElement(Text, { style: [styles.tableHeaderCell, styles.colProduct] }, 'Product'),
-          React.createElement(Text, { style: [styles.tableHeaderCell, styles.colPrice] }, 'Retail'),
-          React.createElement(Text, { style: [styles.tableHeaderCell, styles.colBulk] }, 'Bulk Price'),
-          React.createElement(Text, { style: [styles.tableHeaderCell, styles.colSavings] }, 'Save')
+          React.createElement(
+            Text,
+            { style: [styles.tableHeaderCell, styles.colNo] },
+            '#'
+          ),
+          React.createElement(
+            Text,
+            { style: [styles.tableHeaderCell, styles.colProduct] },
+            'Product'
+          ),
+          React.createElement(
+            Text,
+            { style: [styles.tableHeaderCell, styles.colPrice] },
+            'Retail'
+          ),
+          React.createElement(
+            Text,
+            { style: [styles.tableHeaderCell, styles.colWholesale] },
+            'Wholesale Price'
+          ),
+          React.createElement(
+            Text,
+            { style: [styles.tableHeaderCell, styles.colSavings] },
+            'Save'
+          )
         ),
 
         // Data rows
@@ -336,8 +363,14 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
             ),
             React.createElement(
               Text,
-              { style: [styles.tableCell, styles.colBulk, styles.tableCellRed] },
-              fmt(product.bulk_price)
+              {
+                style: [
+                  styles.tableCell,
+                  styles.colWholesale,
+                  styles.tableCellRed,
+                ],
+              },
+              fmt(product.wholesale_price)
             ),
             React.createElement(
               Text,
@@ -348,7 +381,9 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
                   styles.tableCellGreen,
                 ],
               },
-              product.price ? savingsPct(product.price, product.bulk_price) : '—'
+              product.price
+                ? savingsPct(product.price, product.wholesale_price)
+                : '—'
             )
           )
         )
@@ -361,26 +396,58 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
         React.createElement(
           View,
           { style: styles.summaryItem },
-          React.createElement(Text, { style: styles.summaryLabel }, 'Total Products'),
-          React.createElement(Text, { style: styles.summaryValue }, String(products.length))
+          React.createElement(
+            Text,
+            { style: styles.summaryLabel },
+            'Total Products'
+          ),
+          React.createElement(
+            Text,
+            { style: styles.summaryValue },
+            String(products.length)
+          )
         ),
         React.createElement(
           View,
           { style: styles.summaryItem },
-          React.createElement(Text, { style: styles.summaryLabel }, 'Min. Order'),
-          React.createElement(Text, { style: styles.summaryValue }, '1 Dozen (12 pcs)')
+          React.createElement(
+            Text,
+            { style: styles.summaryLabel },
+            'Min. Order'
+          ),
+          React.createElement(
+            Text,
+            { style: styles.summaryValue },
+            '1 Dozen (12 pcs)'
+          )
         ),
         React.createElement(
           View,
           { style: styles.summaryItem },
-          React.createElement(Text, { style: styles.summaryLabel }, 'Avg. Bulk Savings'),
-          React.createElement(Text, { style: styles.summaryValueRed }, 'Up to 40%')
+          React.createElement(
+            Text,
+            { style: styles.summaryLabel },
+            'Avg. Wholesale Savings'
+          ),
+          React.createElement(
+            Text,
+            { style: styles.summaryValueRed },
+            'Up to 40%'
+          )
         ),
         React.createElement(
           View,
           { style: styles.summaryItem },
-          React.createElement(Text, { style: styles.summaryLabel }, 'Enquiries'),
-          React.createElement(Text, { style: styles.summaryValue }, companyPhone)
+          React.createElement(
+            Text,
+            { style: styles.summaryLabel },
+            'Enquiries'
+          ),
+          React.createElement(
+            Text,
+            { style: styles.summaryValue },
+            companyPhone
+          )
         )
       ),
 
@@ -388,11 +455,15 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
       React.createElement(
         View,
         { style: styles.termsBox },
-        React.createElement(Text, { style: styles.termsTitle }, 'Terms & Ordering'),
+        React.createElement(
+          Text,
+          { style: styles.termsTitle },
+          'Terms & Ordering'
+        ),
         React.createElement(
           Text,
           { style: styles.termsLine },
-          '• Bulk prices apply to orders of 12 or more units per item (1 dozen minimum).'
+          '• Wholesale prices apply to orders of 12 or more units per item (1 dozen minimum).'
         ),
         React.createElement(
           Text,
@@ -432,8 +503,13 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
         ),
         React.createElement(Text, {
           style: styles.pageNumber,
-          render: ({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>
-            `Page ${pageNumber} of ${totalPages}`,
+          render: ({
+            pageNumber,
+            totalPages,
+          }: {
+            pageNumber: number;
+            totalPages: number;
+          }) => `Page ${pageNumber} of ${totalPages}`,
         })
       )
     )
@@ -445,7 +521,7 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
 /**
  * Generates a wholesale product catalog PDF.
  *
- * @param products - Array of products (must have bulk_price)
+ * @param products - Array of products (must have wholesale_price)
  * @param settings - Company settings for branding
  * @returns Uint8Array containing the PDF binary
  */

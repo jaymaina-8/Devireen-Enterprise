@@ -11,13 +11,13 @@ import {
 import React from 'react';
 
 // ─── Brand tokens ──────────────────────────────────────────────────────────
-const RED   = '#DC2626'; // Devireen primary red
+const RED = '#DC2626'; // Devireen primary red
 const RED50 = '#FEF2F2'; // light red tint
-const DARK  = '#111827'; // near-black for headings
-const INK   = '#374151'; // body text
+const DARK = '#111827'; // near-black for headings
+const INK = '#374151'; // body text
 const MUTED = '#6B7280'; // secondary/muted text
-const RULE  = '#E5E7EB'; // divider lines
-const BG    = '#F9FAFB'; // card backgrounds
+const RULE = '#E5E7EB'; // divider lines
+const BG = '#F9FAFB'; // card backgrounds
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
@@ -182,9 +182,9 @@ const styles = StyleSheet.create({
 
   // ── Column widths ─────────────────────────────────────────────────────────
   colProduct: { flex: 4 },
-  colQty:     { flex: 1, textAlign: 'center' },
-  colPrice:   { flex: 2, textAlign: 'right' },
-  colTotal:   { flex: 2, textAlign: 'right' },
+  colQty: { flex: 1, textAlign: 'center' },
+  colPrice: { flex: 2, textAlign: 'right' },
+  colTotal: { flex: 2, textAlign: 'right' },
 
   // ── Totals ────────────────────────────────────────────────────────────────
   totalsSection: {
@@ -231,14 +231,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#ffffff',
   },
-  bulkRow: {
+  wholesaleRow: {
     flexDirection: 'row',
     paddingVertical: 5,
     paddingHorizontal: 14,
     borderBottom: `1px solid ${RULE}`,
     backgroundColor: RED50,
   },
-  bulkLabel: {
+  wholesaleLabel: {
     fontSize: 8,
     fontFamily: 'Helvetica-Bold',
     color: RED,
@@ -317,18 +317,19 @@ interface QuoteDocumentProps {
 }
 
 function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
-  const subtotal   = quote.total_amount / 1.16;
-  const vatAmount  = quote.total_amount - subtotal;
-  const isBulk     = quote.pricing_model === 'BULK';
+  const enableVat = settings?.enable_vat !== false;
+  const subtotal = enableVat ? quote.total_amount / 1.16 : quote.total_amount;
+  const vatAmount = enableVat ? quote.total_amount - subtotal : 0;
+  const isWholesale = quote.pricing_model === 'WHOLESALE';
 
-  const companyName    = settings?.company_name    || 'Devireen Enterprise';
+  const companyName = settings?.company_name || 'Devireen Enterprise';
   const companyAddress = settings?.physical_address || 'Nairobi, Kenya';
-  const companyEmail   = settings?.email            || '';
-  const companyPhone   = Array.isArray(settings?.phone_numbers)
+  const companyEmail = settings?.email || '';
+  const companyPhone = Array.isArray(settings?.phone_numbers)
     ? settings.phone_numbers[0]
     : settings?.phone_numbers || '';
   const vatRate = settings?.vat_rate || '16%';
-  const kraPin  = settings?.kra_pin  || '';
+  const kraPin = settings?.kra_pin || '';
   const logoUrl = settings?.logo_url || null;
 
   const quoteDate = new Date(quote.created_at).toLocaleDateString('en-KE', {
@@ -369,7 +370,7 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
               companyAddress,
               companyPhone ? `Phone: ${companyPhone}` : null,
               companyEmail ? `Email: ${companyEmail}` : null,
-              kraPin       ? `KRA PIN: ${kraPin}`     : null,
+              kraPin ? `KRA PIN: ${kraPin}` : null,
             ]
               .filter(Boolean)
               .join('\n')
@@ -414,7 +415,7 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
           React.createElement(
             Text,
             { style: [styles.infoLine, styles.tableCellBold] },
-            quote.customers?.company_name || "Individual" || ''
+            quote.customers?.company_name || 'Individual' || ''
           ),
           quote.customers?.contact_email
             ? React.createElement(
@@ -548,7 +549,13 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
             ),
             React.createElement(
               Text,
-              { style: [styles.tableCell, styles.colTotal, styles.tableCellBold] },
+              {
+                style: [
+                  styles.tableCell,
+                  styles.colTotal,
+                  styles.tableCellBold,
+                ],
+              },
               fmt(item.quantity * item.unit_price)
             )
           )
@@ -576,28 +583,30 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
               fmt(subtotal)
             )
           ),
-          React.createElement(
-            View,
-            { style: styles.totalRow },
-            React.createElement(
-              Text,
-              { style: styles.totalLabel },
-              `VAT (${vatRate})`
-            ),
-            React.createElement(
-              Text,
-              { style: styles.totalValue },
-              fmt(vatAmount)
-            )
-          ),
-          isBulk
+          enableVat
             ? React.createElement(
                 View,
-                { style: styles.bulkRow },
+                { style: styles.totalRow },
                 React.createElement(
                   Text,
-                  { style: styles.bulkLabel },
-                  'Bulk pricing applied'
+                  { style: styles.totalLabel },
+                  `VAT (${vatRate})`
+                ),
+                React.createElement(
+                  Text,
+                  { style: styles.totalValue },
+                  fmt(vatAmount)
+                )
+              )
+            : null,
+          isWholesale
+            ? React.createElement(
+                View,
+                { style: styles.wholesaleRow },
+                React.createElement(
+                  Text,
+                  { style: styles.wholesaleLabel },
+                  'Wholesale pricing applied'
                 )
               )
             : null,

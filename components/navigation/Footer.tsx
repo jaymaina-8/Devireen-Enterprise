@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 import {
   PackageOpen,
   MapPin,
@@ -9,9 +9,9 @@ import {
   Globe,
   Share2,
   ExternalLink,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { siteConfig } from "@/config/site";
+import { siteConfig } from '@/config/site';
 
 export function Footer({ settings }: { settings?: any }) {
   return (
@@ -19,12 +19,11 @@ export function Footer({ settings }: { settings?: any }) {
       {/* ─── Main Footer ─── */}
       <div className="container mx-auto px-4 py-10 md:py-16">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-8">
-
           {/* Brand Column */}
           <div className="sm:col-span-2 lg:col-span-2">
             <Link
               href="/"
-              className="flex items-center gap-2 font-bold text-xl text-white tracking-tight mb-4"
+              className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight text-white"
             >
               {settings?.logo_url ? (
                 <img
@@ -34,12 +33,12 @@ export function Footer({ settings }: { settings?: any }) {
                 />
               ) : (
                 <>
-                  <PackageOpen className="h-6 w-6 text-primary-500" />
+                  <PackageOpen className="text-primary-500 h-6 w-6" />
                   <span>{settings?.company_name || siteConfig.name}</span>
                 </>
               )}
             </Link>
-            <p className="text-sm text-gray-400 leading-relaxed mb-5">
+            <p className="mb-5 text-sm leading-relaxed text-gray-400">
               {settings?.footer_content ||
                 "Kenya's trusted B2B supplier of office supplies, stationery, school supplies and office equipment."}
             </p>
@@ -48,7 +47,7 @@ export function Footer({ settings }: { settings?: any }) {
             <Link href="/quote">
               <button
                 type="button"
-                className="w-full mb-5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors active:scale-[0.98]"
+                className="bg-primary-600 hover:bg-primary-700 mb-5 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors active:scale-[0.98]"
               >
                 Request a Quick Quote
               </button>
@@ -58,41 +57,41 @@ export function Footer({ settings }: { settings?: any }) {
             <div className="flex items-center gap-3">
               {/* Facebook */}
               <a
-                href={settings?.facebook_url || "#"}
+                href={settings?.facebook_url || '#'}
                 aria-label="Facebook"
-                className="h-8 w-8 rounded-full bg-white/10 hover:bg-blue-600 flex items-center justify-center text-gray-400 hover:text-white transition-all font-bold text-xs"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-gray-400 transition-all hover:bg-blue-600 hover:text-white"
               >
                 f
               </a>
               {/* Twitter / X */}
               <a
-                href={settings?.twitter_url || "#"}
+                href={settings?.twitter_url || '#'}
                 aria-label="Twitter"
-                className="h-8 w-8 rounded-full bg-white/10 hover:bg-sky-500 flex items-center justify-center text-gray-400 hover:text-white transition-all font-bold text-xs"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-gray-400 transition-all hover:bg-sky-500 hover:text-white"
               >
                 𝕏
               </a>
               {/* LinkedIn */}
               <a
-                href={settings?.linkedin_url || "#"}
+                href={settings?.linkedin_url || '#'}
                 aria-label="LinkedIn"
-                className="h-8 w-8 rounded-full bg-white/10 hover:bg-blue-700 flex items-center justify-center text-gray-400 hover:text-white transition-all font-bold text-xs"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-gray-400 transition-all hover:bg-blue-700 hover:text-white"
               >
                 in
               </a>
               {/* Instagram */}
               <a
-                href={settings?.instagram_url || "#"}
+                href={settings?.instagram_url || '#'}
                 aria-label="Instagram"
-                className="h-8 w-8 rounded-full bg-white/10 hover:bg-pink-600 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-gray-400 transition-all hover:bg-pink-600 hover:text-white"
               >
                 <Share2 className="h-3.5 w-3.5" />
               </a>
               {/* WhatsApp */}
               <a
-                href={`https://wa.me/${(settings?.phone_numbers?.[0] || "+254708037929").replace(/\D/g, "")}`}
+                href={`https://wa.me/${(settings?.phone_numbers?.[0] || '+254708037929').replace(/\D/g, '')}`}
                 aria-label="WhatsApp"
-                className="h-8 w-8 rounded-full bg-white/10 hover:bg-green-600 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-gray-400 transition-all hover:bg-green-600 hover:text-white"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
               </a>
@@ -100,17 +99,19 @@ export function Footer({ settings }: { settings?: any }) {
 
             {/* Newsletter */}
             <div className="mt-6">
-              <h4 className="text-sm font-semibold text-white mb-3">Stay updated</h4>
+              <h4 className="mb-3 text-sm font-semibold text-white">
+                Stay updated
+              </h4>
               <div className="flex gap-2">
                 <input
                   type="email"
                   placeholder="Your email address"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  className="focus:ring-primary-500 focus:border-primary-500 flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:ring-1 focus:outline-none"
                   aria-label="Email for newsletter"
                 />
                 <button
                   type="button"
-                  className="bg-primary-600 text-white px-3 py-2 rounded-md hover:bg-primary-700 transition-colors shrink-0"
+                  className="bg-primary-600 hover:bg-primary-700 shrink-0 rounded-md px-3 py-2 text-white transition-colors"
                   aria-label="Subscribe to newsletter"
                 >
                   <ArrowRight className="h-4 w-4" />
@@ -121,37 +122,55 @@ export function Footer({ settings }: { settings?: any }) {
 
           {/* Products */}
           <div>
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-4">
+            <h3 className="mb-4 text-sm font-semibold tracking-wider text-white uppercase">
               Products
             </h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li>
-                <Link href="/products?category=office-supplies" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=office-supplies"
+                  className="transition-colors hover:text-white"
+                >
                   Office Supplies
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=stationery" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=stationery"
+                  className="transition-colors hover:text-white"
+                >
                   Stationery
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=school-accessories" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=school-accessories"
+                  className="transition-colors hover:text-white"
+                >
                   School Supplies
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=office-equipment" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=office-equipment"
+                  className="transition-colors hover:text-white"
+                >
                   Office Equipment
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=office-furniture" className="hover:text-white transition-colors">
+                <Link
+                  href="/products?category=office-furniture"
+                  className="transition-colors hover:text-white"
+                >
                   Office Furniture
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="hover:text-white transition-colors inline-flex items-center gap-1 text-primary-400">
+                <Link
+                  href="/products"
+                  className="text-primary-400 inline-flex items-center gap-1 transition-colors hover:text-white"
+                >
                   View All <ArrowRight className="h-3 w-3" />
                 </Link>
               </li>
@@ -160,32 +179,47 @@ export function Footer({ settings }: { settings?: any }) {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-4">
+            <h3 className="mb-4 text-sm font-semibold tracking-wider text-white uppercase">
               Company
             </h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li>
-                <Link href="/about" className="hover:text-white transition-colors">
+                <Link
+                  href="/about"
+                  className="transition-colors hover:text-white"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/bulk-orders" className="hover:text-white transition-colors">
-                  Bulk Orders
+                <Link
+                  href="/wholesale"
+                  className="transition-colors hover:text-white"
+                >
+                  Wholesale
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link
+                  href="/contact"
+                  className="transition-colors hover:text-white"
+                >
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-white transition-colors">
+                <Link
+                  href="/privacy"
+                  className="transition-colors hover:text-white"
+                >
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-white transition-colors">
+                <Link
+                  href="/terms"
+                  className="transition-colors hover:text-white"
+                >
                   Terms of Service
                 </Link>
               </li>
@@ -194,32 +228,47 @@ export function Footer({ settings }: { settings?: any }) {
 
           {/* Support */}
           <div>
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-4">
+            <h3 className="mb-4 text-sm font-semibold tracking-wider text-white uppercase">
               Support
             </h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link
+                  href="/contact"
+                  className="transition-colors hover:text-white"
+                >
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link href="/quote" className="hover:text-white transition-colors">
+                <Link
+                  href="/quote"
+                  className="transition-colors hover:text-white"
+                >
                   Request a Quote
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link
+                  href="/contact"
+                  className="transition-colors hover:text-white"
+                >
                   Track Your Order
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link
+                  href="/contact"
+                  className="transition-colors hover:text-white"
+                >
                   Returns &amp; Exchanges
                 </Link>
               </li>
               <li>
-                <Link href="/bulk-orders" className="hover:text-white transition-colors">
+                <Link
+                  href="/bulk-orders"
+                  className="transition-colors hover:text-white"
+                >
                   Bulk &amp; Enterprise
                 </Link>
               </li>
@@ -228,50 +277,68 @@ export function Footer({ settings }: { settings?: any }) {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-4">
+            <h3 className="mb-4 text-sm font-semibold tracking-wider text-white uppercase">
               Contact
             </h3>
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-primary-500 shrink-0 mt-0.5" />
-                <a href={settings?.google_maps_url || "https://www.google.com/maps/place/Devireen+Enterprise./@-1.28181,36.825743,17z/data=!3m1!4b1!4m6!3m5!1s0x182f118fa27150b5:0xe0fb2ec5aa188109!8m2!3d-1.2818154!4d36.8283179!16s%2Fg%2F11nth4f4zs"} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                  {settings?.physical_address || "Nairobi CBD, Kenya"}
+                <MapPin className="text-primary-500 mt-0.5 h-4 w-4 shrink-0" />
+                <a
+                  href={
+                    settings?.google_maps_url ||
+                    'https://www.google.com/maps/place/Devireen+Enterprise./@-1.28181,36.825743,17z/data=!3m1!4b1!4m6!3m5!1s0x182f118fa27150b5:0xe0fb2ec5aa188109!8m2!3d-1.2818154!4d36.8283179!16s%2Fg%2F11nth4f4zs'
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-white"
+                >
+                  {settings?.physical_address || 'Nairobi CBD, Kenya'}
                 </a>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-primary-500 shrink-0" />
-                <span>{settings?.phone_numbers?.[0] || "+254 708 037929"}</span>
+                <Phone className="text-primary-500 h-4 w-4 shrink-0" />
+                <span>{settings?.phone_numbers?.[0] || '+254 708 037929'}</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary-500 shrink-0" />
-                <span>{settings?.email || "sales@devireen.co.ke"}</span>
+                <Mail className="text-primary-500 h-4 w-4 shrink-0" />
+                <span>{settings?.email || 'sales@devireen.co.ke'}</span>
               </li>
             </ul>
 
             {/* Business Hours */}
             <div className="mt-6">
-              <h4 className="text-sm font-semibold text-white mb-2">Business Hours</h4>
-              <div className="text-sm text-gray-400 space-y-1">
+              <h4 className="mb-2 text-sm font-semibold text-white">
+                Business Hours
+              </h4>
+              <div className="space-y-1 text-sm text-gray-400">
                 <p>Mon – Fri: 8:00 AM – 6:00 PM</p>
                 <p>Saturday: 9:00 AM – 2:00 PM</p>
                 <p>Sunday: Closed</p>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* ─── Bottom Bar ─── */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 text-center md:text-left">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-5 text-center text-sm text-gray-500 md:flex-row md:text-left">
           <p className="md:w-1/3">
-            &copy; {new Date().getFullYear()} {settings?.company_name || siteConfig.name}. All rights reserved.
+            &copy; {new Date().getFullYear()}{' '}
+            {settings?.company_name || siteConfig.name}. All rights reserved.
           </p>
           <p className="text-xs md:w-1/3 md:text-center">
-            Powered by <a href="https://blackpoolindustry.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Blackpool Industry</a>
+            Powered by{' '}
+            <a
+              href="https://blackpoolindustry.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 transition-colors hover:text-white"
+            >
+              Blackpool Industry
+            </a>
           </p>
-          <p className="text-gray-600 md:w-1/3 md:text-right hidden sm:block">
+          <p className="hidden text-gray-600 sm:block md:w-1/3 md:text-right">
             Kenya&apos;s trusted B2B procurement platform.
           </p>
         </div>

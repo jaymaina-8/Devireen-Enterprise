@@ -1,7 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { CheckCircle, Download, MessageSquare, MapPin, Package, Smartphone } from 'lucide-react';
+import {
+  CheckCircle,
+  Download,
+  MessageSquare,
+  MapPin,
+  Package,
+  Smartphone,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { markOrderWhatsAppSentAction } from '@/actions/order.actions';
 import { CartItem } from '@/lib/store/quote-cart';
@@ -16,7 +23,7 @@ interface OrderConfirmationProps {
   whatsappNumber?: string;
   mapsUrl?: string;
   shopAddress?: string;
-  pricingModel: 'RETAIL' | 'BULK';
+  pricingModel: 'RETAIL' | 'WHOLESALE';
 }
 
 export function OrderConfirmation({
@@ -88,18 +95,18 @@ export function OrderConfirmation({
   return (
     <div className="mx-auto max-w-xl">
       {/* Success header */}
-      <div className="flex flex-col items-center text-center py-8 px-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
+      <div className="flex flex-col items-center px-6 py-8 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
           <CheckCircle className="h-8 w-8 text-emerald-500" strokeWidth={1.5} />
         </div>
-        <h2 className="text-2xl font-bold text-text-main">Order Confirmed!</h2>
+        <h2 className="text-text-main text-2xl font-bold">Order Confirmed!</h2>
         <p className="text-text-muted mt-2 text-sm leading-relaxed">
-          Your order has been placed successfully. Download your invoice below and use it as your
-          purchase reference.
+          Your order has been placed successfully. Download your invoice below
+          and use it as your purchase reference.
         </p>
-        <div className="mt-4 flex items-center gap-2 rounded-full border border-border-subtle bg-surface px-4 py-2">
-          <Package className="h-4 w-4 text-primary-500" />
-          <span className="text-sm font-medium text-text-main">
+        <div className="border-border-subtle bg-surface mt-4 flex items-center gap-2 rounded-full border px-4 py-2">
+          <Package className="text-primary-500 h-4 w-4" />
+          <span className="text-text-main text-sm font-medium">
             Order #{invoiceNumber}
           </span>
         </div>
@@ -111,18 +118,20 @@ export function OrderConfirmation({
         <a
           href={invoiceUrl}
           download={`Invoice-${invoiceNumber}.pdf`}
-          className="flex items-center gap-4 rounded-xl border-2 border-primary-500 bg-primary-50/30 p-4 hover:bg-primary-50/60 transition-colors group"
+          className="border-primary-500 bg-primary-50/30 hover:bg-primary-50/60 group flex items-center gap-4 rounded-xl border-2 p-4 transition-colors"
         >
-          <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary-500 text-white shadow-md shadow-primary-200">
+          <span className="bg-primary-500 shadow-primary-200 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md">
             <Download className="h-5 w-5" />
           </span>
           <div className="flex-1">
-            <p className="font-semibold text-text-main text-sm">Download Invoice PDF</p>
-            <p className="text-xs text-text-muted mt-0.5">
+            <p className="text-text-main text-sm font-semibold">
+              Download Invoice PDF
+            </p>
+            <p className="text-text-muted mt-0.5 text-xs">
               {invoiceNumber} — Keep this for your records
             </p>
           </div>
-          <span className="text-xs font-medium text-primary-600 group-hover:underline">
+          <span className="text-primary-600 text-xs font-medium group-hover:underline">
             Download →
           </span>
         </a>
@@ -134,29 +143,38 @@ export function OrderConfirmation({
               <Smartphone className="h-5 w-5" />
             </span>
             <div className="flex-1">
-              <p className="font-bold text-text-main text-sm">Pay via M-Pesa</p>
-              <p className="text-xs text-text-muted mt-0.5 mb-3">
-                Complete your order by sending payment and sharing your screenshot.
+              <p className="text-text-main text-sm font-bold">Pay via M-Pesa</p>
+              <p className="text-text-muted mt-0.5 mb-3 text-xs">
+                Complete your order by sending payment and sharing your
+                screenshot.
               </p>
 
               {/* Steps */}
               <ol className="space-y-3">
                 {/* Step 1 */}
                 <li className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white mt-0.5">1</span>
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+                    1
+                  </span>
                   <div>
-                    <p className="text-sm font-semibold text-text-main">
+                    <p className="text-text-main text-sm font-semibold">
                       Send{' '}
-                      <span className="text-emerald-700">KSh {total.toLocaleString()}</span>{' '}
+                      <span className="text-emerald-700">
+                        KSh {total.toLocaleString()}
+                      </span>{' '}
                       to M-Pesa
                     </p>
-                    <p className="text-xs text-text-muted mt-0.5">
+                    <p className="text-text-muted mt-0.5 text-xs">
                       Number:{' '}
-                      <strong className="font-mono text-emerald-800 text-sm tracking-wide">+254 708 037929</strong>
+                      <strong className="font-mono text-sm tracking-wide text-emerald-800">
+                        +254 708 037929
+                      </strong>
                     </p>
-                    <p className="text-xs text-text-muted mt-0.5">
+                    <p className="text-text-muted mt-0.5 text-xs">
                       Use{' '}
-                      <span className="font-mono font-semibold">{invoiceNumber}</span>{' '}
+                      <span className="font-mono font-semibold">
+                        {invoiceNumber}
+                      </span>{' '}
                       as your payment reference.
                     </p>
                   </div>
@@ -164,19 +182,25 @@ export function OrderConfirmation({
 
                 {/* Step 2 */}
                 <li className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white mt-0.5">2</span>
-                  <p className="text-sm text-text-muted leading-snug">
-                    Take a <strong className="text-text-main">screenshot</strong> of the M-Pesa confirmation SMS on your phone.
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+                    2
+                  </span>
+                  <p className="text-text-muted text-sm leading-snug">
+                    Take a{' '}
+                    <strong className="text-text-main">screenshot</strong> of
+                    the M-Pesa confirmation SMS on your phone.
                   </p>
                 </li>
 
                 {/* Step 3 */}
                 <li className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white mt-0.5">3</span>
-                  <p className="text-sm text-text-muted leading-snug">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+                    3
+                  </span>
+                  <p className="text-text-muted text-sm leading-snug">
                     Send the screenshot via{' '}
-                    <strong className="text-text-main">WhatsApp</strong>{' '}
-                    using the button below to confirm your payment.
+                    <strong className="text-text-main">WhatsApp</strong> using
+                    the button below to confirm your payment.
                   </p>
                 </li>
               </ol>
@@ -189,18 +213,24 @@ export function OrderConfirmation({
           <button
             type="button"
             onClick={handleOpenMaps}
-            className="flex w-full items-center gap-4 rounded-xl border border-border-subtle bg-surface p-4 hover:bg-background transition-colors text-left group"
+            className="border-border-subtle bg-surface hover:bg-background group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-colors"
           >
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500">
               <MapPin className="h-5 w-5" />
             </span>
             <div className="flex-1">
-              <p className="font-semibold text-text-main text-sm">Get Directions to Our Shop</p>
+              <p className="text-text-main text-sm font-semibold">
+                Get Directions to Our Shop
+              </p>
               {shopAddress && (
-                <p className="text-xs text-text-muted mt-0.5 leading-snug">{shopAddress}</p>
+                <p className="text-text-muted mt-0.5 text-xs leading-snug">
+                  {shopAddress}
+                </p>
               )}
             </div>
-            <span className="text-xs font-medium text-amber-600 group-hover:underline">Open →</span>
+            <span className="text-xs font-medium text-amber-600 group-hover:underline">
+              Open →
+            </span>
           </button>
         )}
 
@@ -208,44 +238,51 @@ export function OrderConfirmation({
         <button
           type="button"
           onClick={handleWhatsApp}
-          className="flex w-full items-center gap-4 rounded-xl border-2 border-green-300 bg-green-50 p-4 hover:bg-green-100 transition-colors text-left group"
+          className="group flex w-full items-center gap-4 rounded-xl border-2 border-green-300 bg-green-50 p-4 text-left transition-colors hover:bg-green-100"
         >
           <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md shadow-green-200">
             <MessageSquare className="h-5 w-5" />
           </span>
           <div className="flex-1">
-            <p className="font-bold text-text-main text-sm">
-              {whatsappSent ? '✓ Payment Confirmation Sent' : 'Send Payment Screenshot via WhatsApp'}
+            <p className="text-text-main text-sm font-bold">
+              {whatsappSent
+                ? '✓ Payment Confirmation Sent'
+                : 'Send Payment Screenshot via WhatsApp'}
             </p>
-            <p className="text-xs text-text-muted mt-0.5">
+            <p className="text-text-muted mt-0.5 text-xs">
               {whatsappSent
                 ? 'We will process your order once payment is verified.'
                 : 'Attach your M-Pesa screenshot in the WhatsApp chat to confirm payment.'}
             </p>
           </div>
           {!whatsappSent && (
-            <span className="text-xs font-bold text-green-700 group-hover:underline whitespace-nowrap">Open →</span>
+            <span className="text-xs font-bold whitespace-nowrap text-green-700 group-hover:underline">
+              Open →
+            </span>
           )}
         </button>
       </div>
 
       {/* Order summary */}
-      <div className="mt-6 mx-2 rounded-xl border border-border-subtle bg-background p-4">
-        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
+      <div className="border-border-subtle bg-background mx-2 mt-6 rounded-xl border p-4">
+        <h3 className="text-text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
           Order Summary
         </h3>
         <div className="space-y-1.5">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-sm">
+            <div
+              key={item.id}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="text-text-muted">
                 {item.name} × {item.quantity}
               </span>
-              <span className="font-medium text-text-main">
+              <span className="text-text-main font-medium">
                 KSh {(item.price * item.quantity).toLocaleString()}
               </span>
             </div>
           ))}
-          <div className="border-t border-border-subtle pt-2 mt-2 flex items-center justify-between text-sm font-bold text-text-main">
+          <div className="border-border-subtle text-text-main mt-2 flex items-center justify-between border-t pt-2 text-sm font-bold">
             <span>Total</span>
             <span>KSh {total.toLocaleString()}</span>
           </div>

@@ -7,7 +7,7 @@ export interface CreateOrderPayload {
   customerEmail: string;
   customerPhone: string;
   fulfillmentType: 'DELIVERY' | 'PICKUP';
-  pricingModel: 'RETAIL' | 'BULK';
+  pricingModel: 'RETAIL' | 'WHOLESALE';
   deliveryAddress?: string;
   county?: string;
   courierService?: string;
@@ -73,7 +73,9 @@ export class OrderRepository {
 
     if (itemsError) {
       logger.error('Failed to create order items', itemsError);
-      throw new DatabaseError(`Failed to create order items: ${itemsError.message}`);
+      throw new DatabaseError(
+        `Failed to create order items: ${itemsError.message}`
+      );
     }
 
     return order;
@@ -98,7 +100,7 @@ export class OrderRepository {
 
     const { data: items } = await supabase
       .from('order_items')
-      .select('*, products(name, sku, price, bulk_price)')
+      .select('*, products(name, sku, price, wholesale_price)')
       .eq('order_id', id);
 
     return { ...order, items: items || [] };
@@ -149,7 +151,9 @@ export class OrderRepository {
 
     if (error) {
       logger.error(`Failed to update order status ${id}`, error);
-      throw new DatabaseError(`Failed to update order status: ${error.message}`);
+      throw new DatabaseError(
+        `Failed to update order status: ${error.message}`
+      );
     }
     return data;
   }
@@ -168,7 +172,9 @@ export class OrderRepository {
 
     if (error) {
       logger.error(`Failed to update order payment status ${id}`, error);
-      throw new DatabaseError(`Failed to update order payment status: ${error.message}`);
+      throw new DatabaseError(
+        `Failed to update order payment status: ${error.message}`
+      );
     }
     return data;
   }

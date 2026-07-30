@@ -13,7 +13,7 @@ interface AddToCartProduct {
   name: string;
   sku: string;
   price: number;
-  bulkPrice?: number | null;
+  wholesalePrice?: number | null;
   imageUrl?: string | null;
 }
 
@@ -35,7 +35,7 @@ export function AddToQuoteButton({
       name: product.name,
       sku: product.sku,
       price: product.price,
-      bulkPrice: product.bulkPrice ?? null,
+      wholesalePrice: product.wholesalePrice ?? null,
       imageUrl: product.imageUrl ?? null,
       quantity,
     });
@@ -57,15 +57,21 @@ export function AddToQuoteButton({
           type="number"
           min="1"
           value={quantity}
-          onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+          onChange={(e) =>
+            setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+          }
           className="h-12 text-center"
           disabled={disabled}
         />
       </div>
       <Button
-        variant={isInCart ? "outline" : "primary"}
+        variant={isInCart ? 'outline' : 'primary'}
         size="lg"
-        className={cn("flex-1 h-12 text-base", isInCart && "border-primary-600 text-primary-600 bg-primary-50 hover:bg-primary-100")}
+        className={cn(
+          'h-12 flex-1 text-base',
+          isInCart &&
+            'border-primary-600 text-primary-600 bg-primary-50 hover:bg-primary-100'
+        )}
         onClick={handleAdd}
         disabled={disabled}
       >

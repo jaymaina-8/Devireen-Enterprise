@@ -177,23 +177,29 @@ export default async function ProductDetailsPage(props: {
                 {product.sale_price ? (
                   <div className="space-y-2">
                     <div className="flex items-baseline gap-3">
-                      <span className="text-sm font-medium text-text-muted uppercase tracking-wider">Sale Price</span>
+                      <span className="text-text-muted text-sm font-medium tracking-wider uppercase">
+                        Sale Price
+                      </span>
                       <Price
                         amount={product.sale_price}
                         showVat={true}
-                        className="text-3xl text-primary-600"
+                        className="text-primary-600 text-3xl"
                       />
                     </div>
                     <div className="flex items-baseline gap-3">
-                      <span className="text-sm font-medium text-text-muted uppercase tracking-wider">Regular Price</span>
-                      <span className="text-xl font-medium text-text-muted line-through">
+                      <span className="text-text-muted text-sm font-medium tracking-wider uppercase">
+                        Regular Price
+                      </span>
+                      <span className="text-text-muted text-xl font-medium line-through">
                         KSh {product.price.toLocaleString()}
                       </span>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-baseline gap-3">
-                    <span className="text-sm font-medium text-text-muted uppercase tracking-wider">Price</span>
+                    <span className="text-text-muted text-sm font-medium tracking-wider uppercase">
+                      Price
+                    </span>
                     <Price
                       amount={product.price}
                       showVat={true}
@@ -258,7 +264,9 @@ export default async function ProductDetailsPage(props: {
                 </li>
                 <li className="flex items-start gap-2">
                   <Package className="text-primary-500 mt-0.5 h-4 w-4 shrink-0" />
-                  <span>Bulk orders may have custom delivery timelines</span>
+                  <span>
+                    Wholesale orders may have custom delivery timelines
+                  </span>
                 </li>
               </ul>
             </div>

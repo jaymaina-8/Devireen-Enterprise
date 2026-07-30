@@ -3,7 +3,11 @@
 import { ProductRepository } from '@/lib/supabase/repositories/product.repository';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-export async function fetchProducts(params?: { query?: string; categorySlug?: string }) {
+export async function fetchProducts(params?: {
+  query?: string;
+  categorySlug?: string;
+  context?: 'retail' | 'wholesale';
+}) {
   try {
     const products = await ProductRepository.getProducts(params);
     return { success: true, data: products };
@@ -21,7 +25,12 @@ export async function fetchProductBySlug(slug: string) {
   }
 }
 
-export async function fetchProductsForAdmin(params?: { query?: string; categorySlug?: string; page?: number; pageSize?: number }) {
+export async function fetchProductsForAdmin(params?: {
+  query?: string;
+  categorySlug?: string;
+  page?: number;
+  pageSize?: number;
+}) {
   try {
     const result = await ProductRepository.getProductsForAdmin(params);
     return { success: true, data: result.data, count: result.count };
@@ -29,7 +38,6 @@ export async function fetchProductsForAdmin(params?: { query?: string; categoryS
     return { success: false, error: error.message };
   }
 }
-
 
 export async function createProductAction(productData: any) {
   try {
@@ -82,7 +90,10 @@ export async function addProductImageRecord(imageData: any) {
   }
 }
 
-export async function deleteProductImageRecord(imageId: string, productId: string) {
+export async function deleteProductImageRecord(
+  imageId: string,
+  productId: string
+) {
   try {
     const supabase = await createAdminClient();
     const { error } = await supabase
@@ -98,10 +109,13 @@ export async function deleteProductImageRecord(imageId: string, productId: strin
   }
 }
 
-export async function setPrimaryProductImageRecord(imageId: string, productId: string) {
+export async function setPrimaryProductImageRecord(
+  imageId: string,
+  productId: string
+) {
   try {
     const supabase = await createAdminClient();
-    
+
     // First, set all to false
     await supabase
       .from('product_images')

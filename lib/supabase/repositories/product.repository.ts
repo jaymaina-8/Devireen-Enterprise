@@ -3,26 +3,41 @@ import { DatabaseError } from '@/lib/errors/DatabaseError';
 import { logger } from '@/lib/logger';
 
 export class ProductRepository {
-  static async getProducts(params?: { query?: string; categorySlug?: string }) {
+  static async getProducts(params?: {
+    query?: string;
+    categorySlug?: string;
+    context?: 'retail' | 'wholesale';
+  }) {
     const supabase = await createClient();
     let dbQuery = supabase
       .from('products')
-      .select('*, categories!inner(name, slug), brands(name), product_images(url, is_primary, alt_text)')
+      .select(
+        '*, categories!inner(name, slug), brands(name), product_images(url, is_primary, alt_text)'
+      )
       .eq('is_active', true)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
-      
+
+    if (params?.context === 'retail') {
+      dbQuery = dbQuery.eq('show_in_retail', true);
+    }
+    if (params?.context === 'wholesale') {
+      dbQuery = dbQuery.eq('show_in_wholesale', true);
+    }
+
     if (params?.categorySlug) {
       dbQuery = dbQuery.eq('categories.slug', params.categorySlug);
     }
-    
+
     if (params?.query && params.query.trim() !== '') {
       const searchTerm = params.query.trim();
-      dbQuery = dbQuery.or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`);
+      dbQuery = dbQuery.or(
+        `name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`
+      );
     }
 
     const { data, error } = await dbQuery;
-    
+
     if (error) {
       logger.error('Failed to retrieve products', error);
       throw new DatabaseError('Database error while retrieving products');
@@ -38,7 +53,7 @@ export class ProductRepository {
       .eq('slug', slug)
       .is('deleted_at', null)
       .single();
-    
+
     if (error) {
       logger.error(`Failed to retrieve product with slug: ${slug}`, error);
       throw new DatabaseError('Database error while retrieving product');
@@ -46,17 +61,27 @@ export class ProductRepository {
     return data;
   }
 
-  static async getProductsForAdmin(params?: { query?: string; categorySlug?: string; page?: number; pageSize?: number }) {
+  static async getProductsForAdmin(params?: {
+    query?: string;
+    categorySlug?: string;
+    page?: number;
+    pageSize?: number;
+  }) {
     const supabase = await createClient();
     let dbQuery = supabase
       .from('products')
-      .select('*, categories(name), brands(name), product_images(url, is_primary)', { count: 'exact' })
+      .select(
+        '*, categories(name), brands(name), product_images(url, is_primary)',
+        { count: 'exact' }
+      )
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (params?.query && params.query.trim() !== '') {
       const searchTerm = params.query.trim();
-      dbQuery = dbQuery.or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`);
+      dbQuery = dbQuery.or(
+        `name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,short_description.ilike.%${searchTerm}%`
+      );
     }
 
     if (params?.page && params?.pageSize) {
@@ -84,7 +109,9 @@ export class ProductRepository {
 
     if (error) {
       logger.error('Failed to create product', error);
-      throw new DatabaseError(`Database error while creating product: ${error.message}`);
+      throw new DatabaseError(
+        `Database error while creating product: ${error.message}`
+      );
     }
     return data;
   }
@@ -100,7 +127,9 @@ export class ProductRepository {
 
     if (error) {
       logger.error(`Failed to update product with id: ${id}`, error);
-      throw new DatabaseError(`Database error while updating product: ${error.message}`);
+      throw new DatabaseError(
+        `Database error while updating product: ${error.message}`
+      );
     }
     return data;
   }

@@ -168,7 +168,7 @@ const industries = [
 
 export default async function HomePage() {
   const [{ data: products }, { data: categories }] = await Promise.all([
-    fetchProducts(),
+    fetchProducts({ context: 'retail' }),
     fetchCategories(),
   ]);
 
@@ -245,16 +245,23 @@ export default async function HomePage() {
                 </button>
               </form>
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Link href="/products">
-                  <Button size="lg" variant="primary">
+              <div className="mt-5 flex flex-col gap-3">
+                <Link href="/products" className="w-full">
+                  <Button
+                    size="lg"
+                    variant="primary"
+                    className="w-full justify-center"
+                  >
                     Browse Products
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/quote">
-                  <Button size="lg" variant="outline">
-                    Request Bulk Quote
+                <Link href="/wholesale" className="w-full">
+                  <Button
+                    size="lg"
+                    className="w-full justify-center border-transparent bg-indigo-600 text-white hover:bg-indigo-700"
+                  >
+                    Browse Wholesale
                   </Button>
                 </Link>
               </div>
@@ -312,7 +319,7 @@ export default async function HomePage() {
               href="https://www.google.com/maps/place/Devireen+Enterprise./@-1.28181,36.825743,17z/data=!3m1!4b1!4m6!3m5!1s0x182f118fa27150b5:0xe0fb2ec5aa188109!8m2!3d-1.2818154!4d36.8283179!16s%2Fg%2F11nth4f4zs"
               target="_blank"
               rel="noopener noreferrer"
-              className="group block border-border-subtle relative overflow-hidden rounded-2xl border bg-gray-50 shadow-xl"
+              className="group border-border-subtle relative block overflow-hidden rounded-2xl border bg-gray-50 shadow-xl"
             >
               <Image
                 src="/images/storefront.jpg"
@@ -324,13 +331,15 @@ export default async function HomePage() {
                 priority
               />
               {/* Persistent Overlay Message */}
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 sm:p-8 flex items-end">
-                <div className="text-white transform transition-transform duration-300 group-hover:-translate-y-1">
-                  <div className="flex items-center gap-2 font-bold text-lg sm:text-xl mb-1">
-                    <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary-500" />
+              <div className="absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 sm:p-8">
+                <div className="transform text-white transition-transform duration-300 group-hover:-translate-y-1">
+                  <div className="mb-1 flex items-center gap-2 text-lg font-bold sm:text-xl">
+                    <MapPin className="text-primary-500 h-5 w-5 sm:h-6 sm:w-6" />
                     Visit Our Store
                   </div>
-                  <p className="text-sm sm:text-base text-white/90 font-medium">Click here for Google Maps directions to Devireen Enterprise</p>
+                  <p className="text-sm font-medium text-white/90 sm:text-base">
+                    Click here for Google Maps directions to Devireen Enterprise
+                  </p>
                 </div>
               </div>
             </a>
@@ -520,7 +529,9 @@ export default async function HomePage() {
                       name={product.name}
                       sku={product.sku}
                       price={product.sale_price || product.price}
-                      originalPrice={product.sale_price ? product.price : undefined}
+                      originalPrice={
+                        product.sale_price ? product.price : undefined
+                      }
                       imageUrl={primaryImage?.url || null}
                       stockStatus={product.stock_status as StockStatus}
                     />

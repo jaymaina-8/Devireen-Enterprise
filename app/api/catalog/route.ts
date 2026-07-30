@@ -7,22 +7,22 @@ import { fetchProducts } from '@/actions/product.actions';
  * GET /api/catalog
  *
  * Generates and streams a wholesale product catalog PDF containing all
- * products that have a bulk_price set and are not DISCONTINUED.
+ * products that have a wholesale_price set and are not DISCONTINUED.
  */
 export async function GET() {
   try {
     // Fetch products and company settings in parallel
     const [{ data: products }, settings] = await Promise.all([
-      fetchProducts(),
+      fetchProducts({ context: 'wholesale' }),
       SettingsRepository.getSettings(),
     ]);
 
-    // Only include products with bulk pricing
-    const bulkProducts = (products || []).filter(
-      (p: any) => p.bulk_price != null && p.stock_status !== 'DISCONTINUED'
+    // Only include products with wholesale pricing
+    const wholesaleProducts = (products || []).filter(
+      (p: any) => p.wholesale_price != null && p.stock_status !== 'DISCONTINUED'
     );
 
-    if (bulkProducts.length === 0) {
+    if (wholesaleProducts.length === 0) {
       return NextResponse.json(
         { error: 'No wholesale products are currently available.' },
         { status: 404 }
@@ -30,9 +30,12 @@ export async function GET() {
     }
 
     // Generate PDF buffer
-    const pdfBuffer = await generateCatalogPDF(bulkProducts, settings);
+    const pdfBuffer = await generateCatalogPDF(wholesaleProducts, settings);
 
-    const companyName = (settings?.company_name || 'Devireen').replace(/\s+/g, '-');
+    const companyName = (settings?.company_name || 'Devireen').replace(
+      /\s+/g,
+      '-'
+    );
     const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const filename = `${companyName}-Wholesale-Catalog-${date}.pdf`;
 

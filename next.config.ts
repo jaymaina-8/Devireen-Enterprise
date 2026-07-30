@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/bulk-orders',
+        destination: '/wholesale',
+        permanent: true,
+      },
+    ];
   },
 };
 

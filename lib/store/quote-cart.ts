@@ -6,7 +6,7 @@ export interface CartItem {
   name: string;
   sku: string;
   price: number; // retail price
-  bulkPrice?: number | null; // bulk price if available
+  wholesalePrice?: number | null; // wholesale price if available
   imageUrl?: string | null;
   quantity: number;
 }
@@ -16,21 +16,21 @@ interface CartSummary {
   itemCount: number;
   vatAmount: number;
   total: number;
-  pricingModel: 'RETAIL' | 'BULK';
+  pricingModel: 'RETAIL' | 'WHOLESALE';
 }
 
 interface QuoteCartState {
   items: CartItem[];
   isOpen: boolean;
-  bulkMode: boolean;
+  wholesaleMode: boolean;
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   setIsOpen: (isOpen: boolean) => void;
   toggleCart: () => void;
-  toggleBulkMode: () => void;
-  setBulkMode: (mode: boolean) => void;
+  toggleWholesaleMode: () => void;
+  setWholesaleMode: (mode: boolean) => void;
   getSummary: () => CartSummary;
 }
 
@@ -39,7 +39,7 @@ export const useQuoteCart = create<QuoteCartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
-      bulkMode: false,
+      wholesaleMode: false,
 
       addItem: (item) =>
         set((state) => {
@@ -70,42 +70,51 @@ export const useQuoteCart = create<QuoteCartState>()(
           ),
         })),
 
-      clearCart: () => set({ items: [], bulkMode: false }),
+      clearCart: () => set({ items: [], wholesaleMode: false }),
 
       setIsOpen: (isOpen) => set({ isOpen }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
-      toggleBulkMode: () => set((state) => ({ bulkMode: !state.bulkMode })),
+      toggleWholesaleMode: () =>
+        set((state) => ({ wholesaleMode: !state.wholesaleMode })),
 
-      setBulkMode: (mode) => set({ bulkMode: mode }),
+      setWholesaleMode: (mode) => set({ wholesaleMode: mode }),
 
       getSummary: (): CartSummary => {
         const state = get();
-        const pricingModel: 'RETAIL' | 'BULK' = state.bulkMode ? 'BULK' : 'RETAIL';
+        const pricingModel: 'RETAIL' | 'WHOLESALE' = state.wholesaleMode
+          ? 'WHOLESALE'
+          : 'RETAIL';
 
-        const itemCount = state.items.reduce((acc, item) => acc + item.quantity, 0);
+        const itemCount = state.items.reduce(
+          (acc, item) => acc + item.quantity,
+          0
+        );
 
         const rawSubtotal = state.items.reduce((acc, item) => {
-          // Use bulk price if bulkMode is active AND bulk price exists
+          // Use wholesale price if wholesaleMode is active AND wholesale price exists
           const effectivePrice =
-            state.bulkMode && item.bulkPrice != null
-              ? item.bulkPrice
+            state.wholesaleMode && item.wholesalePrice != null
+              ? item.wholesalePrice
               : item.price;
           return acc + effectivePrice * item.quantity;
         }, 0);
 
         // Round all monetary values to the nearest whole number (KSh)
-        const subtotal  = Math.round(rawSubtotal);
+        const subtotal = Math.round(rawSubtotal);
         const vatAmount = Math.round(rawSubtotal * 0.16);
-        const total     = Math.round(rawSubtotal * 1.16);
+        const total = Math.round(rawSubtotal * 1.16);
 
         return { itemCount, subtotal, vatAmount, total, pricingModel };
       },
     }),
     {
       name: 'devireen-quote-cart',
-      partialize: (state) => ({ items: state.items, bulkMode: state.bulkMode }),
+      partialize: (state) => ({
+        items: state.items,
+        wholesaleMode: state.wholesaleMode,
+      }),
     }
   )
 );

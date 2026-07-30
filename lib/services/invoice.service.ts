@@ -11,13 +11,13 @@ import {
 import React from 'react';
 
 // ─── Brand tokens ──────────────────────────────────────────────────────────
-const RED   = '#DC2626'; // Devireen primary red
+const RED = '#DC2626'; // Devireen primary red
 const RED50 = '#FEF2F2'; // light red tint
-const DARK  = '#111827'; // near-black for headings
-const INK   = '#374151'; // body text
+const DARK = '#111827'; // near-black for headings
+const INK = '#374151'; // body text
 const MUTED = '#6B7280'; // secondary/muted text
-const RULE  = '#E5E7EB'; // divider lines
-const BG    = '#F9FAFB'; // card backgrounds
+const RULE = '#E5E7EB'; // divider lines
+const BG = '#F9FAFB'; // card backgrounds
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
@@ -182,9 +182,9 @@ const styles = StyleSheet.create({
 
   // ── Column widths ─────────────────────────────────────────────────────────
   colProduct: { flex: 4 },
-  colQty:     { flex: 1, textAlign: 'center' },
-  colPrice:   { flex: 2, textAlign: 'right' },
-  colTotal:   { flex: 2, textAlign: 'right' },
+  colQty: { flex: 1, textAlign: 'center' },
+  colPrice: { flex: 2, textAlign: 'right' },
+  colTotal: { flex: 2, textAlign: 'right' },
 
   // ── Totals ────────────────────────────────────────────────────────────────
   totalsSection: {
@@ -231,14 +231,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#ffffff',
   },
-  bulkRow: {
+  wholesaleRow: {
     flexDirection: 'row',
     paddingVertical: 5,
     paddingHorizontal: 14,
     borderBottom: `1px solid ${RULE}`,
     backgroundColor: RED50,
   },
-  bulkLabel: {
+  wholesaleLabel: {
     fontSize: 8,
     fontFamily: 'Helvetica-Bold',
     color: RED,
@@ -317,19 +317,20 @@ interface InvoiceDocumentProps {
 }
 
 function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
-  const subtotal   = order.total_amount / 1.16;
-  const vatAmount  = order.total_amount - subtotal;
+  const enableVat = settings?.enable_vat !== false;
+  const subtotal = enableVat ? order.total_amount / 1.16 : order.total_amount;
+  const vatAmount = enableVat ? order.total_amount - subtotal : 0;
   const isDelivery = order.fulfillment_type === 'DELIVERY';
-  const isBulk     = order.pricing_model === 'BULK';
+  const isWholesale = order.pricing_model === 'WHOLESALE';
 
-  const companyName    = settings?.company_name    || 'Devireen Enterprise';
+  const companyName = settings?.company_name || 'Devireen Enterprise';
   const companyAddress = settings?.physical_address || 'Nairobi, Kenya';
-  const companyEmail   = settings?.email            || '';
-  const companyPhone   = Array.isArray(settings?.phone_numbers)
+  const companyEmail = settings?.email || '';
+  const companyPhone = Array.isArray(settings?.phone_numbers)
     ? settings.phone_numbers[0]
     : settings?.phone_numbers || '';
   const vatRate = settings?.vat_rate || '16%';
-  const kraPin  = settings?.kra_pin  || '';
+  const kraPin = settings?.kra_pin || '';
   const logoUrl = settings?.logo_url || null;
 
   const invoiceDate = new Date(order.created_at).toLocaleDateString('en-KE', {
@@ -370,7 +371,7 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
               companyAddress,
               companyPhone ? `Phone: ${companyPhone}` : null,
               companyEmail ? `Email: ${companyEmail}` : null,
-              kraPin       ? `KRA PIN: ${kraPin}`     : null,
+              kraPin ? `KRA PIN: ${kraPin}` : null,
             ]
               .filter(Boolean)
               .join('\n')
@@ -549,7 +550,13 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
             ),
             React.createElement(
               Text,
-              { style: [styles.tableCell, styles.colTotal, styles.tableCellBold] },
+              {
+                style: [
+                  styles.tableCell,
+                  styles.colTotal,
+                  styles.tableCellBold,
+                ],
+              },
               fmt(item.quantity * item.unit_price)
             )
           )
@@ -577,28 +584,30 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
               fmt(subtotal)
             )
           ),
-          React.createElement(
-            View,
-            { style: styles.totalRow },
-            React.createElement(
-              Text,
-              { style: styles.totalLabel },
-              `VAT (${vatRate})`
-            ),
-            React.createElement(
-              Text,
-              { style: styles.totalValue },
-              fmt(vatAmount)
-            )
-          ),
-          isBulk
+          enableVat
             ? React.createElement(
                 View,
-                { style: styles.bulkRow },
+                { style: styles.totalRow },
                 React.createElement(
                   Text,
-                  { style: styles.bulkLabel },
-                  'Bulk pricing applied'
+                  { style: styles.totalLabel },
+                  `VAT (${vatRate})`
+                ),
+                React.createElement(
+                  Text,
+                  { style: styles.totalValue },
+                  fmt(vatAmount)
+                )
+              )
+            : null,
+          isWholesale
+            ? React.createElement(
+                View,
+                { style: styles.wholesaleRow },
+                React.createElement(
+                  Text,
+                  { style: styles.wholesaleLabel },
+                  'Wholesale pricing applied'
                 )
               )
             : null,

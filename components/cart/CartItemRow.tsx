@@ -8,25 +8,28 @@ import { cn } from '@/lib/utils';
 
 interface CartItemRowProps {
   item: CartItem;
-  bulkMode: boolean;
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
 }
 
-export function CartItemRow({ item, bulkMode, onUpdateQuantity, onRemove }: CartItemRowProps) {
+export function CartItemRow({
+  item,
+  onUpdateQuantity,
+  onRemove,
+}: CartItemRowProps) {
   const effectivePrice =
-    bulkMode && item.bulkPrice != null ? item.bulkPrice : item.price;
+    item.wholesalePrice != null ? item.wholesalePrice : item.price;
   const subtotal = effectivePrice * item.quantity;
-  const hasBulkPrice = item.bulkPrice != null && item.bulkPrice !== item.price;
-  const showBulkTag = bulkMode && hasBulkPrice;
+  const hasWholesalePrice =
+    item.wholesalePrice != null && item.wholesalePrice !== item.price;
+  const showWholesaleTag = hasWholesalePrice;
 
   return (
-    <div className="py-5 border-b border-border-subtle last:border-b-0">
-
+    <div className="border-border-subtle border-b py-5 last:border-b-0">
       {/* ── Row 1: Thumbnail + Product info + Remove ────────────────── */}
       <div className="flex items-start gap-4">
         {/* Thumbnail */}
-        <div className="relative h-[72px] w-[72px] sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-xl border border-border-subtle bg-background">
+        <div className="border-border-subtle bg-background relative h-[72px] w-[72px] flex-shrink-0 overflow-hidden rounded-xl border sm:h-20 sm:w-20">
           {item.imageUrl ? (
             <Image
               src={item.imageUrl}
@@ -36,34 +39,29 @@ export function CartItemRow({ item, bulkMode, onUpdateQuantity, onRemove }: Cart
               sizes="80px"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-text-muted text-xs">
+            <div className="text-text-muted flex h-full w-full items-center justify-center text-xs">
               No image
             </div>
           )}
         </div>
 
         {/* Product details + remove button in one row */}
-        <div className="flex flex-1 min-w-0 items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-text-main leading-snug line-clamp-2">
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-text-main line-clamp-2 text-sm leading-snug font-semibold">
               {item.name}
             </h3>
-            <p className="text-xs text-text-muted mt-0.5">SKU: {item.sku}</p>
+            <p className="text-text-muted mt-0.5 text-xs">SKU: {item.sku}</p>
 
             {/* Unit price + bulk badges */}
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="text-sm font-bold text-text-main">
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <span className="text-text-main text-sm font-bold">
                 KSh {effectivePrice.toLocaleString()}
               </span>
-              <span className="text-xs text-text-muted">each</span>
-              {showBulkTag && (
-                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
-                  Bulk price
-                </span>
-              )}
-              {hasBulkPrice && !bulkMode && (
-                <span className="text-xs text-text-muted line-through">
-                  Bulk: KSh {item.bulkPrice!.toLocaleString()}
+              <span className="text-text-muted text-xs">each</span>
+              {showWholesaleTag && (
+                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  Wholesale price
                 </span>
               )}
             </div>
@@ -73,7 +71,7 @@ export function CartItemRow({ item, bulkMode, onUpdateQuantity, onRemove }: Cart
           <button
             type="button"
             onClick={() => onRemove(item.id)}
-            className="flex-shrink-0 p-2 rounded-lg text-text-muted hover:text-red-500 hover:bg-red-50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            className="text-text-muted flex-shrink-0 rounded-lg p-2 transition-all hover:bg-red-50 hover:text-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
             aria-label={`Remove ${item.name}`}
           >
             <Trash2 className="h-4 w-4" />
@@ -84,25 +82,24 @@ export function CartItemRow({ item, bulkMode, onUpdateQuantity, onRemove }: Cart
       {/* ── Row 2: Quantity stepper + Subtotal ──────────────────────── */}
       {/* Indent to align under the product text (past the thumbnail) */}
       <div className="mt-3 flex items-center justify-between pl-[88px] sm:pl-24">
-
         {/* Quantity stepper */}
-        <div className="flex items-center rounded-xl border border-border-main overflow-hidden shadow-sm bg-background">
+        <div className="border-border-main bg-background flex items-center overflow-hidden rounded-xl border shadow-sm">
           <button
             type="button"
             onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
             disabled={item.quantity <= 1}
             className={cn(
               // 44px on mobile (touch-compliant), 36px on desktop
-              'flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center bg-background transition-colors',
-              'hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
+              'bg-background flex h-10 w-10 items-center justify-center transition-colors sm:h-9 sm:w-9',
+              'hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40',
+              'focus-visible:ring-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset'
             )}
             aria-label="Decrease quantity"
           >
-            <Minus className="h-3.5 w-3.5 text-text-muted" />
+            <Minus className="text-text-muted h-3.5 w-3.5" />
           </button>
 
-          <span className="flex h-10 sm:h-9 min-w-[2.5rem] items-center justify-center bg-background text-sm font-semibold text-text-main px-1 select-none border-x border-border-main">
+          <span className="bg-background text-text-main border-border-main flex h-10 min-w-[2.5rem] items-center justify-center border-x px-1 text-sm font-semibold select-none sm:h-9">
             {item.quantity}
           </span>
 
@@ -110,22 +107,21 @@ export function CartItemRow({ item, bulkMode, onUpdateQuantity, onRemove }: Cart
             type="button"
             onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
             className={cn(
-              'flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center bg-background transition-colors',
+              'bg-background flex h-10 w-10 items-center justify-center transition-colors sm:h-9 sm:w-9',
               'hover:bg-surface',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
+              'focus-visible:ring-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset'
             )}
             aria-label="Increase quantity"
           >
-            <Plus className="h-3.5 w-3.5 text-text-muted" />
+            <Plus className="text-text-muted h-3.5 w-3.5" />
           </button>
         </div>
 
         {/* Line subtotal */}
-        <span className="text-sm font-bold text-text-main tabular-nums">
+        <span className="text-text-main text-sm font-bold tabular-nums">
           KSh {subtotal.toLocaleString()}
         </span>
       </div>
-
     </div>
   );
 }

@@ -15,6 +15,7 @@ export const settingsSchema = z.object({
   default_og_image: z.string().url().optional().or(z.literal('')),
   kra_pin: z.string().optional().or(z.literal('')),
   vat_rate: z.coerce.number().optional(),
+  enable_vat: z.boolean().default(true).optional(),
   business_hours_weekdays: z.string().optional().or(z.literal('')),
   business_hours_weekends: z.string().optional().or(z.literal('')),
 });
