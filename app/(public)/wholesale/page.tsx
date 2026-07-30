@@ -54,7 +54,7 @@ export default async function WholesalePage() {
   // For this page, we display all IN_STOCK products that have a bulk price set
   const availableProducts =
     products?.filter(
-      (p: any) => p.stock_status !== 'DISCONTINUED' && p.bulk_price != null
+      (p: any) => p.stock_status !== 'DISCONTINUED' && p.wholesale_price != null
     ) || [];
 
   return (
@@ -243,12 +243,12 @@ export default async function WholesalePage() {
                       slug={product.slug}
                       name={product.name}
                       sku={product.sku}
-                      price={product.bulk_price}
+                      price={product.wholesale_price}
                       originalPrice={product.price}
                       imageUrl={primaryImage?.url || '/placeholder.svg'}
                       stockStatus={product.stock_status}
                       addQuantity={1}
-                      addLabel={`Add 1 ${product.bulk_unit || 'Dozen'}`}
+                      addLabel={`Add 1 ${product.wholesale_unit || 'Dozen'}`}
                     />
                   </AnimatedSection>
                 );
