@@ -269,12 +269,13 @@ export default async function HomePage() {
 
             {/* Right — Hero Image */}
             <div className="relative hidden lg:block">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl">
+              <div className="relative overflow-hidden rounded-2xl shadow-2xl">
                 <Image
                   src="/images/hero_main.png"
                   alt="Premium office supplies and stationery — organized desk with notebooks, pens and supplies"
-                  fill
-                  className="object-cover"
+                  width={1000}
+                  height={1000}
+                  className="h-auto w-full object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   priority
                 />

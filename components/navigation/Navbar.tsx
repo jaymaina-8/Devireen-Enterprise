@@ -113,22 +113,30 @@ export function Navbar({
         <div className="flex h-16 items-center gap-4">
           {/* Col 1 — Logo (left, flex-1 so it takes equal space) */}
           <div className="flex flex-1 items-center">
-            <Link
-              href="/"
-              className="text-primary-600 flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight sm:text-xl"
-            >
-              {settings?.logo_url ? (
-                <img
-                  src={settings.logo_url}
-                  alt={settings.company_name || siteConfig.name}
-                  className="h-8 object-contain"
-                />
-              ) : (
-                <PackageOpen className="h-6 w-6 shrink-0" />
-              )}
-              <span className="inline-block whitespace-nowrap">
-                {settings?.company_name || siteConfig.name}
-              </span>
+            <Link href="/" className="flex shrink-0 items-center gap-3.5">
+              <Image
+                src="/images/devireen-logo.png"
+                alt="Devireen Logo"
+                width={64}
+                height={64}
+                className="h-12 w-auto object-contain"
+                priority
+              />
+              {/* Divider */}
+              <div className="h-11 w-[1.5px] rounded-full bg-gray-400" />
+              {/* Text */}
+              <div className="flex flex-col justify-center">
+                <span className="font-sans text-[28px] leading-[0.9] font-black tracking-[0.05em] text-[#D31B27]">
+                  DEVIREEN
+                </span>
+                <div className="mt-1.5 flex items-center justify-center gap-1.5">
+                  <div className="h-[2px] flex-1 rounded-full bg-[#232B2F]" />
+                  <span className="text-[0.65rem] leading-none font-bold tracking-[0.25em] text-[#232B2F]">
+                    ENTERPRISE
+                  </span>
+                  <div className="h-[2px] flex-1 rounded-full bg-[#232B2F]" />
+                </div>
+              </div>
             </Link>
           </div>
 

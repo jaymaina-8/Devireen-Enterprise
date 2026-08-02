@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   PackageOpen,
   MapPin,
@@ -21,22 +22,22 @@ export function Footer({ settings }: { settings?: any }) {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-8">
           {/* Brand Column */}
           <div className="sm:col-span-2 lg:col-span-2">
-            <Link
-              href="/"
-              className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight text-white"
-            >
-              {settings?.logo_url ? (
-                <img
-                  src={settings.logo_url}
-                  alt={settings.company_name || siteConfig.name}
-                  className="h-8 object-contain brightness-0 invert"
-                />
-              ) : (
-                <>
-                  <PackageOpen className="text-primary-500 h-6 w-6" />
-                  <span>{settings?.company_name || siteConfig.name}</span>
-                </>
-              )}
+            <Link href="/" className="mb-8 flex items-center gap-4">
+              <Image
+                src="/images/devireen-logo.png"
+                alt="Devireen Logo"
+                width={72}
+                height={72}
+                className="h-16 w-auto object-contain"
+              />
+              <div className="flex flex-col justify-center">
+                <span className="text-[26px] leading-[1.1] font-extrabold tracking-[0.02em] text-white uppercase">
+                  DEVIREEN
+                </span>
+                <span className="text-[26px] leading-[1.1] font-extrabold tracking-[0.02em] text-white uppercase">
+                  ENTERPRISE
+                </span>
+              </div>
             </Link>
             <p className="mb-5 text-sm leading-relaxed text-gray-400">
               {settings?.footer_content ||

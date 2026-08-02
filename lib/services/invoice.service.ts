@@ -355,14 +355,72 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
         React.createElement(
           View,
           { style: styles.headerLeft },
-          // Logo image (when available) – falls back to styled text
-          logoUrl
-            ? React.createElement(Image, { src: logoUrl, style: styles.logo })
-            : React.createElement(
+          // Custom Styled Logo matching Navbar
+          React.createElement(
+            View,
+            {
+              style: {
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+              },
+            },
+            React.createElement(Image, {
+              src: 'public/images/devireen-logo.png',
+              style: { width: 36, height: 36, objectFit: 'contain' },
+            }),
+            React.createElement(View, {
+              style: {
+                width: 1.5,
+                height: 32,
+                backgroundColor: '#9CA3AF',
+                marginHorizontal: 8,
+              },
+            }),
+            React.createElement(
+              View,
+              { style: { flexDirection: 'column', justifyContent: 'center' } },
+              React.createElement(
                 Text,
-                { style: styles.companyName },
-                companyName
+                {
+                  style: {
+                    fontSize: 20,
+                    color: '#D31B27',
+                    fontFamily: 'Helvetica-Bold',
+                  },
+                },
+                'DEVIREEN'
               ),
+              React.createElement(
+                View,
+                {
+                  style: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginTop: 3,
+                  },
+                },
+                React.createElement(View, {
+                  style: { height: 1.5, width: 10, backgroundColor: '#232B2F' },
+                }),
+                React.createElement(
+                  Text,
+                  {
+                    style: {
+                      fontSize: 7.5,
+                      color: '#232B2F',
+                      fontFamily: 'Helvetica-Bold',
+                      marginHorizontal: 4,
+                    },
+                  },
+                  'ENTERPRISE'
+                ),
+                React.createElement(View, {
+                  style: { height: 1.5, width: 10, backgroundColor: '#232B2F' },
+                })
+              )
+            )
+          ),
           // Company meta — always shown
           React.createElement(
             Text,
