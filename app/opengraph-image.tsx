@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export const alt = 'Devireen Enterprise';
 export const size = {
@@ -11,6 +13,12 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
+  // Read the logo from the public folder
+  const logoData = await readFile(
+    join(process.cwd(), 'public', 'images', 'google logo.png')
+  );
+  const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
+
   return new ImageResponse(
     <div
       style={{
@@ -21,19 +29,32 @@ export default async function Image() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 32,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
+      {/* Logo + Brand name row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
+        {/* Logo mark */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logoBase64}
+          alt="Devireen Logo"
+          width={200}
+          height={200}
+          style={{ objectFit: 'contain' }}
+        />
+
         {/* Divider */}
         <div
           style={{
-            width: 6,
-            height: 180,
+            width: 4,
+            height: 160,
             backgroundColor: '#D31B27',
             borderRadius: 4,
           }}
         />
-        {/* Text */}
+
+        {/* Brand text */}
         <div
           style={{
             display: 'flex',
@@ -43,7 +64,7 @@ export default async function Image() {
         >
           <span
             style={{
-              fontSize: 120,
+              fontSize: 100,
               lineHeight: 1,
               fontWeight: 900,
               color: '#ffffff',
@@ -53,19 +74,18 @@ export default async function Image() {
           >
             Devireen
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: 16 }}>
-            <span
-              style={{
-                fontSize: 54,
-                fontWeight: 900,
-                color: '#D31B27',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Enterprise
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: 44,
+              fontWeight: 900,
+              color: '#D31B27',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              marginTop: 12,
+            }}
+          >
+            Enterprise
+          </span>
         </div>
       </div>
 
@@ -73,13 +93,14 @@ export default async function Image() {
       <div
         style={{
           position: 'absolute',
-          bottom: 60,
+          bottom: 52,
           display: 'flex',
-          fontSize: 32,
+          fontSize: 28,
           color: '#9CA3AF',
+          letterSpacing: '0.05em',
         }}
       >
-        Kenya&apos;s trusted B2B procurement platform
+        Kenya&apos;s Trusted B2B Office &amp; School Supplier
       </div>
     </div>,
     {

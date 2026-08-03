@@ -14,12 +14,40 @@ const inter = Inter({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = (await SettingsRepository.getSettings()) || {};
+  const baseUrl = siteConfig.url || 'https://www.devireenenterprise.com';
   return {
     title: {
       default: settings.default_seo_title || siteConfig.name,
       template: `%s | ${settings.company_name || siteConfig.name}`,
     },
     description: settings.default_seo_description || siteConfig.description,
+    icons: {
+      icon: '/images/google logo.png',
+      shortcut: '/images/google logo.png',
+      apple: '/images/google logo.png',
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'en_KE',
+      url: baseUrl,
+      siteName: settings.company_name || siteConfig.name,
+      title: settings.default_seo_title || siteConfig.name,
+      description: settings.default_seo_description || siteConfig.description,
+      images: [
+        {
+          url: `${baseUrl}/images/google%20logo.png`,
+          width: 1080,
+          height: 1080,
+          alt: 'Devireen Enterprise Logo',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary',
+      title: settings.default_seo_title || siteConfig.name,
+      description: settings.default_seo_description || siteConfig.description,
+      images: [`${baseUrl}/images/google%20logo.png`],
+    },
   };
 }
 
