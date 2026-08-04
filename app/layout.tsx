@@ -22,9 +22,12 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: settings.default_seo_description || siteConfig.description,
     icons: {
-      icon: '/images/google logo.png',
-      shortcut: '/images/google logo.png',
-      apple: '/images/google logo.png',
+      icon: [
+        { url: '/images/google-logo.png', type: 'image/png' },
+        { url: '/favicon.png', type: 'image/png' },
+      ],
+      shortcut: '/images/google-logo.png',
+      apple: '/images/google-logo.png',
     },
     openGraph: {
       type: 'website',
@@ -35,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: settings.default_seo_description || siteConfig.description,
       images: [
         {
-          url: `${baseUrl}/images/google%20logo.png`,
+          url: `${baseUrl}/images/google-logo.png`,
           width: 1080,
           height: 1080,
           alt: 'Devireen Enterprise Logo',
@@ -46,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary',
       title: settings.default_seo_title || siteConfig.name,
       description: settings.default_seo_description || siteConfig.description,
-      images: [`${baseUrl}/images/google%20logo.png`],
+      images: [`${baseUrl}/images/google-logo.png`],
     },
   };
 }
