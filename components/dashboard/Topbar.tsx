@@ -16,6 +16,7 @@ import { NotificationCenter } from './NotificationCenter';
 import { QuickActions } from './QuickActions';
 import { useSidebarStore } from '@/hooks/use-sidebar';
 import { useState, useRef, useEffect } from 'react';
+import { logoutAction } from '@/actions/auth.actions';
 
 export function Topbar() {
   const pathname = usePathname();
@@ -156,13 +157,16 @@ export function Topbar() {
               </div>
 
               <div className="border-t border-slate-100 pt-1">
-                <Link
-                  href="/api/auth/signout"
-                  className="flex items-center gap-2.5 px-4 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
+                <button
+                  onClick={() => {
+                    setProfileOpen(false);
+                    logoutAction();
+                  }}
+                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
                 >
                   <LogOut className="h-4 w-4 text-red-500" />
                   Sign Out
-                </Link>
+                </button>
               </div>
             </div>
           )}
