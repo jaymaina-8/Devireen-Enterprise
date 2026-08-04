@@ -8,6 +8,23 @@ import {
   renderToBuffer,
 } from '@react-pdf/renderer';
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
+
+// Helper to load logo as base64 for reliable PDF generation across environments
+let logoBase64 = '';
+try {
+  const logoPath = path.join(
+    process.cwd(),
+    'public',
+    'images',
+    'devireen-logo.png'
+  );
+  const logoBuffer = fs.readFileSync(logoPath);
+  logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+} catch (e) {
+  console.warn('Could not load devireen-logo.png for PDF:', e);
+}
 
 // ─── Brand tokens ──────────────────────────────────────────────────────────
 const RED = '#DC2626';
@@ -256,7 +273,7 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
               },
             },
             React.createElement(Image, {
-              src: 'public/images/devireen-logo.png',
+              src: logoBase64 || 'public/images/devireen-logo.png',
               style: { width: 36, height: 36, objectFit: 'contain' },
             }),
             React.createElement(View, {
