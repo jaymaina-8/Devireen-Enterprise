@@ -15,7 +15,7 @@ export const contentType = 'image/png';
 export default async function Image() {
   // Read the logo from the public folder
   const logoData = await readFile(
-    join(process.cwd(), 'public', 'images', 'google logo.png')
+    join(process.cwd(), 'public', 'images', 'google-logo.png')
   );
   const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
 
