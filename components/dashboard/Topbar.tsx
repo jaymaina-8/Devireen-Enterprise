@@ -158,9 +158,14 @@ export function Topbar() {
 
               <div className="border-t border-slate-100 pt-1">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setProfileOpen(false);
-                    logoutAction();
+                    try {
+                      await logoutAction();
+                    } catch (e) {
+                      // ignore NEXT_REDIRECT errors or other thrown errors from the server action
+                    }
+                    window.location.href = '/login';
                   }}
                   className="flex w-full items-center gap-2.5 px-4 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
                 >

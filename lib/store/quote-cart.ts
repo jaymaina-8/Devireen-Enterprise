@@ -103,8 +103,8 @@ export const useQuoteCart = create<QuoteCartState>()(
 
         // Round all monetary values to the nearest whole number (KSh)
         const subtotal = Math.round(rawSubtotal);
-        const vatAmount = Math.round(rawSubtotal * 0.16);
-        const total = Math.round(rawSubtotal * 1.16);
+        const vatAmount = 0; // VAT is calculated in CheckoutPage.tsx if the user opts in
+        const total = subtotal;
 
         return { itemCount, subtotal, vatAmount, total, pricingModel };
       },

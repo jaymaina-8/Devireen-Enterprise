@@ -145,7 +145,7 @@ function TotalsSidebar({
               KSh {total.toLocaleString()}
             </span>
           </div>
-          {enableVat && (
+          {vatAmount > 0 && (
             <p className="text-text-muted mt-1 text-xs">Inclusive of 16% VAT</p>
           )}
         </div>
@@ -179,6 +179,9 @@ export function CheckoutPage({
   const [confirmedOrder, setConfirmedOrder] =
     React.useState<ConfirmedOrder | null>(null);
 
+  const [requiresVat, setRequiresVat] = React.useState(false);
+  const [kraPin, setKraPin] = React.useState('');
+
   React.useEffect(() => {
     setMounted(true);
   }, []);
@@ -194,8 +197,9 @@ export function CheckoutPage({
   );
 
   const subtotal = rawSubtotal;
-  const total = enableVat ? Math.round(rawSubtotal * 1.16) : rawSubtotal;
-  const vatAmount = enableVat ? total - subtotal : 0;
+  const isVatApplied = enableVat && requiresVat;
+  const total = isVatApplied ? Math.round(rawSubtotal * 1.16) : rawSubtotal;
+  const vatAmount = isVatApplied ? total - subtotal : 0;
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
   const hasItems = items.length > 0;
@@ -240,6 +244,10 @@ export function CheckoutPage({
     setIsSubmitting(true);
     const invoiceNumber = generateInvoiceNumber();
 
+    const notesAppendedWithPin = isVatApplied
+      ? `${customerData.deliveryNotes || ''}\n[Requested VAT Invoice. KRA PIN: ${kraPin}]`.trim()
+      : customerData.deliveryNotes;
+
     const payload = {
       customerName: customerData.fullName,
       customerEmail: customerData.email,
@@ -252,8 +260,13 @@ export function CheckoutPage({
         deliveryAddress: customerData.deliveryAddress,
         county: customerData.county,
         courierService: customerData.courierService,
-        deliveryNotes: customerData.deliveryNotes,
+        deliveryNotes: notesAppendedWithPin,
       }),
+      ...(fulfillmentType === 'PICKUP' &&
+        isVatApplied && {
+          // If pickup doesn't normally have delivery notes, we still need to store the PIN
+          deliveryNotes: `[Requested VAT Invoice. KRA PIN: ${kraPin}]`,
+        }),
       items: items.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
@@ -467,18 +480,65 @@ export function CheckoutPage({
             vatAmount={vatAmount}
             total={total}
             itemCount={itemCount}
-            enableVat={enableVat}
+            enableVat={isVatApplied}
             primaryAction={
-              step === 'cart' ? (
-                <Button
-                  variant="primary"
-                  onClick={() => setStep('fulfillment')}
-                  className="w-full rounded-xl py-6 text-base shadow-md transition-all hover:shadow-lg"
-                >
-                  <Zap className="mr-2 h-5 w-5" />
-                  Proceed to Checkout
-                </Button>
-              ) : undefined
+              <div className="space-y-4">
+                {enableVat && (
+                  <div className="border-border-subtle bg-background rounded-lg border p-3 text-sm">
+                    <label className="flex cursor-pointer items-start space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={requiresVat}
+                        onChange={(e) => setRequiresVat(e.target.checked)}
+                        className="text-primary-600 focus:ring-primary-500 mt-0.5 h-4 w-4 rounded border-slate-300"
+                      />
+                      <span className="text-text-main font-medium">
+                        I require a VAT Invoice
+                      </span>
+                    </label>
+                    {requiresVat && (
+                      <div className="mt-3">
+                        <label
+                          htmlFor="kra_pin"
+                          className="text-text-muted mb-1 block text-xs font-medium"
+                        >
+                          KRA PIN *
+                        </label>
+                        <input
+                          id="kra_pin"
+                          type="text"
+                          required
+                          value={kraPin}
+                          onChange={(e) => setKraPin(e.target.value)}
+                          placeholder="e.g. P000000000A"
+                          className="border-border-main bg-surface focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {step === 'cart' && (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      if (requiresVat && !kraPin.trim()) {
+                        toast({
+                          title: 'KRA PIN Required',
+                          description:
+                            'Please enter your KRA PIN to get a VAT invoice.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      setStep('fulfillment');
+                    }}
+                    className="w-full rounded-xl py-6 text-base shadow-md transition-all hover:shadow-lg"
+                  >
+                    <Zap className="mr-2 h-5 w-5" />
+                    Proceed to Checkout
+                  </Button>
+                )}
+              </div>
             }
           />
         </div>
