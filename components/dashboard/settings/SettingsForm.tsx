@@ -88,7 +88,11 @@ export function SettingsForm({ settings }: { settings: any }) {
         })}
       </div>
 
-      <form onSubmit={handleSectionSave} className="max-w-4xl space-y-6">
+      <form
+        onSubmit={handleSectionSave}
+        noValidate
+        className="max-w-4xl space-y-6"
+      >
         {/* Section 1: Company Profile */}
         <div
           className={
