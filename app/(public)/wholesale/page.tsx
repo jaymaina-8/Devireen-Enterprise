@@ -15,6 +15,7 @@ import {
   UserCheck,
   Download,
 } from 'lucide-react';
+import { SearchBar } from '@/components/navigation/SearchBar';
 
 export const metadata = {
   title: 'Wholesale & Bulk Orders | Devireen Enterprise',
@@ -48,8 +49,18 @@ const benefits = [
   },
 ];
 
-export default async function WholesalePage() {
-  const { data: products } = await fetchProducts({ context: 'wholesale' });
+export default async function WholesalePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const q = typeof params.q === 'string' ? params.q : undefined;
+
+  const { data: products } = await fetchProducts({
+    context: 'wholesale',
+    query: q,
+  });
 
   // For this page, we display all IN_STOCK products that have a bulk price set
   const availableProducts =
@@ -215,15 +226,29 @@ export default async function WholesalePage() {
       {/* ─── Wholesale Catalog ─── */}
       <section id="catalog" className="scroll-mt-20 py-12 md:py-24">
         <div className="container mx-auto px-4">
-          <div>
-            <h2 className="text-text-main text-3xl font-bold tracking-tight">
-              Wholesale Products
-            </h2>
-            <p className="text-text-muted mt-2">
-              All items are sold in wholesale units as specified per product.
-            </p>
-          </div>
-          <div className="mb-10 flex flex-col items-end justify-between gap-4 md:flex-row">
+          <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <h2 className="text-text-main text-3xl font-bold tracking-tight">
+                Wholesale Products
+              </h2>
+              <p className="text-text-muted mt-2">
+                All items are sold in wholesale units as specified per product.
+              </p>
+            </div>
+
+            <form
+              action="/wholesale"
+              method="GET"
+              className="flex w-full max-w-md gap-2 md:w-auto"
+            >
+              <SearchBar
+                name="q"
+                defaultValue={q}
+                placeholder="Search wholesale..."
+              />
+              <Button type="submit">Search</Button>
+            </form>
+
             <div className="text-primary-600 bg-primary-50 rounded-lg px-4 py-2 text-sm font-medium">
               {availableProducts.length} Products Available
             </div>

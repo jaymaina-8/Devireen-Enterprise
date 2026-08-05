@@ -76,7 +76,9 @@ export const columns: ColumnDef<any>[] = [
       const product = row.original;
       return (
         <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-          {product.categories?.name || 'Uncategorized'}
+          {Array.isArray(product.categories) && product.categories.length > 0
+            ? product.categories.map((c: any) => c.name).join(', ')
+            : product.categories?.name || 'Uncategorized'}
         </span>
       );
     },
@@ -91,14 +93,18 @@ export const columns: ColumnDef<any>[] = [
       return (
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-medium text-slate-400 uppercase">Retail</span>
+            <span className="text-[10px] font-medium text-slate-400 uppercase">
+              Retail
+            </span>
             <span className="text-xs font-bold text-slate-900">
               KSh {product.price?.toLocaleString()}
             </span>
           </div>
           {product.bulk_price != null && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-medium text-emerald-500 uppercase">Bulk</span>
+              <span className="text-[10px] font-medium text-emerald-500 uppercase">
+                Bulk
+              </span>
               <span className="text-xs font-semibold text-emerald-700">
                 KSh {product.bulk_price.toLocaleString()}
               </span>

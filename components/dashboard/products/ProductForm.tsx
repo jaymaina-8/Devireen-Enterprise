@@ -41,7 +41,12 @@ export function ProductForm({
   const [wholesaleUnit, setWholesaleUnit] = useState(
     initialData?.wholesale_unit || 'Dozen'
   );
-  const [categoryId, setCategoryId] = useState(initialData?.category_id || '');
+  const [categoryIds, setCategoryIds] = useState<string[]>(
+    initialData?.categories?.map((c: any) => c.id).filter(Boolean) || []
+  );
+  const [isAllCategories, setIsAllCategories] = useState<boolean>(
+    initialData?.is_all_categories || false
+  );
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const supabase = createClient();
 
@@ -71,7 +76,8 @@ export function ProductForm({
         `PRD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       description: formData.get('description'),
       short_description: formData.get('short_description'),
-      category_id: formData.get('category_id'),
+      category_ids: categoryIds,
+      is_all_categories: isAllCategories,
       brand_id: formData.get('brand_id') || null,
       price: Number(formData.get('price')),
       sale_price: formData.get('sale_price')
@@ -193,24 +199,55 @@ export function ProductForm({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category_id">Category *</Label>
-                  <Select
-                    id="category_id"
-                    name="category_id"
-                    required
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                  >
-                    <option value="" disabled>
-                      Select Category
-                    </option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
+                <div className="space-y-4">
+                  <Label>Categories *</Label>
+                  <div className="mb-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="is_all_categories"
+                      checked={isAllCategories}
+                      onChange={(e) => setIsAllCategories(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label
+                      htmlFor="is_all_categories"
+                      className="cursor-pointer font-medium text-blue-700"
+                    >
+                      Apply to All Categories
+                    </Label>
+                  </div>
+
+                  {!isAllCategories && (
+                    <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-2">
+                      {categories.map((c) => (
+                        <label
+                          key={c.id}
+                          className="flex cursor-pointer items-center gap-2 rounded p-1 text-sm hover:bg-gray-100"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={categoryIds.includes(c.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setCategoryIds([...categoryIds, c.id]);
+                              } else {
+                                setCategoryIds(
+                                  categoryIds.filter((id) => id !== c.id)
+                                );
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          {c.name}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {!isAllCategories && categoryIds.length === 0 && (
+                    <p className="text-xs text-red-500">
+                      Please select at least one category.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -459,8 +496,14 @@ export function ProductForm({
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-gray-500">
-                  {categories.find((c) => c.id === categoryId)?.name ||
-                    'Category'}
+                  {isAllCategories
+                    ? 'All Categories'
+                    : categoryIds.length > 0
+                      ? categories
+                          .filter((c) => categoryIds.includes(c.id))
+                          .map((c) => c.name)
+                          .join(', ')
+                      : 'Category'}
                 </p>
                 <h4 className="line-clamp-2 font-medium text-gray-900">
                   {name || 'Product Name'}

@@ -4,6 +4,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { SectionHeading } from '@/components/layout/SectionHeading';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { SearchBar } from '@/components/navigation/SearchBar';
 import { StockStatus } from '@/components/products/StockIndicator';
 import { PackageSearch, ChevronRight } from 'lucide-react';
 
@@ -105,6 +106,23 @@ export default async function ProductsPage({
               ))}
             </div>
           )}
+
+          {/* Search Form */}
+          <form
+            action="/products"
+            method="GET"
+            className="mt-6 flex w-full max-w-md gap-2"
+          >
+            {category && (
+              <input type="hidden" name="category" value={category} />
+            )}
+            <SearchBar
+              name="q"
+              defaultValue={q}
+              placeholder="Search products..."
+            />
+            <Button type="submit">Search</Button>
+          </form>
         </div>
       </div>
 

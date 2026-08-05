@@ -35,8 +35,16 @@ export function ProductsClientView({
   // Filtered dataset
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      if (selectedCategory !== 'all' && p.category_id !== selectedCategory)
-        return false;
+      if (selectedCategory !== 'all') {
+        if (!p.is_all_categories) {
+          if (Array.isArray(p.categories)) {
+            if (!p.categories.some((c: any) => c.id === selectedCategory))
+              return false;
+          } else {
+            return false;
+          }
+        }
+      }
       if (selectedStock !== 'all' && p.stock_status !== selectedStock)
         return false;
       if (selectedFeatured === 'featured' && !p.is_featured) return false;
@@ -63,7 +71,9 @@ export function ProductsClientView({
       p.id,
       `"${p.name.replace(/"/g, '""')}"`,
       p.sku || '',
-      p.categories?.name || '',
+      Array.isArray(p.categories)
+        ? `"${p.categories.map((c: any) => c.name).join(', ')}"`
+        : '',
       p.price || 0,
       p.sale_price || '',
       p.stock_status,

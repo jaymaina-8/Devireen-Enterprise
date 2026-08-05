@@ -65,8 +65,8 @@ export interface Database {
           name: string;
           description: string | null;
           short_description: string | null;
-          category_id: string;
           brand_id: string | null;
+          is_all_categories: boolean;
           price: number;
           sale_price: number | null;
           bulk_price: number | null;
@@ -90,6 +90,13 @@ export interface Database {
           alt_text: string | null;
           is_primary: boolean;
           sort_order: number;
+          created_at: string;
+        };
+      };
+      product_categories: {
+        Row: {
+          product_id: string;
+          category_id: string;
           created_at: string;
         };
       };
