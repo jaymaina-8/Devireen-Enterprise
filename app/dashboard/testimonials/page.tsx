@@ -2,6 +2,8 @@ import { fetchTestimonialsForAdmin } from '@/actions/testimonial.actions';
 import { TestimonialClientView } from '@/components/dashboard/testimonials/TestimonialClientView';
 import { Star } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Testimonials Management | Devireen Enterprise OS',
 };
