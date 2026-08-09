@@ -7,7 +7,7 @@ export const productSchema = z.object({
   description: z.string().optional(),
   category_ids: z.array(z.string().uuid('Invalid category ID')).optional(),
   is_all_categories: z.boolean().default(false),
-  brand_id: z.string().uuid('Invalid brand ID').optional(),
+  brand_id: z.string().uuid('Invalid brand ID').nullable().optional(),
   price: z.number().min(0, 'Price must be non-negative'),
   sale_price: z.number().min(0).optional().nullable(),
   stock_status: z
