@@ -3,6 +3,8 @@
 import { ProductRepository } from '@/lib/supabase/repositories/product.repository';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
+import { productSchema } from '@/lib/validation/product.schema';
 export async function fetchProducts(params?: {
   query?: string;
   categorySlug?: string;
@@ -41,7 +43,9 @@ export async function fetchProductsForAdmin(params?: {
 
 export async function createProductAction(productData: any) {
   try {
-    const product = await ProductRepository.createProduct(productData);
+    await verifyAdminServerAction();
+    const validData = productSchema.parse(productData);
+    const product = await ProductRepository.createProduct(validData);
     revalidatePath('/dashboard/products');
     revalidatePath('/products');
     return { success: true, data: product };
@@ -52,7 +56,9 @@ export async function createProductAction(productData: any) {
 
 export async function updateProductAction(id: string, productData: any) {
   try {
-    const product = await ProductRepository.updateProduct(id, productData);
+    await verifyAdminServerAction();
+    const validData = productSchema.parse(productData);
+    const product = await ProductRepository.updateProduct(id, validData);
     revalidatePath('/dashboard/products');
     revalidatePath(`/products/${productData.slug || product.slug}`);
     revalidatePath('/products');
@@ -64,6 +70,7 @@ export async function updateProductAction(id: string, productData: any) {
 
 export async function deleteProductAction(id: string) {
   try {
+    await verifyAdminServerAction();
     await ProductRepository.deleteProduct(id);
     revalidatePath('/dashboard/products');
     revalidatePath('/products');
@@ -75,6 +82,7 @@ export async function deleteProductAction(id: string) {
 
 export async function addProductImageRecord(imageData: any) {
   try {
+    await verifyAdminServerAction();
     const supabase = await createAdminClient();
     const { data, error } = await supabase
       .from('product_images')
@@ -95,6 +103,7 @@ export async function deleteProductImageRecord(
   productId: string
 ) {
   try {
+    await verifyAdminServerAction();
     const supabase = await createAdminClient();
     const { error } = await supabase
       .from('product_images')
@@ -114,6 +123,7 @@ export async function setPrimaryProductImageRecord(
   productId: string
 ) {
   try {
+    await verifyAdminServerAction();
     const supabase = await createAdminClient();
 
     // First, set all to false

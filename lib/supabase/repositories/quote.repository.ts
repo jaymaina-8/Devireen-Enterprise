@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { DatabaseError } from '@/lib/errors/DatabaseError';
 import { logger } from '@/lib/logger';
 
@@ -11,9 +11,12 @@ export class QuoteRepository {
       .eq('customer_id', customerId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
-      logger.error(`Failed to retrieve quotes for customer: ${customerId}`, error);
+      logger.error(
+        `Failed to retrieve quotes for customer: ${customerId}`,
+        error
+      );
       throw new DatabaseError('Database error while retrieving quotes');
     }
     return data;
@@ -21,42 +24,80 @@ export class QuoteRepository {
 
   static async createQuote(payload: any) {
     const supabase = await createClient();
+    const adminSupabase = await createAdminClient();
     const sessionId = Math.random().toString(36).substring(2, 15);
-    
-    const totalAmount = payload.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
-    
-    const { data: quote, error: quoteError } = await supabase
+
+    // Fetch authoritative product prices
+    const productIds = payload.items.map((i: any) => i.productId);
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, price')
+      .in('id', productIds)
+      .is('deleted_at', null)
+      .eq('is_active', true);
+
+    if (productsError) {
+      logger.error('Failed to retrieve products for quote', productsError);
+      throw new DatabaseError('Failed to validate products');
+    }
+
+    if (!products || products.length === 0) {
+      throw new DatabaseError('No valid products found for this quote');
+    }
+
+    const productPriceMap = new Map(products.map((p) => [p.id, p.price || 0]));
+
+    // Calculate total amount securely
+    let totalAmount = 0;
+    const quoteItemsData = payload.items
+      .filter((item: any) => productPriceMap.has(item.productId))
+      .map((item: any) => {
+        const authoritativePrice = productPriceMap.get(item.productId) || 0;
+        totalAmount += item.quantity * authoritativePrice;
+
+        return {
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: authoritativePrice,
+        };
+      });
+
+    if (quoteItemsData.length === 0) {
+      throw new DatabaseError('No valid items for quote creation');
+    }
+
+    // Insert Quote via admin client to bypass RLS
+    const { data: quote, error: quoteError } = await adminSupabase
       .from('quotes')
       .insert({
         session_id: sessionId,
         status: 'DRAFT',
         notes: `Company: ${payload.companyName || 'N/A'}\nContact: ${payload.contactName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nNotes: ${payload.notes || ''}`,
-        total_amount: totalAmount
+        total_amount: totalAmount,
       })
       .select()
       .single();
-      
+
     if (quoteError) {
       logger.error('Failed to create quote', quoteError);
       throw new DatabaseError('Failed to create quote');
     }
-    
-    const quoteItems = payload.items.map((item: any) => ({
+
+    // Assign quote_id to items and insert them via admin client
+    const itemsToInsert = quoteItemsData.map((item: any) => ({
+      ...item,
       quote_id: quote.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      unit_price: item.unitPrice
     }));
-    
-    const { error: itemsError } = await supabase
+
+    const { error: itemsError } = await adminSupabase
       .from('quote_items')
-      .insert(quoteItems);
-      
+      .insert(itemsToInsert);
+
     if (itemsError) {
       logger.error('Failed to create quote items', itemsError);
       throw new DatabaseError('Failed to create quote items');
     }
-    
+
     return quote;
   }
 }

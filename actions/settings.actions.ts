@@ -3,9 +3,11 @@
 import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 import { settingsSchema } from '@/lib/validation/settings.schema';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
 
 export async function updateSettingsAction(formData: FormData) {
   try {
+    await verifyAdminServerAction();
     const rawData = {
       company_name: formData.get('company_name'),
       email: formData.get('email'),

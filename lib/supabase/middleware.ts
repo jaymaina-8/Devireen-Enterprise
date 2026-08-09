@@ -43,9 +43,6 @@ export async function updateSession(request: NextRequest) {
 
   // Protect Dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    const adminEmail =
-      process.env.ADMIN_EMAIL || 'admin@devireenenterprice.com';
-
     if (!user) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/login';
@@ -53,7 +50,19 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    if (user.email !== adminEmail) {
+    const adminEmail =
+      process.env.ADMIN_EMAIL || 'admin@devireenenterprice.com';
+    let isAdmin = user.email === adminEmail;
+
+    if (!isAdmin) {
+      // Fallback to canonical user_roles via the is_admin() RPC
+      const { data, error } = await supabase.rpc('is_admin');
+      if (!error && data === true) {
+        isAdmin = true;
+      }
+    }
+
+    if (!isAdmin) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/';
       // Optionally you could add an error query param like ?error=unauthorized

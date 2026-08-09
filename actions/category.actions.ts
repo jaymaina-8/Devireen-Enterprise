@@ -4,6 +4,7 @@ import { CategoryRepository } from '@/lib/supabase/repositories/category.reposit
 import { categorySchema } from '@/lib/validation/category.schema';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
 
 export async function fetchCategories() {
   try {
@@ -25,6 +26,7 @@ export async function fetchCategoryById(id: string) {
 
 export async function createCategoryAction(formData: FormData) {
   try {
+    await verifyAdminServerAction();
     const rawData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
@@ -35,19 +37,24 @@ export async function createCategoryAction(formData: FormData) {
 
     const validatedData = categorySchema.parse(rawData);
     await CategoryRepository.createCategory(validatedData);
-    
+
     revalidatePath('/dashboard/categories');
   } catch (error: any) {
     return { success: false, error: error.message || 'Validation failed' };
   }
-  
+
   // We handle redirection in the client component now for better UX,
   // but if server-only form we can keep redirect. We'll return success instead.
   return { success: true };
 }
 
-export async function updateCategoryAction(id: string, formData: FormData, skipRedirect = false) {
+export async function updateCategoryAction(
+  id: string,
+  formData: FormData,
+  skipRedirect = false
+) {
   try {
+    await verifyAdminServerAction();
     const rawData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
@@ -58,7 +65,7 @@ export async function updateCategoryAction(id: string, formData: FormData, skipR
 
     const validatedData = categorySchema.parse(rawData);
     await CategoryRepository.updateCategory(id, validatedData);
-    
+
     revalidatePath('/dashboard/categories');
     if (skipRedirect) return { success: true };
   } catch (error: any) {
@@ -70,11 +77,16 @@ export async function updateCategoryAction(id: string, formData: FormData, skipR
 
 export async function deleteCategoryAction(id: string) {
   try {
+    await verifyAdminServerAction();
     const categories = await CategoryRepository.getCategories();
-    const targetCategory = categories.find(c => c.id === id);
-    
+    const targetCategory = categories.find((c) => c.id === id);
+
     if (targetCategory && targetCategory.productCount > 0) {
-      return { success: false, error: 'This category contains products. Move or delete those products before deleting the category.' };
+      return {
+        success: false,
+        error:
+          'This category contains products. Move or delete those products before deleting the category.',
+      };
     }
 
     await CategoryRepository.deleteCategory(id);

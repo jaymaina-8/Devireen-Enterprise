@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
 
 export async function createCustomerAction(payload: {
   company_name?: string;
@@ -10,6 +11,7 @@ export async function createCustomerAction(payload: {
   contact_email?: string;
   contact_phone?: string;
 }) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -36,6 +38,7 @@ export async function createCustomerAction(payload: {
 }
 
 export async function updateCustomerAction(id: string, payload: any) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -55,6 +58,7 @@ export async function updateCustomerAction(id: string, payload: any) {
 }
 
 export async function deleteCustomerAction(id: string) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   const { error } = await supabase

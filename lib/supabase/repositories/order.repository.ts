@@ -29,13 +29,59 @@ export class OrderRepository {
   static async createOrder(payload: CreateOrderPayload) {
     const supabase = await createClient();
 
+    // 1. Fetch authoritative product prices
+    const productIds = payload.items.map((i) => i.productId);
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, price, wholesale_price')
+      .in('id', productIds)
+      .eq('is_active', true)
+      .is('deleted_at', null);
+
+    if (productsError || !products) {
+      logger.error('Failed to fetch products for pricing', productsError);
+      throw new DatabaseError('Failed to fetch products');
+    }
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    // 2. Calculate totals and build safe items
+    let calculatedTotal = 0;
+    const safeOrderItems = [];
+
+    for (const item of payload.items) {
+      const product = productMap.get(item.productId);
+      if (!product) {
+        throw new DatabaseError(
+          `Product not found or inactive: ${item.productId}`
+        );
+      }
+
+      const authoritativePrice =
+        payload.pricingModel === 'WHOLESALE' && product.wholesale_price !== null
+          ? product.wholesale_price
+          : product.price;
+
+      calculatedTotal += authoritativePrice * item.quantity;
+      safeOrderItems.push({
+        product_id: item.productId,
+        quantity: item.quantity,
+        unit_price: authoritativePrice,
+      });
+    }
+
+    // 3. Insert Order
+    // Since RLS blocks public INSERT using standard client, use admin client
+    // because this is an unauthenticated guest checkout flow.
+    const adminSupabase = await createAdminClient();
+
     const orderData: Record<string, any> = {
       customer_name: payload.customerName,
       customer_email: payload.customerEmail,
       customer_phone: payload.customerPhone,
       fulfillment_type: payload.fulfillmentType,
       pricing_model: payload.pricingModel,
-      total_amount: payload.totalAmount,
+      total_amount: calculatedTotal,
       invoice_number: payload.invoiceNumber,
       status: 'PENDING',
       payment_status: 'UNPAID',
@@ -49,7 +95,7 @@ export class OrderRepository {
       orderData.shipping_address = payload.deliveryAddress;
     }
 
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await adminSupabase
       .from('orders')
       .insert(orderData)
       .select('id')
@@ -60,16 +106,15 @@ export class OrderRepository {
       throw new DatabaseError(`Failed to create order: ${orderError?.message}`);
     }
 
-    const orderItems = payload.items.map((item) => ({
+    // 4. Insert Order Items
+    const itemsToInsert = safeOrderItems.map((item) => ({
+      ...item,
       order_id: order.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
     }));
 
-    const { error: itemsError } = await supabase
+    const { error: itemsError } = await adminSupabase
       .from('order_items')
-      .insert(orderItems);
+      .insert(itemsToInsert);
 
     if (itemsError) {
       logger.error('Failed to create order items', itemsError);

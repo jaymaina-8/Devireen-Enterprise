@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
 
 export interface TestimonialInput {
   customer_name: string;
@@ -20,6 +21,7 @@ export async function fetchTestimonialsForAdmin(options?: {
   publishedOnly?: boolean;
 }) {
   try {
+    await verifyAdminServerAction();
     const supabase = await createClient();
     let query = supabase
       .from('testimonials')
@@ -56,6 +58,7 @@ export async function fetchTestimonialsForAdmin(options?: {
 }
 
 export async function createTestimonialAction(data: TestimonialInput) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   const { data: newRecord, error } = await supabase
@@ -90,6 +93,7 @@ export async function updateTestimonialAction(
   id: string,
   data: Partial<TestimonialInput>
 ) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   const { data: updated, error } = await supabase
@@ -113,6 +117,7 @@ export async function updateTestimonialAction(
 }
 
 export async function deleteTestimonialAction(id: string) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -147,6 +152,7 @@ export async function toggleFeaturedTestimonialAction(
 export async function reorderTestimonialsAction(
   items: { id: string; display_order: number }[]
 ) {
+  await verifyAdminServerAction();
   const supabase = await createClient();
 
   for (const item of items) {

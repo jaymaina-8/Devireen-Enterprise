@@ -2,12 +2,14 @@
 
 import { StorageService } from '@/lib/supabase/storage';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
 
 export async function uploadMediaAction(formData: FormData) {
   try {
+    await verifyAdminServerAction();
     const file = formData.get('file') as File;
     const bucket = formData.get('bucket') as string;
-    
+
     if (!file || !bucket) {
       return { success: false, error: 'File and bucket are required' };
     }
@@ -35,6 +37,7 @@ export async function uploadMediaAction(formData: FormData) {
 
 export async function deleteMediaAction(bucket: string, path: string) {
   try {
+    await verifyAdminServerAction();
     await StorageService.deleteFile(bucket, path);
     revalidatePath('/dashboard/media');
     return { success: true };
