@@ -1,5 +1,5 @@
 import { env } from '@/lib/env';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { DatabaseError } from '@/lib/errors/DatabaseError';
 
@@ -7,11 +7,17 @@ export class StorageService {
   /**
    * Uploads a file to a specified bucket.
    */
-  static async uploadFile(bucket: string, path: string, file: File): Promise<string> {
-    const supabase = await createClient();
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
-      upsert: true,
-    });
+  static async uploadFile(
+    bucket: string,
+    path: string,
+    file: File
+  ): Promise<string> {
+    const supabase = await createAdminClient();
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        upsert: true,
+      });
 
     if (error) {
       logger.error(`Storage upload failed for ${path} in ${bucket}`, error);
@@ -24,7 +30,7 @@ export class StorageService {
    * Deletes a file from a specified bucket.
    */
   static async deleteFile(bucket: string, path: string): Promise<void> {
-    const supabase = await createClient();
+    const supabase = await createAdminClient();
     const { error } = await supabase.storage.from(bucket).remove([path]);
 
     if (error) {

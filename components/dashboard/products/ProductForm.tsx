@@ -7,6 +7,8 @@ import {
   updateProductAction,
   addProductImageRecord,
 } from '@/actions/product.actions';
+import { uploadMediaAction } from '@/actions/media.actions';
+import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -112,11 +114,14 @@ export function ProductForm({
             const fileExt = file.name.split('.').pop();
             const fileName = `${newProductId}/${uuidv4()}.${fileExt}`;
 
-            const { error: uploadError } = await supabase.storage
-              .from('products')
-              .upload(fileName, file);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('bucket', 'products');
+            formData.append('path', fileName);
 
-            if (!uploadError) {
+            const uploadResult = await uploadMediaAction(formData);
+
+            if (uploadResult.success) {
               const { data: publicUrlData } = supabase.storage
                 .from('products')
                 .getPublicUrl(fileName);

@@ -25,7 +25,13 @@ export async function uploadMediaAction(formData: FormData) {
     }
 
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const explicitPath = formData.get('path') as string;
+    const fileName =
+      explicitPath ||
+      `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    // We import createAdminClient locally to avoid circular dependencies if any,
+    // or we can just update StorageService itself. Let's rely on StorageService.
     const path = await StorageService.uploadFile(bucket, fileName, file);
 
     revalidatePath('/dashboard/media');
