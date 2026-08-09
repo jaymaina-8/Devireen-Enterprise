@@ -33,7 +33,7 @@ export class OrderRepository {
     const productIds = payload.items.map((i) => i.productId);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, price, wholesale_price')
+      .select('id, price, sale_price, wholesale_price')
       .in('id', productIds)
       .eq('is_active', true)
       .is('deleted_at', null);
@@ -57,10 +57,15 @@ export class OrderRepository {
         );
       }
 
+      const baseRetailPrice =
+        product.sale_price !== null && product.sale_price > 0
+          ? product.sale_price
+          : product.price;
+
       const authoritativePrice =
         payload.pricingModel === 'WHOLESALE' && product.wholesale_price !== null
           ? product.wholesale_price
-          : product.price;
+          : baseRetailPrice;
 
       calculatedTotal += authoritativePrice * item.quantity;
       safeOrderItems.push({

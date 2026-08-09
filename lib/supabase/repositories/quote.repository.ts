@@ -31,7 +31,7 @@ export class QuoteRepository {
     const productIds = payload.items.map((i: any) => i.productId);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, price')
+      .select('id, price, sale_price')
       .in('id', productIds)
       .is('deleted_at', null)
       .eq('is_active', true);
@@ -45,7 +45,12 @@ export class QuoteRepository {
       throw new DatabaseError('No valid products found for this quote');
     }
 
-    const productPriceMap = new Map(products.map((p) => [p.id, p.price || 0]));
+    const productPriceMap = new Map(
+      products.map((p) => [
+        p.id,
+        p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
+      ])
+    );
 
     // Calculate total amount securely
     let totalAmount = 0;

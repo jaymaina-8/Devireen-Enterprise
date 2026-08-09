@@ -31,7 +31,7 @@ export async function createQuoteAction(payload: any) {
   const productIds = payload.items.map((i: any) => i.product_id);
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('id, price')
+    .select('id, price, sale_price')
     .in('id', productIds)
     .is('deleted_at', null)
     .eq('is_active', true);
@@ -43,7 +43,12 @@ export async function createQuoteAction(payload: any) {
     };
   }
 
-  const productPriceMap = new Map(products.map((p) => [p.id, p.price || 0]));
+  const productPriceMap = new Map(
+    products.map((p) => [
+      p.id,
+      p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
+    ])
+  );
 
   // Calculate total amount securely
   let total_amount = 0;
@@ -109,7 +114,7 @@ export async function updateQuoteAction(id: string, payload: any) {
   const productIds = payload.items.map((i: any) => i.product_id);
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('id, price')
+    .select('id, price, sale_price')
     .in('id', productIds)
     .is('deleted_at', null)
     .eq('is_active', true);
@@ -117,13 +122,18 @@ export async function updateQuoteAction(id: string, payload: any) {
   if (productsError || !products || products.length === 0) {
     return {
       success: false,
-      error: 'Failed to retrieve valid products for quote',
+      error: 'Failed to retrieve valid products for quote update',
     };
   }
 
-  const productPriceMap = new Map(products.map((p) => [p.id, p.price || 0]));
+  const productPriceMap = new Map(
+    products.map((p) => [
+      p.id,
+      p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
+    ])
+  );
 
-  // Calculate total amount securely
+  // Calculate new total securely
   let total_amount = 0;
   const itemsToInsert = payload.items
     .filter((item: any) => productPriceMap.has(item.product_id))
