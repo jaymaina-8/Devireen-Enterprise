@@ -17,17 +17,53 @@ import {
 } from 'lucide-react';
 import { AddToQuoteButton } from './AddToQuoteButton';
 
+import type { Metadata } from 'next';
+import { ProductJsonLd, BreadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { SeoContentSection } from '@/components/seo/SeoContentSection';
+
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const params = await props.params;
   const { data: product } = await fetchProductBySlug(params.slug);
-  if (!product) return { title: 'Product Not Found' };
+  if (!product) return { title: 'Product Not Found | Devireen Enterprise' };
+
+  const allImages = product.product_images || [];
+  const primaryImage =
+    allImages.find((i: any) => i.is_primary)?.url || allImages[0]?.url || null;
+
+  const description =
+    product.description ||
+    `Buy ${product.name} at Devireen Enterprise Nairobi. High quality office & school supplies with fast delivery across Kenya.`;
+
+  const canonicalUrl = `/products/${params.slug}`;
 
   return {
     title: product.name,
-    description:
-      product.description || `Buy ${product.name} at Devireen Enterprise.`,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${product.name} | Devireen Enterprise`,
+      description,
+      url: `https://www.devireenenterprise.com${canonicalUrl}`,
+      siteName: 'Devireen Enterprise',
+      images: primaryImage
+        ? [
+            {
+              url: primaryImage,
+              alt: product.name,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${product.name} | Devireen Enterprise`,
+      description,
+      images: primaryImage ? [primaryImage] : [],
+    },
   };
 }
 
@@ -52,8 +88,36 @@ export default async function ProductDetailsPage(props: {
       ? Object.entries(product.attributes as Record<string, string>)
       : [];
 
+  const breadcrumbItems = [
+    { name: 'Home', url: '/' },
+    { name: 'Products', url: '/products' },
+    ...(product.categories
+      ? [
+          {
+            name: product.categories.name,
+            url: `/products?category=${product.categories.slug}`,
+          },
+        ]
+      : []),
+    { name: product.name, url: `/products/${product.slug}` },
+  ];
+
+  const imageUrls = allImages.map((img: any) => img.url).filter(Boolean);
+
   return (
     <div suppressHydrationWarning={true} className="bg-background min-h-screen">
+      <ProductJsonLd
+        name={product.name}
+        description={product.description}
+        sku={product.sku}
+        slug={product.slug}
+        price={product.sale_price || product.price}
+        images={imageUrls}
+        category={product.categories?.name}
+        brand={product.brands?.name}
+        stockStatus={product.stock_status}
+      />
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       {/* Breadcrumbs */}
       <div className="bg-surface border-border-subtle border-b">
         <div className="container mx-auto px-4 py-4">
@@ -273,6 +337,60 @@ export default async function ProductDetailsPage(props: {
           </div>
         </div>
       </div>
+
+      {/* SEO Content Layer */}
+      <SeoContentSection
+        title={`Ordering ${product.name} — Devireen Enterprise Supply Information`}
+        subtitle="Genuine quality, corporate compliance, and reliable procurement across Kenya."
+        sections={[
+          {
+            heading: `Authentic ${product.name} Sourcing & Quality Standards`,
+            content: (
+              <p>
+                {product.name} is sourced directly from verified manufacturers
+                to meet rigorous quality standards for corporate offices,
+                schools, and institutional environments. Each item is inspected
+                prior to dispatch to ensure reliability and compliance with
+                procurement guidelines.
+              </p>
+            ),
+          },
+          {
+            heading: 'Bulk Quotes & Custom Invoicing Options',
+            content: (
+              <p>
+                Need to procure {product.name} in volume for a school term,
+                office restock, or institutional project? Add this product to
+                your quote cart to receive customized tier-based bulk pricing
+                and formal invoicing.
+              </p>
+            ),
+          },
+          {
+            heading: 'Packaging & Delivery Timelines',
+            content: (
+              <p>
+                All orders are securely packaged to protect products during
+                transit. Deliveries within Nairobi take 1 to 2 business days,
+                while nationwide county deliveries are fulfilled within 2 to 4
+                business days.
+              </p>
+            ),
+          },
+        ]}
+        faqs={[
+          {
+            question: `Is ${product.name} available for immediate delivery?`,
+            answer:
+              'Current stock indicators reflect real-time inventory. In-stock products are dispatched within 24 hours of order or quote confirmation.',
+          },
+          {
+            question: 'Can I request a sample before making a bulk order?',
+            answer:
+              'For large corporate or institutional procurement, contact our sales desk directly to discuss product samples and custom bulk terms.',
+          },
+        ]}
+      />
     </div>
   );
 }

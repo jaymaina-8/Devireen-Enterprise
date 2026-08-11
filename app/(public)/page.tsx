@@ -30,11 +30,36 @@ import {
 } from 'lucide-react';
 import { StockStatus } from '@/components/products/StockIndicator';
 import { EmptyState } from '@/components/ui/EmptyState';
+import {
+  OrganizationJsonLd,
+  LocalBusinessJsonLd,
+  WebSiteJsonLd,
+} from '@/lib/seo/structured-data';
+import { SeoContentSection } from '@/components/seo/SeoContentSection';
 
 export const metadata = {
-  title: 'Office Supplies, Stationery & School Essentials | Devireen',
+  title:
+    'Office Supplies, Stationery & School Essentials | Devireen Enterprise Nairobi',
   description:
-    "Kenya's trusted B2B supplier of office supplies, stationery, school supplies and office equipment. Request bulk quotes for schools, businesses, NGOs, hospitals and government.",
+    "Devireen Enterprise is Nairobi's leading supplier of office supplies, stationery, school accessories, books, and bulk educational supplies. Fast delivery across Kenya.",
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title:
+      'Office Supplies, Stationery & School Essentials | Devireen Enterprise Nairobi',
+    description:
+      "Nairobi's trusted supplier of office supplies, stationery, school accessories, books, and bulk educational supplies.",
+    url: 'https://www.devireenenterprise.com/',
+    images: [
+      {
+        url: '/images/hero_main.png',
+        width: 1200,
+        height: 630,
+        alt: 'Devireen Enterprise Stationery & Office Supplies',
+      },
+    ],
+  },
 };
 
 /* ─── Category imagery (AI-generated, stored locally) ─── */
@@ -166,6 +191,81 @@ const industries = [
   },
 ];
 
+/* ─── SEO Content Layer Sections ─── */
+const homepageSeoSections = [
+  {
+    heading: 'Comprehensive Office Supplies & Stationery in Nairobi',
+    content: (
+      <p>
+        Devireen Enterprise is your one-stop supplier for quality stationery,
+        writing materials, filing products, printer paper, toner cartridges, and
+        desk organization tools. Whether equipping a corporate boardroom or a
+        local business office, our catalogue brings together verified
+        manufacturers to ensure long-lasting performance and corporate
+        compliance.
+      </p>
+    ),
+  },
+  {
+    heading: 'Primary, Secondary & Institutional Educational Supplies',
+    content: (
+      <p>
+        We partner with schools, colleges, and training institutes across Kenya
+        to provide exercise books, geometry sets, art supplies, chalkboards, and
+        classroom tools. Our school packages are tailored to meet curriculum
+        requirements while offering educational administrators reliable
+        inventory throughout the academic calendar.
+      </p>
+    ),
+  },
+  {
+    heading: 'Bulk Purchasing & Wholesale Pricing for Organizations',
+    content: (
+      <p>
+        For NGOs, medical facilities, government agencies, and multi-branch
+        enterprises, Devireen Enterprise provides dedicated B2B procurement
+        support. Enjoy itemized volume pricing, custom quotation turnarounds
+        within 24 hours, and flexible invoicing tailored to corporate finance
+        procedures.
+      </p>
+    ),
+  },
+  {
+    heading: 'Fast Delivery & Local Store Pickup Across All 47 Counties',
+    content: (
+      <p>
+        Based in Nairobi CBD, Devireen Enterprise operates a dedicated retail
+        and wholesale storefront. Orders can be dispatched directly to your
+        doorstep in Nairobi within 1 to 2 business days or shipped via verified
+        courier partners to all 47 counties in Kenya.
+      </p>
+    ),
+  },
+];
+
+const homepageFaqs = [
+  {
+    question: 'Where is Devireen Enterprise located in Nairobi?',
+    answer:
+      'Devireen Enterprise is headquartered in Nairobi CBD, Kenya. Customers can visit our retail and wholesale store for in-person orders or place requests online for fast nationwide delivery.',
+  },
+  {
+    question: 'What types of stationery and supplies do you offer?',
+    answer:
+      'We supply ballpoint pens, notebooks, exercise books, printing paper, toner cartridges, office equipment, furniture, art materials, and school accessories.',
+  },
+  {
+    question: 'How do I request a bulk or wholesale quotation?',
+    answer:
+      'Browse our catalogue, add items to your quote cart, and submit your request. Our procurement team will generate an itemized quote within 24 hours.',
+  },
+  {
+    question: 'What are the delivery options and timelines?',
+    answer:
+      'Nairobi deliveries take 1 to 2 business days. Deliveries outside Nairobi take 2 to 4 business days depending on the county location.',
+  },
+];
+
 export default async function HomePage() {
   const [{ data: products }, { data: categories }] = await Promise.all([
     fetchProducts({ context: 'retail' }),
@@ -184,6 +284,9 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <OrganizationJsonLd />
+      <LocalBusinessJsonLd />
+      <WebSiteJsonLd />
       {/* ─────────────────────────────────────────────────
           1. HERO
       ───────────────────────────────────────────────── */}
@@ -781,6 +884,14 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* SEO Content Layer */}
+      <SeoContentSection
+        title="Devireen Enterprise — Stationery, Office & Educational Supplies in Nairobi"
+        subtitle="Serving businesses, schools, NGOs, hospitals, and government institutions across Kenya."
+        sections={homepageSeoSections}
+        faqs={homepageFaqs}
+      />
     </div>
   );
 }

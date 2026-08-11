@@ -16,10 +16,29 @@ import {
   Download,
 } from 'lucide-react';
 import { SearchBar } from '@/components/navigation/SearchBar';
+import { SeoContentSection } from '@/components/seo/SeoContentSection';
 
 export const metadata = {
-  title: 'Wholesale & Bulk Orders | Devireen Enterprise',
-  description: 'Browse our wholesale catalog and enjoy exclusive bulk pricing.',
+  title: 'Wholesale & Bulk Orders | Devireen Enterprise Nairobi',
+  description:
+    'Wholesale stationery, office supplies, school accessories, and bulk business orders in Nairobi, Kenya. Exclusive volume discounts for schools and businesses.',
+  alternates: {
+    canonical: '/wholesale',
+  },
+  openGraph: {
+    title: 'Wholesale & Bulk Orders | Devireen Enterprise Nairobi',
+    description:
+      'Wholesale stationery, office supplies, school accessories, and bulk business orders in Nairobi, Kenya.',
+    url: 'https://www.devireenenterprise.com/wholesale',
+    images: [
+      {
+        url: '/images/hero_main.png',
+        width: 1200,
+        height: 630,
+        alt: 'Wholesale Stationery & Office Supplies Devireen',
+      },
+    ],
+  },
 };
 
 const benefits = [
@@ -312,6 +331,68 @@ export default async function WholesalePage({
           </Link>
         </div>
       </section>
+
+      {/* SEO Content Layer */}
+      <SeoContentSection
+        title="Wholesale Stationery & Bulk Office Supply Procurement in Kenya"
+        subtitle="Tiered pricing, priority dispatch, and corporate sourcing for educational institutions, businesses, and organizations."
+        sections={[
+          {
+            heading: 'Direct Manufacturer Sourcing & Tiered Bulk Rates',
+            content: (
+              <p>
+                Devireen Enterprise works directly with authorized manufacturers
+                to deliver competitive wholesale pricing across writing
+                instruments, exercise books, paper reams, toner cartridges, and
+                office consumables. Buying in wholesale packs enables schools,
+                hospitals, and enterprises to reduce procurement overheads
+                significantly.
+              </p>
+            ),
+          },
+          {
+            heading: 'Custom Sourcing for Institutional Procurement Needs',
+            content: (
+              <p>
+                Can’t find a specific item in our standard catalog? Our
+                procurement team assists institutions in sourcing custom
+                stationery, specialized exam papers, printed notebooks, and
+                corporate branded accessories tailored to exact tenders and
+                project requirements.
+              </p>
+            ),
+          },
+          {
+            heading: 'Priority Delivery & Freight Management Across Kenya',
+            content: (
+              <p>
+                Large wholesale shipments are assigned dedicated logistics
+                handling. Orders destined for Nairobi locations receive
+                expedited 24-hour dispatch, while regional shipments to Mombasa,
+                Kisumu, Nakuru, Eldoret, and outer counties are routed through
+                reliable freight partners.
+              </p>
+            ),
+          },
+        ]}
+        faqs={[
+          {
+            question: 'What qualifies an order for wholesale pricing?',
+            answer:
+              'Wholesale pricing applies to items purchased in standard wholesale packs, cartons, or bulk quantities as indicated in our wholesale portal.',
+          },
+          {
+            question: 'Do you accept LPOs and corporate credit terms?',
+            answer:
+              'We accept Local Purchase Orders (LPOs) for verified corporate accounts, government agencies, and accredited institutions following quote approval.',
+          },
+          {
+            question: 'How quickly can a large bulk order be processed?',
+            answer:
+              'Standard bulk orders are processed within 1 to 2 business days. Custom sourcing or non-catalog items typically take 3 to 5 business days.',
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -8,11 +8,60 @@ import { SearchBar } from '@/components/navigation/SearchBar';
 import { StockStatus } from '@/components/products/StockIndicator';
 import { PackageSearch, ChevronRight } from 'lucide-react';
 
-export const metadata = {
-  title: 'Product Catalogue',
-  description:
-    'Browse our complete range of office supplies, stationery, and equipment.',
-};
+import type { Metadata } from 'next';
+import { BreadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { SeoContentSection } from '@/components/seo/SeoContentSection';
+
+export async function generateMetadata(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
+  const params = await props.searchParams;
+  const category =
+    typeof params.category === 'string' ? params.category : undefined;
+  const q = typeof params.q === 'string' ? params.q : undefined;
+
+  const { data: categories = [] } = await fetchCategories();
+  const activeCategory = (categories || []).find(
+    (c: any) => c.slug === category
+  );
+
+  let title = 'Product Catalogue | Devireen Enterprise';
+  let description =
+    'Browse our complete catalogue of stationery, office supplies, school accessories, books, and bulk educational materials in Nairobi, Kenya.';
+
+  if (activeCategory) {
+    title = `${activeCategory.name} | Devireen Enterprise`;
+    description = `Explore quality ${activeCategory.name.toLowerCase()} at Devireen Enterprise Nairobi. Fast delivery across Kenya.`;
+  } else if (q) {
+    title = `Search results for "${q}" | Devireen Enterprise`;
+    description = `Browse products matching "${q}" at Devireen Enterprise Nairobi.`;
+  }
+
+  const canonicalUrl = category
+    ? `/products?category=${category}`
+    : '/products';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://www.devireenenterprise.com${canonicalUrl}`,
+      images: [
+        {
+          url: '/images/category_office_supplies.png',
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+  };
+}
 
 export default async function ProductsPage({
   searchParams,
@@ -34,8 +83,22 @@ export default async function ProductsPage({
 
   const activeCategory = categories.find((c: any) => c.slug === category);
 
+  const breadcrumbItems = [
+    { name: 'Home', url: '/' },
+    { name: 'Products', url: '/products' },
+    ...(activeCategory
+      ? [
+          {
+            name: activeCategory.name,
+            url: `/products?category=${activeCategory.slug}`,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="bg-background min-h-screen">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       {/* Page Header */}
       <div className="bg-surface border-border-subtle border-b">
         <div className="container mx-auto px-4 py-6 md:py-8">
@@ -212,6 +275,78 @@ export default async function ProductsPage({
           )}
         </main>
       </div>
+
+      {/* SEO Content Layer */}
+      <SeoContentSection
+        title="Devireen Stationery & Office Supplies Catalogue — Nairobi, Kenya"
+        subtitle="Explore our comprehensive range of office products, school materials, and business accessories."
+        sections={[
+          {
+            heading:
+              'Sourcing High-Quality Office Supplies & Stationery in Kenya',
+            content: (
+              <p>
+                Our product catalogue brings together essential office
+                stationery, ballpoint pens, notebooks, copy paper, toner
+                cartridges, and filing systems. Designed for corporate
+                productivity, every item is quality-tested to ensure reliability
+                in demanding workspace environments.
+              </p>
+            ),
+          },
+          {
+            heading: 'School & Classroom Equipment Sourcing',
+            content: (
+              <p>
+                From primary schools to tertiary colleges, Devireen Enterprise
+                supplies curriculum-compliant exercise books, geometry sets, art
+                materials, and classroom accessories. We maintain reliable stock
+                levels to support educational institutions throughout the school
+                term.
+              </p>
+            ),
+          },
+          {
+            heading: 'Volume Quotes & Organizational Procurement',
+            content: (
+              <p>
+                Businesses, medical centers, and non-profit organizations can
+                request itemized volume quotations directly through our catalog.
+                Select your desired products and submit a quote request for
+                custom bulk pricing within one business day.
+              </p>
+            ),
+          },
+          {
+            heading: 'Order Fulfillment & Delivery Options',
+            content: (
+              <p>
+                Choose between doorstep delivery across Nairobi within 1 to 2
+                business days, courier dispatch to all 47 counties in Kenya, or
+                direct store pickup at our Nairobi CBD location.
+              </p>
+            ),
+          },
+        ]}
+        faqs={[
+          {
+            question: 'How do I filter products by category or keyword?',
+            answer:
+              'Use the category navigation menu on the left or top filter pills to browse specific categories like stationery, printer supplies, or technology.',
+          },
+          {
+            question:
+              'Can I order stationery in bulk for my school or business?',
+            answer:
+              'Yes, Devireen Enterprise provides bulk and wholesale purchasing with volume discounts for schools, businesses, hospitals, and NGOs.',
+          },
+          {
+            question: 'Are prices inclusive of tax?',
+            answer:
+              'Pricing displays indicate standard estimates. Itemized VAT details are provided during quote confirmation and invoice generation.',
+          },
+        ]}
+      />
     </div>
   );
 }
