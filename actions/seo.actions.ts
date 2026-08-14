@@ -4,9 +4,11 @@ import { SeoRepository } from '@/lib/supabase/repositories/seo.repository';
 import { seoSchema } from '@/lib/validation/seo.schema';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
+import { createSafeAction } from '@/lib/actions/withErrorHandling';
 
-export async function upsertSeoAction(formData: FormData) {
-  try {
+export const upsertSeoAction = createSafeAction(
+  'upsertSeoAction',
+  async (formData: FormData) => {
     await verifyAdminServerAction();
     const rawData = {
       id: formData.get('id') || undefined,
@@ -28,8 +30,6 @@ export async function upsertSeoAction(formData: FormData) {
     await SeoRepository.upsertSeoMetadata(validatedData);
 
     revalidatePath('/dashboard/seo');
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Validation failed' };
+    return true;
   }
-}
+);

@@ -105,4 +105,168 @@ export class QuoteRepository {
 
     return quote;
   }
+
+  static async createAdminQuote(payload: any) {
+    const supabase = await createClient();
+    const adminSupabase = await createAdminClient();
+
+    // Fetch authoritative product prices
+    const productIds = payload.items.map((i: any) => i.product_id);
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, price, sale_price')
+      .in('id', productIds)
+      .is('deleted_at', null)
+      .eq('is_active', true);
+
+    if (productsError) {
+      logger.error('Failed to retrieve valid products for quote', productsError);
+      throw new DatabaseError('Failed to validate products');
+    }
+
+    if (!products || products.length === 0) {
+      throw new DatabaseError('No valid products found for this quote');
+    }
+
+    const productPriceMap = new Map(
+      products.map((p) => [
+        p.id,
+        p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
+      ])
+    );
+
+    // Calculate total amount securely
+    let totalAmount = 0;
+    const itemsToInsert = payload.items
+      .filter((item: any) => productPriceMap.has(item.product_id))
+      .map((item: any) => {
+        const authoritativePrice = productPriceMap.get(item.product_id) || 0;
+        totalAmount += item.quantity * authoritativePrice;
+
+        return {
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: authoritativePrice,
+        };
+      });
+
+    if (itemsToInsert.length === 0) {
+      throw new DatabaseError('No valid items for quote creation');
+    }
+
+    // Insert Quote
+    const { data: quote, error: quoteError } = await adminSupabase
+      .from('quotes')
+      .insert({
+        customer_id: payload.customer_id,
+        status: payload.status,
+        notes: payload.notes,
+        total_amount: totalAmount,
+      })
+      .select('id')
+      .single();
+
+    if (quoteError || !quote) {
+      logger.error('Failed to create quote', quoteError);
+      throw new DatabaseError('Failed to create quote');
+    }
+
+    // Insert Items
+    const finalItemsToInsert = itemsToInsert.map((item: any) => ({
+      ...item,
+      quote_id: quote.id,
+    }));
+
+    const { error: itemsError } = await adminSupabase
+      .from('quote_items')
+      .insert(finalItemsToInsert);
+
+    if (itemsError) {
+      logger.error('Failed to create quote items', itemsError);
+      throw new DatabaseError('Failed to create quote items');
+    }
+
+    return quote;
+  }
+
+  static async updateAdminQuote(id: string, payload: any) {
+    const supabase = await createClient();
+    const adminSupabase = await createAdminClient();
+
+    // Fetch authoritative product prices
+    const productIds = payload.items.map((i: any) => i.product_id);
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, price, sale_price')
+      .in('id', productIds)
+      .is('deleted_at', null)
+      .eq('is_active', true);
+
+    if (productsError) {
+      logger.error('Failed to retrieve valid products for quote update', productsError);
+      throw new DatabaseError('Failed to validate products');
+    }
+
+    if (!products || products.length === 0) {
+      throw new DatabaseError('No valid products found for this quote update');
+    }
+
+    const productPriceMap = new Map(
+      products.map((p) => [
+        p.id,
+        p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
+      ])
+    );
+
+    // Calculate new total securely
+    let totalAmount = 0;
+    const itemsToInsert = payload.items
+      .filter((item: any) => productPriceMap.has(item.product_id))
+      .map((item: any) => {
+        const authoritativePrice = productPriceMap.get(item.product_id) || 0;
+        totalAmount += item.quantity * authoritativePrice;
+
+        return {
+          quote_id: id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: authoritativePrice,
+        };
+      });
+
+    if (itemsToInsert.length === 0) {
+      throw new DatabaseError('No valid items for quote update');
+    }
+
+    // Update Quote
+    const { error: quoteError } = await adminSupabase
+      .from('quotes')
+      .update({
+        customer_id: payload.customer_id,
+        status: payload.status,
+        notes: payload.notes,
+        total_amount: totalAmount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (quoteError) {
+      logger.error('Failed to update quote', quoteError);
+      throw new DatabaseError('Failed to update quote');
+    }
+
+    // Delete existing items and insert new ones
+    await adminSupabase.from('quote_items').delete().eq('quote_id', id);
+
+    const { error: itemsError } = await adminSupabase
+      .from('quote_items')
+      .insert(itemsToInsert);
+
+    if (itemsError) {
+      logger.error('Failed to update quote items', itemsError);
+      throw new DatabaseError('Failed to update quote items');
+    }
+
+    return true;
+  }
 }

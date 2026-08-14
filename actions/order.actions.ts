@@ -7,114 +7,95 @@ import {
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
+import { createSafeAction } from '@/lib/actions/withErrorHandling';
 
 /**
  * Generates a unique, human-readable invoice number.
- * Format: INV-YYYYMMDD-XXXX (e.g. INV-20260726-4829)
- * Uses a random 4-digit suffix to avoid collisions (good enough for typical volume).
  */
-export async function generateInvoiceNumberAction(): Promise<string> {
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+export const generateInvoiceNumberAction = createSafeAction(
+  'generateInvoiceNumberAction',
+  async (): Promise<string> => {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .like('invoice_number', `INV-${dateStr}-%`);
 
-  // Check existing invoices with same date prefix to avoid any duplicate numbers
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from('orders')
-    .select('id', { count: 'exact', head: true })
-    .like('invoice_number', `INV-${dateStr}-%`);
-
-  // Base off count + random offset for uniqueness
-  const seq = 1000 + (count || 0) + Math.floor(Math.random() * 100);
-  return `INV-${dateStr}-${seq}`;
-}
+    const seq = 1000 + (count || 0) + Math.floor(Math.random() * 100);
+    return `INV-${dateStr}-${seq}`;
+  }
+);
 
 /**
  * Creates a public order from the checkout flow.
  * No authentication required — this is for guest customers.
  */
-export async function createPublicOrderAction(payload: CreateOrderPayload) {
-  try {
-    // Validate cart is not empty
+export const createPublicOrderAction = createSafeAction(
+  'createPublicOrderAction',
+  async (payload: CreateOrderPayload) => {
     if (!payload.items || payload.items.length === 0) {
-      return {
-        success: false,
-        error: 'Cart is empty. Please add items before ordering.',
-      };
+      throw new Error('Cart is empty. Please add items before ordering.');
     }
-
-    // Validate total amount
     if (!payload.totalAmount || payload.totalAmount <= 0) {
-      return { success: false, error: 'Invalid order total.' };
+      throw new Error('Invalid order total.');
     }
 
     const order = await OrderRepository.createOrder(payload);
     revalidatePath('/dashboard/orders');
-    return { success: true, data: { orderId: order.id } };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message || 'Failed to create order. Please try again.',
-    };
+    return { orderId: order.id };
   }
-}
+);
 
 /**
  * Fetches a single order by ID (for invoice generation and order confirmation).
  */
-export async function fetchOrderByIdAction(orderId: string) {
-  try {
+export const fetchOrderByIdAction = createSafeAction(
+  'fetchOrderByIdAction',
+  async (orderId: string) => {
     await verifyAdminServerAction();
-    const order = await OrderRepository.getOrderById(orderId);
-    return { success: true, data: order };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Order not found' };
+    return await OrderRepository.getOrderById(orderId);
   }
-}
+);
 
 /**
  * Marks an order's WhatsApp status as sent.
  */
-export async function markOrderWhatsAppSentAction(orderId: string) {
-  try {
+export const markOrderWhatsAppSentAction = createSafeAction(
+  'markOrderWhatsAppSentAction',
+  async (orderId: string) => {
     await verifyAdminServerAction();
     await OrderRepository.markWhatsAppSent(orderId);
     revalidatePath('/dashboard/orders');
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    return true;
   }
-}
+);
 
 /**
  * Updates an order's status (e.g. PENDING -> SHIPPED).
  */
-export async function updateOrderStatusAction(orderId: string, status: string) {
-  try {
+export const updateOrderStatusAction = createSafeAction(
+  'updateOrderStatusAction',
+  async (orderId: string, status: string) => {
     await verifyAdminServerAction();
     const order = await OrderRepository.updateOrderStatus(orderId, status);
     revalidatePath('/dashboard/orders');
-    return { success: true, data: order };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    return order;
   }
-}
+);
 
 /**
  * Updates an order's payment status (e.g. UNPAID -> PAID).
  */
-export async function updateOrderPaymentStatusAction(
-  orderId: string,
-  paymentStatus: string
-) {
-  try {
+export const updateOrderPaymentStatusAction = createSafeAction(
+  'updateOrderPaymentStatusAction',
+  async (orderId: string, paymentStatus: string) => {
     await verifyAdminServerAction();
     const order = await OrderRepository.updateOrderPaymentStatus(
       orderId,
       paymentStatus
     );
     revalidatePath('/dashboard/orders');
-    return { success: true, data: order };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    return order;
   }
-}
+);

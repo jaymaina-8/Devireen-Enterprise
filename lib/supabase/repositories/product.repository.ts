@@ -172,9 +172,7 @@ export class ProductRepository {
 
     if (error) {
       logger.error('Failed to create product', error);
-      throw new DatabaseError(
-        `Database error while creating product: ${error.message}`
-      );
+      throw new DatabaseError('Database error while creating product');
     }
 
     // Insert categories if not all categories
@@ -215,9 +213,7 @@ export class ProductRepository {
 
     if (error) {
       logger.error(`Failed to update product with id: ${id}`, error);
-      throw new DatabaseError(
-        `Database error while updating product: ${error.message}`
-      );
+      throw new DatabaseError('Database error while updating product');
     }
 
     // Update categories

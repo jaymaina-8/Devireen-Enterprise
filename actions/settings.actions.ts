@@ -4,9 +4,11 @@ import { SettingsRepository } from '@/lib/supabase/repositories/settings.reposit
 import { settingsSchema } from '@/lib/validation/settings.schema';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
+import { createSafeAction } from '@/lib/actions/withErrorHandling';
 
-export async function updateSettingsAction(formData: FormData) {
-  try {
+export const updateSettingsAction = createSafeAction(
+  'updateSettingsAction',
+  async (formData: FormData) => {
     await verifyAdminServerAction();
     const rawData = {
       company_name: formData.get('company_name'),
@@ -32,17 +34,13 @@ export async function updateSettingsAction(formData: FormData) {
     await SettingsRepository.updateSettings(validatedData);
 
     revalidatePath('/', 'layout'); // Revalidate everything
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Validation failed' };
+    return true;
   }
-}
+);
 
-export async function fetchSettingsAction() {
-  try {
-    const settings = await SettingsRepository.getSettings();
-    return { success: true, data: settings };
-  } catch (error) {
-    return { success: false, error: 'Failed to load settings' };
+export const fetchSettingsAction = createSafeAction(
+  'fetchSettingsAction',
+  async () => {
+    return await SettingsRepository.getSettings();
   }
-}
+);

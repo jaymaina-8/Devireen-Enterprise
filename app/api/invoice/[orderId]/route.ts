@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OrderRepository } from '@/lib/supabase/repositories/order.repository';
 import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 import { generateInvoicePDF } from '@/lib/services/invoice.service';
+import { AppError } from '@/lib/errors/AppError';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -41,9 +43,18 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error('Invoice generation error:', error);
+    if (error instanceof AppError) {
+      if (error.statusCode >= 500) {
+        logger.error('Invoice generation AppError:', error);
+      } else {
+        logger.warn('Invoice generation AppError:', error);
+      }
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+
+    logger.error('Invoice generation error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate invoice. Please try again.' },
+      { error: 'An unexpected error occurred. Please try again.' },
       { status: 500 }
     );
   }

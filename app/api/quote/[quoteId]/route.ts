@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 import { generateQuotePDF } from '@/lib/services/quote.service';
+import { AppError } from '@/lib/errors/AppError';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -46,9 +48,18 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error('Quote generation error:', error);
+    if (error instanceof AppError) {
+      if (error.statusCode >= 500) {
+        logger.error('Quote generation AppError:', error);
+      } else {
+        logger.warn('Quote generation AppError:', error);
+      }
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+
+    logger.error('Quote generation error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate quote. Please try again.' },
+      { error: 'An unexpected error occurred. Please try again.' },
       { status: 500 }
     );
   }

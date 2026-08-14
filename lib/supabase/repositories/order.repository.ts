@@ -75,9 +75,7 @@ export class OrderRepository {
       });
     }
 
-    // 3. Insert Order
-    // Since RLS blocks public INSERT using standard client, use admin client
-    // because this is an unauthenticated guest checkout flow.
+    // 3. Insert Order and Items Atomically via RPC
     const adminSupabase = await createAdminClient();
 
     const orderData: Record<string, any> = {
@@ -100,35 +98,20 @@ export class OrderRepository {
       orderData.shipping_address = payload.deliveryAddress;
     }
 
-    const { data: order, error: orderError } = await adminSupabase
-      .from('orders')
-      .insert(orderData)
-      .select('id')
-      .single();
+    const { data: orderId, error: rpcError } = await adminSupabase.rpc(
+      'create_order_rpc',
+      {
+        p_order_data: orderData,
+        p_order_items: safeOrderItems,
+      }
+    );
 
-    if (orderError || !order) {
-      logger.error('Failed to create order', orderError);
-      throw new DatabaseError(`Failed to create order: ${orderError?.message}`);
+    if (rpcError || !orderId) {
+      logger.error('Failed to create atomic order via RPC', rpcError);
+      throw new DatabaseError('Failed to create order. Please try again.');
     }
 
-    // 4. Insert Order Items
-    const itemsToInsert = safeOrderItems.map((item) => ({
-      ...item,
-      order_id: order.id,
-    }));
-
-    const { error: itemsError } = await adminSupabase
-      .from('order_items')
-      .insert(itemsToInsert);
-
-    if (itemsError) {
-      logger.error('Failed to create order items', itemsError);
-      throw new DatabaseError(
-        `Failed to create order items: ${itemsError.message}`
-      );
-    }
-
-    return order;
+    return { id: orderId, ...orderData };
   }
 
   /**
@@ -201,9 +184,7 @@ export class OrderRepository {
 
     if (error) {
       logger.error(`Failed to update order status ${id}`, error);
-      throw new DatabaseError(
-        `Failed to update order status: ${error.message}`
-      );
+      throw new DatabaseError('Failed to update order status');
     }
     return data;
   }
@@ -222,9 +203,7 @@ export class OrderRepository {
 
     if (error) {
       logger.error(`Failed to update order payment status ${id}`, error);
-      throw new DatabaseError(
-        `Failed to update order payment status: ${error.message}`
-      );
+      throw new DatabaseError('Failed to update order payment status');
     }
     return data;
   }

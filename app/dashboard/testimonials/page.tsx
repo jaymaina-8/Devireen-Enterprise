@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function TestimonialsPage() {
   const result = await fetchTestimonialsForAdmin();
-  const testimonials = result.success ? result.data : [];
+  const testimonials = result.success && result.data ? result.data : [];
 
   return (
     <div className="space-y-6">

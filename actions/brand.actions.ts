@@ -5,9 +5,11 @@ import { brandSchema } from '@/lib/validation/brand.schema';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
+import { createSafeAction } from '@/lib/actions/withErrorHandling';
 
-export async function createBrandAction(formData: FormData) {
-  try {
+export const createBrandAction = createSafeAction(
+  'createBrandAction',
+  async (formData: FormData) => {
     await verifyAdminServerAction();
     const rawData = {
       name: formData.get('name'),
@@ -20,15 +22,13 @@ export async function createBrandAction(formData: FormData) {
     await BrandRepository.createBrand(validatedData);
 
     revalidatePath('/dashboard/brands');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Validation failed' };
+    redirect('/dashboard/brands');
   }
+);
 
-  redirect('/dashboard/brands');
-}
-
-export async function updateBrandAction(id: string, formData: FormData) {
-  try {
+export const updateBrandAction = createSafeAction(
+  'updateBrandAction',
+  async (id: string, formData: FormData) => {
     await verifyAdminServerAction();
     const rawData = {
       name: formData.get('name'),
@@ -41,20 +41,16 @@ export async function updateBrandAction(id: string, formData: FormData) {
     await BrandRepository.updateBrand(id, validatedData);
 
     revalidatePath('/dashboard/brands');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Validation failed' };
+    redirect('/dashboard/brands');
   }
+);
 
-  redirect('/dashboard/brands');
-}
-
-export async function deleteBrandAction(id: string) {
-  try {
+export const deleteBrandAction = createSafeAction(
+  'deleteBrandAction',
+  async (id: string) => {
     await verifyAdminServerAction();
     await BrandRepository.deleteBrand(id);
     revalidatePath('/dashboard/brands');
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    return true;
   }
-}
+);
