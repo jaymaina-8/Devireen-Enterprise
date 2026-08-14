@@ -19,6 +19,8 @@
     "@supabase/supabase-js": "^2.110.7",
     "@tanstack/react-table": "^8.21.3",
     "@types/uuid": "^10.0.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.25.0",

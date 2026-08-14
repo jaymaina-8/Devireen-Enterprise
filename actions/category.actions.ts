@@ -6,13 +6,11 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit } from '@/lib/rate-limit';
 
-export const fetchCategories = createSafeAction(
-  'fetchCategories',
-  async () => {
-    return await CategoryRepository.getCategories();
-  }
-);
+export const fetchCategories = createSafeAction('fetchCategories', async () => {
+  return await CategoryRepository.getCategories();
+});
 
 export const fetchCategoryById = createSafeAction(
   'fetchCategoryById',
@@ -24,7 +22,14 @@ export const fetchCategoryById = createSafeAction(
 export const createCategoryAction = createSafeAction(
   'createCategoryAction',
   async (formData: FormData) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const rawData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
@@ -44,7 +49,14 @@ export const createCategoryAction = createSafeAction(
 export const updateCategoryAction = createSafeAction(
   'updateCategoryAction',
   async (id: string, formData: FormData, skipRedirect = false) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const rawData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
@@ -64,12 +76,21 @@ export const updateCategoryAction = createSafeAction(
 export const deleteCategoryAction = createSafeAction(
   'deleteCategoryAction',
   async (id: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const categories = await CategoryRepository.getCategories();
     const targetCategory = categories.find((c) => c.id === id);
 
     if (targetCategory && targetCategory.productCount > 0) {
-      throw new Error('This category contains products. Move or delete those products before deleting the category.');
+      throw new Error(
+        'This category contains products. Move or delete those products before deleting the category.'
+      );
     }
 
     await CategoryRepository.deleteCategory(id);

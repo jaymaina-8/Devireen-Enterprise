@@ -13,6 +13,8 @@ const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Service role key is required'),
   COMPANY_NAME: z.string().min(1).default('Devireen Enterprise'),
   WHATSAPP_NUMBER: z.string().min(1).default('+254708037929'),
+  UPSTASH_REDIS_REST_URL: z.string().url('Must be a valid URL'),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1, 'Upstash token is required'),
 });
 
 const processEnv = {
@@ -24,6 +26,8 @@ const processEnv = {
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
         COMPANY_NAME: process.env.COMPANY_NAME,
         WHATSAPP_NUMBER: process.env.WHATSAPP_NUMBER,
+        UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+        UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
       }
     : {}),
 };
@@ -70,4 +74,12 @@ export const env = {
     typeof window === 'undefined'
       ? processEnv.WHATSAPP_NUMBER || '+254708037929'
       : '+254708037929',
+  UPSTASH_REDIS_REST_URL:
+    typeof window === 'undefined'
+      ? processEnv.UPSTASH_REDIS_REST_URL || 'https://placeholder.upstash.io'
+      : '',
+  UPSTASH_REDIS_REST_TOKEN:
+    typeof window === 'undefined'
+      ? processEnv.UPSTASH_REDIS_REST_TOKEN || 'placeholder'
+      : '',
 };

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit } from '@/lib/rate-limit';
 
 export interface TestimonialInput {
   customer_name: string;
@@ -55,7 +56,14 @@ export const fetchTestimonialsForAdmin = createSafeAction(
 export const createTestimonialAction = createSafeAction(
   'createTestimonialAction',
   async (data: TestimonialInput) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { data: newRecord, error } = await supabase
@@ -89,7 +97,14 @@ export const createTestimonialAction = createSafeAction(
 export const updateTestimonialAction = createSafeAction(
   'updateTestimonialAction',
   async (id: string, data: Partial<TestimonialInput>) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { data: updated, error } = await supabase
@@ -115,7 +130,14 @@ export const updateTestimonialAction = createSafeAction(
 export const deleteTestimonialAction = createSafeAction(
   'deleteTestimonialAction',
   async (id: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -150,7 +172,14 @@ export const toggleFeaturedTestimonialAction = createSafeAction(
 export const reorderTestimonialsAction = createSafeAction(
   'reorderTestimonialsAction',
   async (items: { id: string; display_order: number }[]) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     for (const item of items) {

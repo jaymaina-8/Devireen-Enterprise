@@ -4,16 +4,39 @@ import { SettingsRepository } from '@/lib/supabase/repositories/settings.reposit
 import { generateQuotePDF } from '@/lib/services/quote.service';
 import { AppError } from '@/lib/errors/AppError';
 import { logger } from '@/lib/logger';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ quoteId: string }> }
 ) {
   try {
+    const ip = await getClientIp();
+    const rateLimitResult = await rateLimit(ip, 'PDF_GENERATION');
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(
+              Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+            ),
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          },
+        }
+      );
+    }
+
     const { quoteId } = await params;
 
     if (!quoteId) {
-      return NextResponse.json({ error: 'Quote ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Quote ID is required' },
+        { status: 400 }
+      );
     }
 
     const supabase = await createClient();
@@ -21,7 +44,9 @@ export async function GET(
     // Fetch quote with relations
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
-      .select('*, customers(company_name, contact_email, contact_phone, type), items:quote_items(*)')
+      .select(
+        '*, customers(company_name, contact_email, contact_phone, type), items:quote_items(*)'
+      )
       .eq('id', quoteId)
       .single();
 
@@ -35,7 +60,8 @@ export async function GET(
     // Generate PDF
     const pdfBuffer = await generateQuotePDF(quote, settings);
 
-    const quoteNumber = quote.quote_number || quoteId.substring(0, 8).toUpperCase();
+    const quoteNumber =
+      quote.quote_number || quoteId.substring(0, 8).toUpperCase();
     const filename = `Quotation-${quoteNumber}.pdf`;
 
     return new NextResponse(pdfBuffer.buffer as ArrayBuffer, {
@@ -54,7 +80,10 @@ export async function GET(
       } else {
         logger.warn('Quote generation AppError:', error);
       }
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
     }
 
     logger.error('Quote generation error:', error);

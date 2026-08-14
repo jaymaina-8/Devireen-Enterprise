@@ -4,11 +4,19 @@ import { StorageService } from '@/lib/supabase/storage';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const uploadMediaAction = createSafeAction(
   'uploadMediaAction',
   async (formData: FormData) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const file = formData.get('file') as File;
     const bucket = formData.get('bucket') as string;
 
@@ -42,7 +50,14 @@ export const uploadMediaAction = createSafeAction(
 export const deleteMediaAction = createSafeAction(
   'deleteMediaAction',
   async (bucket: string, path: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     await StorageService.deleteFile(bucket, path);
     revalidatePath('/dashboard/media');
     return true;

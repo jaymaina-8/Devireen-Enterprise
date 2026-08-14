@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const createCustomerAction = createSafeAction(
   'createCustomerAction',
@@ -14,7 +15,14 @@ export const createCustomerAction = createSafeAction(
     contact_email?: string;
     contact_phone?: string;
   }) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -43,7 +51,14 @@ export const createCustomerAction = createSafeAction(
 export const updateCustomerAction = createSafeAction(
   'updateCustomerAction',
   async (id: string, payload: any) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -66,7 +81,14 @@ export const updateCustomerAction = createSafeAction(
 export const deleteCustomerAction = createSafeAction(
   'deleteCustomerAction',
   async (id: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { error } = await supabase

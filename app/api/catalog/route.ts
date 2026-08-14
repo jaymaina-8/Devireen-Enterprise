@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 import { generateCatalogPDF } from '@/lib/services/catalog.service';
 import { fetchProducts } from '@/actions/product.actions';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 /**
  * GET /api/catalog
@@ -11,6 +12,25 @@ import { fetchProducts } from '@/actions/product.actions';
  */
 export async function GET() {
   try {
+    const ip = await getClientIp();
+    const rateLimitResult = await rateLimit(ip, 'PDF_GENERATION');
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(
+              Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+            ),
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          },
+        }
+      );
+    }
+
     // Fetch products and company settings in parallel
     const [{ data: products }, settings] = await Promise.all([
       fetchProducts({ context: 'wholesale' }),

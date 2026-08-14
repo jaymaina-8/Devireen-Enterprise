@@ -1,23 +1,83 @@
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import { env } from '@/lib/env';
+import { logger } from '@/lib/logger';
+import { headers } from 'next/headers';
+
 export interface RateLimitConfig {
   interval: number; // in seconds
   limit: number; // max requests per interval
 }
 
 export type RouteProfile =
-  'AUTH' | 'API' | 'ADMIN' | 'QUOTE' | 'ORDER' | 'DEFAULT';
+  | 'PUBLIC_READ'
+  | 'SEARCH'
+  | 'QUOTE_CREATE'
+  | 'ORDER_CREATE'
+  | 'PDF_GENERATION'
+  | 'AUTH'
+  | 'ADMIN_MUTATION'
+  | 'DEFAULT';
 
 export const RATE_LIMIT_PROFILES: Record<RouteProfile, RateLimitConfig> = {
-  AUTH: { interval: 60, limit: 5 }, // 5 requests per minute
-  API: { interval: 60, limit: 60 }, // 60 requests per minute
-  ADMIN: { interval: 60, limit: 120 }, // 120 requests per minute
-  QUOTE: { interval: 60, limit: 20 }, // 20 requests per minute
-  ORDER: { interval: 60, limit: 10 }, // 10 requests per minute
-  DEFAULT: { interval: 60, limit: 30 }, // 30 requests per minute
+  PUBLIC_READ: { interval: 60, limit: 60 },
+  SEARCH: { interval: 60, limit: 20 },
+  QUOTE_CREATE: { interval: 60, limit: 5 },
+  ORDER_CREATE: { interval: 60, limit: 5 },
+  PDF_GENERATION: { interval: 60, limit: 10 },
+  AUTH: { interval: 60, limit: 5 },
+  ADMIN_MUTATION: { interval: 60, limit: 30 },
+  DEFAULT: { interval: 60, limit: 30 },
 };
 
-// In-memory store for development/preparation.
-// Can be replaced with Redis/Upstash later.
-const ipCache = new Map<string, { count: number; expiresAt: number }>();
+// Only initialize Redis if tokens are present to prevent crashes in CI/build
+const redis =
+  env.UPSTASH_REDIS_REST_URL !== 'https://placeholder.upstash.io' &&
+  env.UPSTASH_REDIS_REST_TOKEN !== 'placeholder'
+    ? new Redis({
+        url: env.UPSTASH_REDIS_REST_URL,
+        token: env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;
+
+const limiters = new Map<RouteProfile, Ratelimit>();
+
+function getLimiter(profile: RouteProfile): Ratelimit | null {
+  if (!redis) return null;
+
+  if (!limiters.has(profile)) {
+    const config = RATE_LIMIT_PROFILES[profile];
+    limiters.set(
+      profile,
+      new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(config.limit, `${config.interval} s`),
+        analytics: true,
+      })
+    );
+  }
+
+  return limiters.get(profile)!;
+}
+
+export async function getClientIp(): Promise<string> {
+  const headersList = await headers();
+  // On Vercel, x-real-ip or x-forwarded-for are reliably set by their proxy.
+  // We prefer x-real-ip as it's the immediate connecting client to Vercel's edge,
+  // preventing arbitrary client spoofing of x-forwarded-for.
+  const forwardedFor = headersList.get('x-forwarded-for');
+  const realIp = headersList.get('x-real-ip');
+
+  if (realIp) {
+    return realIp;
+  }
+
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+
+  return '127.0.0.1'; // Fallback
+}
 
 export async function rateLimit(
   identifier: string, // IP or User ID
@@ -29,37 +89,55 @@ export async function rateLimit(
   reset: number;
 }> {
   const config = RATE_LIMIT_PROFILES[profile];
-  const now = Date.now();
-
-  const record = ipCache.get(identifier);
-
-  if (!record || record.expiresAt < now) {
-    ipCache.set(identifier, {
-      count: 1,
-      expiresAt: now + config.interval * 1000,
-    });
-    return {
-      success: true,
-      limit: config.limit,
-      remaining: config.limit - 1,
-      reset: now + config.interval * 1000,
-    };
-  }
-
-  if (record.count >= config.limit) {
-    return {
-      success: false,
-      limit: config.limit,
-      remaining: 0,
-      reset: record.expiresAt,
-    };
-  }
-
-  record.count += 1;
-  return {
-    success: true,
+  const fallbackResponse = {
+    success: true, // Fail-open by default if Redis is missing/down for most profiles
     limit: config.limit,
-    remaining: config.limit - record.count,
-    reset: record.expiresAt,
+    remaining: config.limit,
+    reset: Date.now() + config.interval * 1000,
   };
+
+  const limiter = getLimiter(profile);
+
+  if (!limiter) {
+    logger.warn(
+      `Redis is not configured. Falling back to fail-open for profile: ${profile}`
+    );
+
+    // Fail-closed for sensitive operations if Redis is missing
+    if (['ORDER_CREATE', 'QUOTE_CREATE', 'ADMIN_MUTATION'].includes(profile)) {
+      logger.error(
+        'Blocking sensitive mutation because rate limiter is unconfigured.'
+      );
+      return { ...fallbackResponse, success: false, remaining: 0 };
+    }
+
+    return fallbackResponse;
+  }
+
+  try {
+    const result = await limiter.limit(`${profile}:${identifier}`);
+
+    if (!result.success) {
+      logger.warn(
+        `Rate limit exceeded for profile ${profile} (ID: ${identifier})`
+      );
+    }
+
+    return {
+      success: result.success,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+    };
+  } catch (error) {
+    logger.error('Upstash Redis rate limit error:', error);
+
+    // Fail-closed for sensitive operations on Redis failure
+    if (['ORDER_CREATE', 'QUOTE_CREATE', 'ADMIN_MUTATION'].includes(profile)) {
+      return { ...fallbackResponse, success: false, remaining: 0 };
+    }
+
+    // Fail-open for public reads
+    return fallbackResponse;
+  }
 }

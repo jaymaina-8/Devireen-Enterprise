@@ -43,12 +43,20 @@ All authentication session cookies (managed via Supabase SSR in `lib/supabase/se
 
 The environment variable configuration (`lib/env.ts`) uses Zod validation to ensure secrets never leak to the client bundle. The `SUPABASE_SERVICE_ROLE_KEY` is explicitly restricted to `typeof window === 'undefined'` environments.
 
-## 6. Rate Limiting Preparation
+## 6. Traffic Management & API Abuse (Phase 3)
 
-An extensible rate-limiting abstraction has been created at `lib/rate-limit.ts`. It is currently powered by an in-memory Map but is designed with specific route profiles (Auth, API, Admin, Quote, Order) to seamlessly plug into Redis/Upstash (and ultimately Cloudflare WAF).
+- **IMPLEMENTED IN CODE:** A distributed rate-limiting architecture using Upstash Redis protects all vulnerable public endpoints and Server Actions.
+- **Profiles:** Distinct profiles (e.g., `PUBLIC_READ`, `PDF_GENERATION`, `ORDER_CREATE`) apply context-aware limits to mitigate DB exhaustion and Vercel compute abuse.
+- **Fail-Open/Closed:** Non-destructive reads fail open during Redis outages, while mutations fail closed to guarantee data integrity.
+- **Identity:** `x-real-ip` and `x-forwarded-for` headers are securely parsed to identify edge clients.
+
+> **REQUIRES CLOUDFLARE DASHBOARD VERIFICATION:**
+> Cloudflare must be configured to cache static assets, enforce WAF rules, and challenge automated traffic targeting `/api/quote/*` and `/api/invoice/*`.
+
+> **REQUIRES PRODUCTION ENVIRONMENT CONFIGURATION:**
+> `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` must be provisioned in the Vercel production environment.
 
 ## Future Hardening Plans
 
-- **Cloudflare Integration:** Enforce WAF rules, DDoS protection, and edge-level IP rate limiting.
 - **Penetration Testing:** Schedule automated vulnerability scanning (e.g., OWASP ZAP) and manual audits.
-- **Nonce Implementation for CSP:** Once Cloudflare or Edge middleware is fully deployed, transition away from `'unsafe-inline'` in `script-src` by injecting cryptographic nonces per request.
+- **Nonce Implementation for CSP:** Transition away from `'unsafe-inline'` in `script-src` by injecting cryptographic nonces per request.

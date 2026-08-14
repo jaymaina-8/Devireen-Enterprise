@@ -5,11 +5,19 @@ import { seoSchema } from '@/lib/validation/seo.schema';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const upsertSeoAction = createSafeAction(
   'upsertSeoAction',
   async (formData: FormData) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const rawData = {
       id: formData.get('id') || undefined,
       entity_type: formData.get('entity_type'),

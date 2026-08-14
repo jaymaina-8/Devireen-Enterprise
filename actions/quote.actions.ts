@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
 
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+
 export const fetchCustomerQuotes = createSafeAction(
   'fetchCustomerQuotes',
   async (customerId: string) => {
@@ -16,6 +18,11 @@ export const fetchCustomerQuotes = createSafeAction(
 export const createQuote = createSafeAction(
   'createQuote',
   async (payload: any) => {
+    const ip = await getClientIp();
+    const rateLimitResult = await rateLimit(ip, 'QUOTE_CREATE');
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     return await QuoteRepository.createQuote(payload);
   }
 );
@@ -23,7 +30,14 @@ export const createQuote = createSafeAction(
 export const createQuoteAction = createSafeAction(
   'createQuoteAction',
   async (payload: any) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     await QuoteRepository.createAdminQuote(payload);
     revalidatePath('/dashboard/quotes');
     return true;
@@ -33,7 +47,14 @@ export const createQuoteAction = createSafeAction(
 export const updateQuoteAction = createSafeAction(
   'updateQuoteAction',
   async (id: string, payload: any) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     await QuoteRepository.updateAdminQuote(id, payload);
     revalidatePath('/dashboard/quotes');
     return true;
@@ -43,7 +64,14 @@ export const updateQuoteAction = createSafeAction(
 export const convertQuoteToOrderAction = createSafeAction(
   'convertQuoteToOrderAction',
   async (quoteId: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createClient();
 
     const { data: orderId, error } = await supabase.rpc(

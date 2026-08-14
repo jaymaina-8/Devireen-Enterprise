@@ -27,6 +27,8 @@ export const generateInvoiceNumberAction = createSafeAction(
   }
 );
 
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+
 /**
  * Creates a public order from the checkout flow.
  * No authentication required — this is for guest customers.
@@ -34,6 +36,12 @@ export const generateInvoiceNumberAction = createSafeAction(
 export const createPublicOrderAction = createSafeAction(
   'createPublicOrderAction',
   async (payload: CreateOrderPayload) => {
+    const ip = await getClientIp();
+    const rateLimitResult = await rateLimit(ip, 'ORDER_CREATE');
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
+
     if (!payload.items || payload.items.length === 0) {
       throw new Error('Cart is empty. Please add items before ordering.');
     }
@@ -64,7 +72,14 @@ export const fetchOrderByIdAction = createSafeAction(
 export const markOrderWhatsAppSentAction = createSafeAction(
   'markOrderWhatsAppSentAction',
   async (orderId: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     await OrderRepository.markWhatsAppSent(orderId);
     revalidatePath('/dashboard/orders');
     return true;
@@ -77,7 +92,14 @@ export const markOrderWhatsAppSentAction = createSafeAction(
 export const updateOrderStatusAction = createSafeAction(
   'updateOrderStatusAction',
   async (orderId: string, status: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const order = await OrderRepository.updateOrderStatus(orderId, status);
     revalidatePath('/dashboard/orders');
     return order;
@@ -90,7 +112,14 @@ export const updateOrderStatusAction = createSafeAction(
 export const updateOrderPaymentStatusAction = createSafeAction(
   'updateOrderPaymentStatusAction',
   async (orderId: string, paymentStatus: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const order = await OrderRepository.updateOrderPaymentStatus(
       orderId,
       paymentStatus

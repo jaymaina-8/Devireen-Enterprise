@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { productSchema } from '@/lib/validation/product.schema';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const fetchProducts = createSafeAction(
   'fetchProducts',
@@ -14,6 +15,11 @@ export const fetchProducts = createSafeAction(
     categorySlug?: string;
     context?: 'retail' | 'wholesale';
   }) => {
+    const ip = await getClientIp();
+    const rateLimitResult = await rateLimit(ip, 'PUBLIC_READ');
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     return await ProductRepository.getProducts(params);
   }
 );
@@ -21,6 +27,11 @@ export const fetchProducts = createSafeAction(
 export const fetchProductBySlug = createSafeAction(
   'fetchProductBySlug',
   async (slug: string) => {
+    const ip = await getClientIp();
+    const rateLimitResult = await rateLimit(ip, 'PUBLIC_READ');
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     return await ProductRepository.getProductBySlug(slug);
   }
 );
@@ -41,7 +52,14 @@ export const fetchProductsForAdmin = createSafeAction(
 export const createProductAction = createSafeAction(
   'createProductAction',
   async (productData: any) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const validData = productSchema.parse(productData);
     const product = await ProductRepository.createProduct(validData);
     revalidatePath('/dashboard/products');
@@ -53,7 +71,14 @@ export const createProductAction = createSafeAction(
 export const updateProductAction = createSafeAction(
   'updateProductAction',
   async (id: string, productData: any) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const validData = productSchema.parse(productData);
     const product = await ProductRepository.updateProduct(id, validData);
     revalidatePath('/dashboard/products');
@@ -66,7 +91,14 @@ export const updateProductAction = createSafeAction(
 export const deleteProductAction = createSafeAction(
   'deleteProductAction',
   async (id: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     await ProductRepository.deleteProduct(id);
     revalidatePath('/dashboard/products');
     revalidatePath('/products');
@@ -77,7 +109,14 @@ export const deleteProductAction = createSafeAction(
 export const addProductImageRecord = createSafeAction(
   'addProductImageRecord',
   async (imageData: any) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createAdminClient();
     const { data, error } = await supabase
       .from('product_images')
@@ -94,7 +133,14 @@ export const addProductImageRecord = createSafeAction(
 export const deleteProductImageRecord = createSafeAction(
   'deleteProductImageRecord',
   async (imageId: string, productId: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createAdminClient();
     const { error } = await supabase
       .from('product_images')
@@ -110,7 +156,14 @@ export const deleteProductImageRecord = createSafeAction(
 export const setPrimaryProductImageRecord = createSafeAction(
   'setPrimaryProductImageRecord',
   async (imageId: string, productId: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const supabase = await createAdminClient();
 
     // First, set all to false

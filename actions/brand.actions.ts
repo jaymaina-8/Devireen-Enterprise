@@ -6,11 +6,19 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const createBrandAction = createSafeAction(
   'createBrandAction',
   async (formData: FormData) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const rawData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
@@ -29,7 +37,14 @@ export const createBrandAction = createSafeAction(
 export const updateBrandAction = createSafeAction(
   'updateBrandAction',
   async (id: string, formData: FormData) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     const rawData = {
       name: formData.get('name'),
       slug: formData.get('slug'),
@@ -48,7 +63,14 @@ export const updateBrandAction = createSafeAction(
 export const deleteBrandAction = createSafeAction(
   'deleteBrandAction',
   async (id: string) => {
-    await verifyAdminServerAction();
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
     await BrandRepository.deleteBrand(id);
     revalidatePath('/dashboard/brands');
     return true;
