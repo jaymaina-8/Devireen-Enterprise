@@ -49,16 +49,6 @@ export async function generateMetadata(): Promise<Metadata> {
         'max-snippet': -1,
       },
     },
-    icons: {
-      icon: [
-        { url: '/favicon.ico', sizes: 'any' },
-        { url: '/icon.png', type: 'image/png' },
-        { url: '/favicon.png', type: 'image/png' },
-        { url: '/images/google-logo.png', type: 'image/png' },
-      ],
-      shortcut: '/favicon.ico',
-      apple: [{ url: '/apple-icon.png', type: 'image/png' }],
-    },
     openGraph: {
       type: 'website',
       locale: 'en_KE',
