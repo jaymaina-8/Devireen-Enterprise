@@ -82,11 +82,45 @@ export function Footer({ settings }: { settings?: any }) {
               </a>
               {/* Instagram */}
               <a
-                href={settings?.instagram_url || '#'}
+                href={
+                  settings?.instagram_url ||
+                  'https://www.instagram.com/devireenenterprise/'
+                }
                 aria-label="Instagram"
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-gray-400 transition-all hover:bg-pink-600 hover:text-white"
               >
-                <Share2 className="h-3.5 w-3.5" />
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+              </a>
+              {/* TikTok */}
+              <a
+                href={
+                  settings?.tiktok_url ||
+                  'https://www.tiktok.com/@devireenstationary'
+                }
+                aria-label="TikTok"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-gray-400 transition-all hover:bg-black hover:text-white"
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 2.23-1.15 4.38-2.92 5.75-1.7 1.34-3.95 1.71-6.02 1.25-2.07-.46-3.83-1.87-4.82-3.71-.97-1.81-1.07-4.04-.3-5.94.75-1.86 2.31-3.26 4.18-3.87 1.25-.41 2.61-.43 3.88-.13v4.11c-.51-.15-1.06-.2-1.58-.1-.95.18-1.78.85-2.18 1.73-.41.87-.33 1.95.19 2.74.52.8 1.44 1.23 2.39 1.21.93-.02 1.8-.52 2.29-1.32.48-.8.61-1.78.58-2.71-.03-5.26-.01-10.51-.02-15.77z" />
+                </svg>
               </a>
               {/* WhatsApp */}
               <a
