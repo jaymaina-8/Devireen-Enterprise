@@ -1,6 +1,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { DatabaseError } from '@/lib/errors/DatabaseError';
 import { logger } from '@/lib/logger';
+import type { AdminQuoteInput } from '@/lib/validation/quote.schema';
 
 export class QuoteRepository {
   static async getQuotesByCustomer(customerId: string) {
@@ -27,48 +28,132 @@ export class QuoteRepository {
     const adminSupabase = await createAdminClient();
     const sessionId = Math.random().toString(36).substring(2, 15);
 
-    // Fetch authoritative product prices
-    const productIds = payload.items.map((i: any) => i.productId);
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('id, price, sale_price')
-      .in('id', productIds)
-      .is('deleted_at', null)
-      .eq('is_active', true);
-
-    if (productsError) {
-      logger.error('Failed to retrieve products for quote', productsError);
-      throw new DatabaseError('Failed to validate products');
-    }
-
-    if (!products || products.length === 0) {
-      throw new DatabaseError('No valid products found for this quote');
-    }
-
-    const productPriceMap = new Map(
-      products.map((p) => [
-        p.id,
-        p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
-      ])
-    );
-
-    // Calculate total amount securely
     let totalAmount = 0;
-    const quoteItemsData = payload.items
-      .filter((item: any) => productPriceMap.has(item.productId))
-      .map((item: any) => {
-        const authoritativePrice = productPriceMap.get(item.productId) || 0;
-        totalAmount += item.quantity * authoritativePrice;
+    let quoteItemsData: any[] = [];
 
-        return {
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: authoritativePrice,
-        };
-      });
+    if (Array.isArray(payload.items) && payload.items.length > 0) {
+      // Fetch authoritative product prices
+      const productIds = payload.items
+        .map((i: any) => i.productId)
+        .filter(Boolean);
+      if (productIds.length > 0) {
+        const { data: products, error: productsError } = await supabase
+          .from('products')
+          .select('id, price, sale_price')
+          .in('id', productIds)
+          .is('deleted_at', null)
+          .eq('is_active', true);
 
-    if (quoteItemsData.length === 0) {
-      throw new DatabaseError('No valid items for quote creation');
+        if (productsError) {
+          logger.error('Failed to retrieve products for quote', productsError);
+          throw new DatabaseError('Failed to validate products');
+        }
+
+        if (products && products.length > 0) {
+          const productPriceMap = new Map(
+            products.map((p) => [
+              p.id,
+              p.sale_price !== null && p.sale_price > 0
+                ? p.sale_price
+                : p.price || 0,
+            ])
+          );
+
+          quoteItemsData = payload.items
+            .filter((item: any) => productPriceMap.has(item.productId))
+            .map((item: any) => {
+              const authoritativePrice =
+                productPriceMap.get(item.productId) || 0;
+              totalAmount += item.quantity * authoritativePrice;
+
+              return {
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: authoritativePrice,
+              };
+            });
+        }
+      }
+    }
+
+    if (
+      quoteItemsData.length === 0 &&
+      (!payload.notes || payload.notes.trim().length === 0)
+    ) {
+      throw new DatabaseError(
+        'Please select products or specify your quotation requirements in the notes field.'
+      );
+    }
+
+    let vatRate = 16;
+    try {
+      const { data: settings, error: settingsError } = await adminSupabase
+        .from('settings')
+        .select('enable_vat, vat_rate')
+        .limit(1)
+        .maybeSingle();
+
+      if (settingsError) {
+        logger.warn(
+          'Failed to retrieve VAT settings for quote, defaulting to 16%',
+          settingsError
+        );
+      } else if (settings) {
+        vatRate =
+          settings.enable_vat === false ? 0 : Number(settings.vat_rate ?? 16);
+      }
+    } catch (err) {
+      logger.warn('Error fetching settings for quote tax, using 16%', err);
+    }
+
+    const vatAmount = Number(((totalAmount * vatRate) / 100).toFixed(2));
+
+    // Find or create customer record for this quote
+    let customerId: string | null = null;
+    try {
+      const email = payload.email?.trim() || '';
+      const phone = payload.phone?.trim() || '';
+
+      if (email || phone) {
+        let query = adminSupabase.from('customers').select('id').limit(1);
+        if (email && phone) {
+          query = query.or(
+            `contact_email.eq.${email},contact_phone.eq.${phone}`
+          );
+        } else if (email) {
+          query = query.eq('contact_email', email);
+        } else {
+          query = query.eq('contact_phone', phone);
+        }
+
+        const { data: existingCustomer } = await query.maybeSingle();
+        if (existingCustomer?.id) {
+          customerId = existingCustomer.id;
+        } else {
+          const { data: newCustomer, error: newCustErr } = await adminSupabase
+            .from('customers')
+            .insert({
+              company_name:
+                payload.companyName || payload.contactName || 'Direct Customer',
+              contact_name:
+                payload.contactName || payload.companyName || 'Direct Customer',
+              contact_email: email || null,
+              contact_phone: phone || null,
+              type: payload.companyName ? 'WHOLESALE' : 'RETAIL',
+            })
+            .select('id')
+            .single();
+
+          if (!newCustErr && newCustomer?.id) {
+            customerId = newCustomer.id;
+          }
+        }
+      }
+    } catch (custErr) {
+      logger.warn(
+        'Failed to find or create customer record for quote',
+        custErr
+      );
     }
 
     // Insert Quote via admin client to bypass RLS
@@ -76,9 +161,13 @@ export class QuoteRepository {
       .from('quotes')
       .insert({
         session_id: sessionId,
-        status: 'DRAFT',
+        customer_id: customerId,
+        status: 'PENDING',
         notes: `Company: ${payload.companyName || 'N/A'}\nContact: ${payload.contactName}\nEmail: ${payload.email}\nPhone: ${payload.phone}\nNotes: ${payload.notes || ''}`,
-        total_amount: totalAmount,
+        subtotal_amount: totalAmount,
+        vat_rate: vatRate,
+        vat_amount: vatAmount,
+        total_amount: totalAmount + vatAmount,
       })
       .select()
       .single();
@@ -103,168 +192,87 @@ export class QuoteRepository {
       throw new DatabaseError('Failed to create quote items');
     }
 
+    // Insert alert in activity logs for dashboard attendant notification
+    try {
+      await adminSupabase.from('activity_logs').insert({
+        action: 'created',
+        entity_type: 'quote',
+        entity_id: quote.id,
+        details: {
+          customer_name: payload.contactName,
+          company_name: payload.companyName || 'Direct Customer',
+          total_amount: totalAmount + vatAmount,
+          quote_number: quote.quote_number || quote.id.slice(0, 8),
+          item_count: quoteItemsData.length,
+        },
+      });
+    } catch (logErr) {
+      logger.warn('Failed to insert activity log for quote creation', logErr);
+    }
+
     return quote;
   }
 
-  static async createAdminQuote(payload: any) {
+  static async createAdminQuote(payload: AdminQuoteInput) {
     const supabase = await createClient();
-    const adminSupabase = await createAdminClient();
-
-    // Fetch authoritative product prices
-    const productIds = payload.items.map((i: any) => i.product_id);
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('id, price, sale_price')
-      .in('id', productIds)
-      .is('deleted_at', null)
-      .eq('is_active', true);
-
-    if (productsError) {
-      logger.error('Failed to retrieve valid products for quote', productsError);
-      throw new DatabaseError('Failed to validate products');
-    }
-
-    if (!products || products.length === 0) {
-      throw new DatabaseError('No valid products found for this quote');
-    }
-
-    const productPriceMap = new Map(
-      products.map((p) => [
-        p.id,
-        p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
-      ])
+    const { data: quoteId, error } = await supabase.rpc(
+      'create_admin_quote_rpc',
+      {
+        p_customer_id: payload.customer_id,
+        p_status: payload.status,
+        p_notes: payload.notes || null,
+        p_items: payload.items,
+      }
     );
 
-    // Calculate total amount securely
-    let totalAmount = 0;
-    const itemsToInsert = payload.items
-      .filter((item: any) => productPriceMap.has(item.product_id))
-      .map((item: any) => {
-        const authoritativePrice = productPriceMap.get(item.product_id) || 0;
-        totalAmount += item.quantity * authoritativePrice;
-
-        return {
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: authoritativePrice,
-        };
-      });
-
-    if (itemsToInsert.length === 0) {
-      throw new DatabaseError('No valid items for quote creation');
-    }
-
-    // Insert Quote
-    const { data: quote, error: quoteError } = await adminSupabase
-      .from('quotes')
-      .insert({
-        customer_id: payload.customer_id,
-        status: payload.status,
-        notes: payload.notes,
-        total_amount: totalAmount,
-      })
-      .select('id')
-      .single();
-
-    if (quoteError || !quote) {
-      logger.error('Failed to create quote', quoteError);
+    if (error || !quoteId) {
+      logger.error('Failed to create atomic admin quote', error);
       throw new DatabaseError('Failed to create quote');
     }
 
-    // Insert Items
-    const finalItemsToInsert = itemsToInsert.map((item: any) => ({
-      ...item,
-      quote_id: quote.id,
-    }));
-
-    const { error: itemsError } = await adminSupabase
-      .from('quote_items')
-      .insert(finalItemsToInsert);
-
-    if (itemsError) {
-      logger.error('Failed to create quote items', itemsError);
-      throw new DatabaseError('Failed to create quote items');
-    }
-
-    return quote;
+    return { id: quoteId };
   }
 
-  static async updateAdminQuote(id: string, payload: any) {
+  static async updateAdminQuote(id: string, payload: AdminQuoteInput) {
     const supabase = await createClient();
-    const adminSupabase = await createAdminClient();
+    const { error } = await supabase.rpc('update_admin_quote_rpc', {
+      p_quote_id: id,
+      p_customer_id: payload.customer_id,
+      p_status: payload.status,
+      p_notes: payload.notes || null,
+      p_items: payload.items,
+    });
 
-    // Fetch authoritative product prices
-    const productIds = payload.items.map((i: any) => i.product_id);
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('id, price, sale_price')
-      .in('id', productIds)
-      .is('deleted_at', null)
-      .eq('is_active', true);
-
-    if (productsError) {
-      logger.error('Failed to retrieve valid products for quote update', productsError);
-      throw new DatabaseError('Failed to validate products');
-    }
-
-    if (!products || products.length === 0) {
-      throw new DatabaseError('No valid products found for this quote update');
-    }
-
-    const productPriceMap = new Map(
-      products.map((p) => [
-        p.id,
-        p.sale_price !== null && p.sale_price > 0 ? p.sale_price : p.price || 0,
-      ])
-    );
-
-    // Calculate new total securely
-    let totalAmount = 0;
-    const itemsToInsert = payload.items
-      .filter((item: any) => productPriceMap.has(item.product_id))
-      .map((item: any) => {
-        const authoritativePrice = productPriceMap.get(item.product_id) || 0;
-        totalAmount += item.quantity * authoritativePrice;
-
-        return {
-          quote_id: id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: authoritativePrice,
-        };
-      });
-
-    if (itemsToInsert.length === 0) {
-      throw new DatabaseError('No valid items for quote update');
-    }
-
-    // Update Quote
-    const { error: quoteError } = await adminSupabase
-      .from('quotes')
-      .update({
-        customer_id: payload.customer_id,
-        status: payload.status,
-        notes: payload.notes,
-        total_amount: totalAmount,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
-
-    if (quoteError) {
-      logger.error('Failed to update quote', quoteError);
+    if (error) {
+      logger.error('Failed to update atomic admin quote', error);
       throw new DatabaseError('Failed to update quote');
     }
 
-    // Delete existing items and insert new ones
-    await adminSupabase.from('quote_items').delete().eq('quote_id', id);
+    return true;
+  }
 
-    const { error: itemsError } = await adminSupabase
-      .from('quote_items')
-      .insert(itemsToInsert);
+  static async deleteQuote(id: string) {
+    const supabase = await createAdminClient();
+    // Soft delete quote first
+    const { error: softError } = await supabase
+      .from('quotes')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
 
-    if (itemsError) {
-      logger.error('Failed to update quote items', itemsError);
-      throw new DatabaseError('Failed to update quote items');
+    if (softError) {
+      logger.warn(
+        'Soft delete failed on quote, attempting hard delete',
+        softError
+      );
+      const { error: hardError } = await supabase
+        .from('quotes')
+        .delete()
+        .eq('id', id);
+
+      if (hardError) {
+        logger.error(`Failed to delete quote with id ${id}`, hardError);
+        throw new DatabaseError(`Failed to delete quote: ${hardError.message}`);
+      }
     }
 
     return true;

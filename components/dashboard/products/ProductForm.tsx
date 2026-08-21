@@ -164,10 +164,37 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {initialData ? 'Edit Product' : 'Add Product'}
-        </h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {initialData ? 'Edit Product' : 'Add Product'}
+          </h1>
+          <p className="mt-0.5 text-xs text-gray-500">
+            Fill in the product details, images, and pricing below.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            size="sm"
+            className="bg-red-600 font-semibold text-white shadow-sm hover:bg-red-700"
+          >
+            {isSubmitting
+              ? 'Saving...'
+              : initialData
+                ? 'Update Product'
+                : 'Save Product'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 pb-12 lg:grid-cols-3">
@@ -212,11 +239,11 @@ export function ProductForm({
                       id="is_all_categories"
                       checked={isAllCategories}
                       onChange={(e) => setIsAllCategories(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                     />
                     <Label
                       htmlFor="is_all_categories"
-                      className="cursor-pointer font-medium text-blue-700"
+                      className="cursor-pointer font-medium text-red-700"
                     >
                       Apply to All Categories
                     </Label>
@@ -241,7 +268,7 @@ export function ProductForm({
                                 );
                               }
                             }}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                           />
                           {c.name}
                         </label>
@@ -401,7 +428,7 @@ export function ProductForm({
                     id="is_active"
                     name="is_active"
                     defaultChecked={initialData ? initialData.is_active : true}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
                 </div>
                 <p className="text-xs text-gray-500">
@@ -421,7 +448,7 @@ export function ProductForm({
                     defaultChecked={
                       initialData ? initialData.is_featured : false
                     }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
                 </div>
                 <p className="text-xs text-gray-500">
@@ -441,7 +468,7 @@ export function ProductForm({
                     defaultChecked={
                       initialData ? initialData.show_in_retail : true
                     }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
                 </div>
                 <p className="text-xs text-gray-500">
@@ -461,7 +488,7 @@ export function ProductForm({
                     defaultChecked={
                       initialData ? initialData.show_in_wholesale : true
                     }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
                 </div>
                 <p className="text-xs text-gray-500">

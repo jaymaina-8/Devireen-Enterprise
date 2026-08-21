@@ -10,10 +10,12 @@ import {
   HeadphonesIcon,
   CreditCard,
   Building2,
+  MessageCircle,
 } from 'lucide-react';
 
 import { LocalBusinessJsonLd } from '@/lib/seo/structured-data';
 import { SeoContentSection } from '@/components/seo/SeoContentSection';
+import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 
 export const metadata = {
   title: 'Contact Us | Devireen Enterprise Nairobi',
@@ -61,7 +63,14 @@ const departments = [
   },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await SettingsRepository.getSettings();
+  const phone = settings?.phone_numbers?.[0] || '+254 708 037929';
+  const email = settings?.email || 'sales@devireen.co.ke';
+  const whatsapp = settings?.whatsapp_number || '+254 708 037929';
+  const rawWhatsapp = whatsapp.replace(/[^\d]/g, '');
+  const cleanPhone = phone.replace(/\s/g, '');
+
   return (
     <div className="flex min-h-screen flex-col">
       <LocalBusinessJsonLd />
@@ -110,14 +119,14 @@ export default function ContactPage() {
                   <div className="text-text-muted space-y-2 text-xs">
                     <a
                       href={`mailto:${dept.email}`}
-                      className="hover:text-primary-600 flex cursor-pointer items-center gap-2 transition-colors"
+                      className="hover:text-primary-600 flex cursor-pointer items-center gap-2 font-medium transition-colors"
                     >
                       <Mail className="h-3.5 w-3.5 shrink-0" />
                       <span>{dept.email}</span>
                     </a>
                     <a
                       href={`tel:${dept.phone.replace(/\s/g, '')}`}
-                      className="hover:text-primary-600 flex cursor-pointer items-center gap-2 transition-colors"
+                      className="hover:text-primary-600 flex cursor-pointer items-center gap-2 font-medium transition-colors"
                     >
                       <Phone className="h-3.5 w-3.5 shrink-0" />
                       <span>{dept.phone}</span>
@@ -157,7 +166,7 @@ export default function ContactPage() {
                         Office Address
                       </h4>
                       <p className="text-text-muted text-sm">
-                        Nairobi CBD, Kenya
+                        {settings?.physical_address || 'Nairobi CBD, Kenya'}
                       </p>
                     </div>
                   </div>
@@ -170,7 +179,12 @@ export default function ContactPage() {
                       <h4 className="text-text-main text-sm font-semibold">
                         Phone
                       </h4>
-                      <p className="text-text-muted text-sm">+254 708 037929</p>
+                      <a
+                        href={`tel:${cleanPhone}`}
+                        className="text-text-muted hover:text-primary-600 inline-block text-sm font-medium transition-colors hover:underline"
+                      >
+                        {phone}
+                      </a>
                     </div>
                   </div>
 
@@ -180,11 +194,33 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="text-text-main text-sm font-semibold">
-                        Email
+                        Email Support
                       </h4>
-                      <p className="text-text-muted text-sm">
-                        sales@devireen.co.ke
-                      </p>
+                      <a
+                        href={`mailto:${email}`}
+                        className="text-text-muted hover:text-primary-600 inline-block text-sm font-medium transition-colors hover:underline"
+                      >
+                        {email}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 rounded-lg bg-emerald-100 p-2.5 text-emerald-600">
+                      <MessageCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-text-main text-sm font-semibold">
+                        WhatsApp Hotline
+                      </h4>
+                      <a
+                        href={`https://wa.me/${rawWhatsapp}?text=${encodeURIComponent('Hello Devireen Enterprise, I would like to make an inquiry.')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 transition-colors hover:text-emerald-800 hover:underline"
+                      >
+                        Chat on WhatsApp &rarr;
+                      </a>
                     </div>
                   </div>
 
@@ -197,8 +233,14 @@ export default function ContactPage() {
                         Business Hours
                       </h4>
                       <div className="text-text-muted space-y-0.5 text-sm">
-                        <p>Mon – Fri: 8:00 AM – 6:00 PM</p>
-                        <p>Saturday: 9:00 AM – 2:00 PM</p>
+                        <p>
+                          {settings?.business_hours_weekdays ||
+                            'Mon – Fri: 8:00 AM – 6:00 PM'}
+                        </p>
+                        <p>
+                          {settings?.business_hours_weekends ||
+                            'Saturday: 9:00 AM – 2:00 PM'}
+                        </p>
                         <p>Sunday: Closed</p>
                       </div>
                     </div>

@@ -64,18 +64,30 @@ export const createTestimonialAction = createSafeAction(
     if (!rateLimitResult.success) {
       throw new Error('Too many requests. Please try again later.');
     }
+    if (!data.customer_name || data.customer_name.trim() === '') {
+      throw new Error('Customer name is required.');
+    }
+    if (!data.review || data.review.trim() === '') {
+      throw new Error('Review content is required.');
+    }
+
+    const validatedRating = Math.min(
+      5,
+      Math.max(1, Math.round(Number(data.rating) || 5))
+    );
+
     const supabase = await createClient();
 
     const { data: newRecord, error } = await supabase
       .from('testimonials')
       .insert([
         {
-          customer_name: data.customer_name,
-          company: data.company || null,
-          position: data.position || null,
-          photo_url: data.photo_url || null,
-          rating: data.rating || 5,
-          review: data.review,
+          customer_name: data.customer_name.trim(),
+          company: data.company?.trim() || null,
+          position: data.position?.trim() || null,
+          photo_url: data.photo_url?.trim() || null,
+          rating: validatedRating,
+          review: data.review.trim(),
           is_featured: data.is_featured ?? false,
           is_published: data.is_published ?? true,
           display_order: data.display_order ?? 0,
@@ -105,12 +117,27 @@ export const updateTestimonialAction = createSafeAction(
     if (!rateLimitResult.success) {
       throw new Error('Too many requests. Please try again later.');
     }
+
+    const updatePayload: any = { ...data };
+    if (data.rating !== undefined) {
+      updatePayload.rating = Math.min(
+        5,
+        Math.max(1, Math.round(Number(data.rating) || 5))
+      );
+    }
+    if (data.customer_name !== undefined) {
+      updatePayload.customer_name = data.customer_name.trim();
+    }
+    if (data.review !== undefined) {
+      updatePayload.review = data.review.trim();
+    }
+
     const supabase = await createClient();
 
     const { data: updated, error } = await supabase
       .from('testimonials')
       .update({
-        ...data,
+        ...updatePayload,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)

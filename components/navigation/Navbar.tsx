@@ -97,15 +97,18 @@ export function Navbar({
             Kenya&apos;s Trusted B2B Office &amp; School Supplier
           </p>
           <div className="flex items-center space-x-4">
-            <span>
-              Call us: {settings?.phone_numbers?.[0] || '+254 708 037929'}
-            </span>
-            <Link
-              href="/contact"
-              className="hover:text-primary-600 transition-colors"
+            <a
+              href={`tel:${(settings?.phone_numbers?.[0] || '+254 708 037929').replace(/\s/g, '')}`}
+              className="hover:text-primary-600 font-medium transition-colors"
             >
-              Support
-            </Link>
+              Call us: {settings?.phone_numbers?.[0] || '+254 708 037929'}
+            </a>
+            <a
+              href={`mailto:${settings?.email || 'sales@devireen.co.ke'}`}
+              className="hover:text-primary-600 font-medium transition-colors"
+            >
+              Email Support
+            </a>
           </div>
         </div>
 

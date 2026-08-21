@@ -23,31 +23,7 @@ import { twMerge } from 'tailwind-merge';
 import { useSidebarStore } from '@/hooks/use-sidebar';
 import { useEffect, useState } from 'react';
 
-export interface NavItem {
-  name: string;
-  href: string;
-  icon: any;
-  badge?: string | number;
-  badgeVariant?: 'default' | 'warning' | 'danger' | 'info';
-  shortcut?: string;
-}
-
-const mainNavItems: NavItem[] = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Products', href: '/dashboard/products', icon: Package },
-  { name: 'Categories', href: '/dashboard/categories', icon: Tags },
-  {
-    name: 'Quotes',
-    href: '/dashboard/quotes',
-    icon: FileText,
-    badge: 'New',
-    badgeVariant: 'info',
-  },
-  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { name: 'Customers', href: '/dashboard/customers', icon: Users },
-  { name: 'Testimonials', href: '/dashboard/testimonials', icon: Star },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-];
+import { dashboardNavGroups } from '@/config/navigation';
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -89,7 +65,7 @@ export function Sidebar() {
         {collapsed ? (
           <button
             onClick={toggleCollapsed}
-            className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 font-black text-white shadow-md shadow-blue-500/20 transition-all hover:ring-2 hover:ring-blue-400/50"
+            className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 font-black text-white shadow-md shadow-blue-500/20 transition-all hover:ring-2 hover:ring-blue-400/50"
             title="Expand Sidebar (Ctrl+\\)"
             aria-label="Expand Sidebar"
           >
@@ -104,7 +80,7 @@ export function Sidebar() {
               href="/dashboard"
               className="flex items-center gap-2.5 overflow-hidden"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 font-black text-white shadow-md shadow-blue-500/20">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 font-black text-white shadow-md shadow-blue-500/20">
                 D
               </div>
               <div
@@ -146,95 +122,104 @@ export function Sidebar() {
           collapsed ? 'px-2' : 'px-3'
         )}
       >
-        <div>
-          <div
-            className={clsx(
-              'mb-2 overflow-hidden px-3 text-[10px] font-semibold tracking-wider whitespace-nowrap text-slate-500 uppercase transition-all duration-300 ease-in-out',
-              collapsed ? 'mb-0 max-h-0 py-0 opacity-0' : 'max-h-6 opacity-100'
-            )}
-          >
-            Command Center
-          </div>
+        {dashboardNavGroups.map((group) => (
+          <div key={group.label}>
+            <div
+              className={clsx(
+                'mb-2 overflow-hidden px-3 text-[10px] font-semibold tracking-wider whitespace-nowrap text-slate-500 uppercase transition-all duration-300 ease-in-out',
+                collapsed
+                  ? 'mb-0 max-h-0 py-0 opacity-0'
+                  : 'max-h-6 opacity-100'
+              )}
+            >
+              {group.label}
+            </div>
 
-          <ul className="space-y-1">
-            {mainNavItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== '/dashboard' && pathname.startsWith(item.href));
-              const Icon = item.icon;
+            <ul className="mb-6 space-y-1">
+              {group.items.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== '/dashboard' &&
+                    pathname.startsWith(item.href));
+                const Icon = item.icon;
 
-              return (
-                <li key={item.name} className="group relative">
-                  <Link
-                    href={item.href}
-                    className={twMerge(
-                      clsx(
-                        'relative flex items-center rounded-lg py-2.5 text-sm font-medium transition-all duration-150',
-                        collapsed ? 'justify-center gap-0 px-0' : 'gap-3 px-3',
-                        isActive
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                          : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
-                      )
-                    )}
-                  >
-                    <Icon
+                return (
+                  <li key={item.label} className="group relative">
+                    <Link
+                      href={item.href}
                       className={twMerge(
-                        'h-4 w-4 shrink-0 transition-transform group-hover:scale-110',
-                        isActive ? 'text-white' : 'text-slate-400'
-                      )}
-                    />
-
-                    <span
-                      className={clsx(
-                        'flex-1 truncate overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out',
-                        collapsed ? 'max-w-0 opacity-0' : 'max-w-xs opacity-100'
+                        clsx(
+                          'relative flex items-center rounded-lg py-2.5 text-sm font-medium transition-all duration-150',
+                          collapsed
+                            ? 'justify-center gap-0 px-0'
+                            : 'gap-3 px-3',
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                            : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
+                        )
                       )}
                     >
-                      {item.name}
-                    </span>
+                      <Icon
+                        className={twMerge(
+                          'h-4 w-4 shrink-0 transition-transform group-hover:scale-110',
+                          isActive ? 'text-white' : 'text-slate-400'
+                        )}
+                      />
 
-                    {item.badge && (
                       <span
                         className={clsx(
-                          'shrink-0 overflow-hidden rounded-full px-1.5 py-0.5 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase transition-all duration-300 ease-in-out',
+                          'flex-1 truncate overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out',
                           collapsed
-                            ? 'max-w-0 border-0 px-0 opacity-0'
-                            : 'max-w-xs opacity-100',
-                          item.badgeVariant === 'info' &&
-                            'border border-blue-500/30 bg-blue-500/20 text-blue-400',
-                          item.badgeVariant === 'warning' &&
-                            'border border-amber-500/30 bg-amber-500/20 text-amber-400',
-                          item.badgeVariant === 'danger' &&
-                            'border border-red-500/30 bg-red-500/20 text-red-400',
-                          !item.badgeVariant && 'bg-slate-800 text-slate-300'
+                            ? 'max-w-0 opacity-0'
+                            : 'max-w-xs opacity-100'
                         )}
                       >
-                        {item.badge}
+                        {item.label}
                       </span>
-                    )}
 
-                    {/* Active Bar Indicator */}
-                    {isActive && (
-                      <span className="absolute top-1.5 bottom-1.5 left-0 w-1 rounded-r-full bg-white shadow-sm" />
-                    )}
-                  </Link>
-
-                  {/* Tooltip for Collapsed Sidebar */}
-                  {collapsed && (
-                    <div className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 flex -translate-x-1 -translate-y-1/2 items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-2xl transition-all duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100">
-                      <span>{item.name}</span>
                       {item.badge && (
-                        <span className="py-0.2 rounded-full bg-blue-500 px-1.5 text-[9px] font-bold text-white">
+                        <span
+                          className={clsx(
+                            'shrink-0 overflow-hidden rounded-full px-1.5 py-0.5 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase transition-all duration-300 ease-in-out',
+                            collapsed
+                              ? 'max-w-0 border-0 px-0 opacity-0'
+                              : 'max-w-xs opacity-100',
+                            item.badgeVariant === 'info' &&
+                              'border border-blue-500/30 bg-blue-500/20 text-blue-400',
+                            item.badgeVariant === 'warning' &&
+                              'border border-amber-500/30 bg-amber-500/20 text-amber-400',
+                            item.badgeVariant === 'danger' &&
+                              'border border-red-500/30 bg-red-500/20 text-red-400',
+                            !item.badgeVariant && 'bg-slate-800 text-slate-300'
+                          )}
+                        >
                           {item.badge}
                         </span>
                       )}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+
+                      {/* Active Bar Indicator */}
+                      {isActive && (
+                        <span className="absolute top-1.5 bottom-1.5 left-0 w-1 rounded-r-full bg-white shadow-sm" />
+                      )}
+                    </Link>
+
+                    {/* Tooltip for Collapsed Sidebar */}
+                    {collapsed && (
+                      <div className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 flex -translate-x-1 -translate-y-1/2 items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-2xl transition-all duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100">
+                        <span>{item.label}</span>
+                        {item.badge && (
+                          <span className="py-0.2 rounded-full bg-blue-500 px-1.5 text-[9px] font-bold text-white">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* Footer Profile & Store Link */}
@@ -251,7 +236,7 @@ export function Sidebar() {
           title="View Live Store"
         >
           <span className="flex items-center gap-2">
-            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
             View Live Store
           </span>
           <span className="font-mono text-[10px] text-slate-500">v1.4.0</span>

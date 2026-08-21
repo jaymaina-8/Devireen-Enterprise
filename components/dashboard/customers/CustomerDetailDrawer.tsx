@@ -42,7 +42,7 @@ export function CustomerDetailDrawer({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50 text-base font-bold text-purple-600 shadow-2xs">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-base font-bold text-red-600 shadow-2xs">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
@@ -70,7 +70,7 @@ export function CustomerDetailDrawer({
                 <span className="block text-[10px] text-slate-400">
                   KRA PIN
                 </span>
-                <span className="font-mono font-bold text-blue-400">
+                <span className="font-mono font-bold text-red-400">
                   {customer.kra_pin || 'NOT SET'}
                 </span>
               </div>
@@ -87,7 +87,7 @@ export function CustomerDetailDrawer({
             <Link href={`/dashboard/quotes/new?customer_id=${customer.id}`}>
               <Button
                 size="sm"
-                className="h-8 gap-1.5 bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+                className="h-8 gap-1.5 bg-red-600 text-xs font-semibold text-white shadow-sm hover:bg-red-700"
               >
                 <Plus className="h-3.5 w-3.5" /> Create Quote
               </Button>
@@ -122,7 +122,7 @@ export function CustomerDetailDrawer({
             {/* Past Quotes Timeline */}
             <div className="space-y-3">
               <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-400 text-slate-900 uppercase">
-                <FileText className="h-3.5 w-3.5 text-blue-600" /> Quotation
+                <FileText className="h-3.5 w-3.5 text-red-600" /> Quotation
                 History
               </h3>
               <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-4 text-center text-slate-500">

@@ -106,7 +106,7 @@ export function CategoryModal({
       <div className="animate-in fade-in zoom-in-95 relative w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-            <Folder className="h-4 w-4 text-blue-600" />
+            <Folder className="h-4 w-4 text-red-600" />
             {category ? 'Edit Category' : 'Create Category'}
           </h2>
           <button
@@ -171,7 +171,7 @@ export function CategoryModal({
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
             />
           </div>
 
@@ -187,7 +187,7 @@ export function CategoryModal({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-blue-600 text-xs text-white hover:bg-blue-500"
+              className="rounded-xl bg-red-600 text-xs text-white shadow-sm hover:bg-red-700"
             >
               {isSubmitting
                 ? 'Saving...'

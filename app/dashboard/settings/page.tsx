@@ -7,7 +7,21 @@ export const metadata = {
 };
 
 export default async function SettingsPage() {
-  const settings = (await SettingsRepository.getSettings()) || {};
+  const dbSettings = await SettingsRepository.getSettings();
+  const settings = {
+    company_name: 'Devireen Enterprise',
+    email: 'sales@devireenenterprise.com',
+    phone_numbers: ['+254 708 037 929'],
+    whatsapp_number: '+254 708 037 929',
+    physical_address: 'Enterprise Road, Industrial Area, Nairobi, Kenya',
+    vat_rate: 16,
+    enable_vat: true,
+    business_hours_weekdays: '8:00 AM - 5:00 PM',
+    business_hours_weekends: '8:30 AM - 1:00 PM (Sat), Closed (Sun)',
+    footer_content:
+      'Quotes valid for 30 days. Payment terms 50% deposit, balance on delivery.',
+    ...dbSettings,
+  };
 
   return (
     <div className="max-w-5xl space-y-6">

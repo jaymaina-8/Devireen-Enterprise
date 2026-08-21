@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { OrderTimeline } from '@/components/dashboard/orders/OrderTimeline';
+import { DeleteOrderButton } from '@/components/dashboard/orders/DeleteOrderButton';
 import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 
 export const metadata = {
@@ -154,6 +155,13 @@ export default async function OrderDetailsPage({
               WhatsApp {order.whatsapp_sent && '(Sent ✓)'}
             </Button>
           </a>
+          <DeleteOrderButton
+            orderId={order.id}
+            orderNumber={order.invoice_number || order.id.slice(0, 8)}
+            redirectOnDelete={true}
+            size="md"
+            className="h-10 border-red-200 bg-red-50/60 px-4 text-sm font-semibold text-red-600 transition-colors hover:border-red-600 hover:bg-red-600 hover:text-white"
+          />
         </div>
       </div>
 

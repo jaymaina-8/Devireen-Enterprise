@@ -21,9 +21,10 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-export function SettingsForm({ settings }: { settings: any }) {
+export function SettingsForm({ settings = {} }: { settings: any }) {
   const [activeTab, setActiveTab] = useState('company');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const safeSettings = settings || {};
   const router = useRouter();
   const { addToast } = useToastStore();
 
@@ -49,7 +50,14 @@ export function SettingsForm({ settings }: { settings: any }) {
         });
         router.refresh();
       } else {
-        throw new Error(result.error);
+        const errorMsg = result.validationErrors
+          ? Object.values(result.validationErrors).flat().join(', ')
+          : result.error || 'Failed to update settings';
+        addToast({
+          title: 'Error',
+          description: errorMsg,
+          variant: 'destructive',
+        });
       }
     } catch (error: any) {
       addToast({
@@ -80,7 +88,7 @@ export function SettingsForm({ settings }: { settings: any }) {
               }`}
             >
               <Icon
-                className={`h-4 w-4 ${isActive ? 'text-blue-400' : 'text-slate-400'}`}
+                className={`h-4 w-4 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}
               />
               {sec.label}
             </button>
@@ -193,7 +201,7 @@ export function SettingsForm({ settings }: { settings: any }) {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               <Save className="h-3.5 w-3.5" /> Save Company Profile
             </Button>
@@ -210,7 +218,7 @@ export function SettingsForm({ settings }: { settings: any }) {
         >
           <div className="border-b border-slate-100 pb-3">
             <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <Landmark className="h-4 w-4 text-purple-600" /> Tax & KRA
+              <Landmark className="h-4 w-4 text-blue-600" /> Tax & KRA
               Compliance Settings
             </h2>
             <p className="mt-0.5 text-[11px] text-slate-500">
@@ -270,7 +278,7 @@ export function SettingsForm({ settings }: { settings: any }) {
                   id="enable_vat"
                   name="enable_vat"
                   defaultChecked={settings.enable_vat !== false}
-                  className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
               </div>
               <p className="mt-1 text-[10px] text-slate-400">
@@ -283,7 +291,7 @@ export function SettingsForm({ settings }: { settings: any }) {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               <Save className="h-3.5 w-3.5" /> Save Tax Settings
             </Button>
@@ -346,7 +354,7 @@ export function SettingsForm({ settings }: { settings: any }) {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               <Save className="h-3.5 w-3.5" /> Save Operating Hours
             </Button>
@@ -394,7 +402,7 @@ export function SettingsForm({ settings }: { settings: any }) {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+              className="gap-1.5 rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               <Save className="h-3.5 w-3.5" /> Save Document Defaults
             </Button>

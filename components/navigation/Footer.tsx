@@ -332,11 +332,21 @@ export function Footer({ settings }: { settings?: any }) {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="text-primary-500 h-4 w-4 shrink-0" />
-                <span>{settings?.phone_numbers?.[0] || '+254 708 037929'}</span>
+                <a
+                  href={`tel:${(settings?.phone_numbers?.[0] || '+254 708 037929').replace(/\s/g, '')}`}
+                  className="transition-colors hover:text-white"
+                >
+                  {settings?.phone_numbers?.[0] || '+254 708 037929'}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="text-primary-500 h-4 w-4 shrink-0" />
-                <span>{settings?.email || 'sales@devireen.co.ke'}</span>
+                <a
+                  href={`mailto:${settings?.email || 'sales@devireen.co.ke'}`}
+                  className="transition-colors hover:text-white"
+                >
+                  {settings?.email || 'sales@devireen.co.ke'}
+                </a>
               </li>
             </ul>
 

@@ -134,7 +134,7 @@ export function ProductTableRowActions({ product }: { product: any }) {
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+          className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900"
           onClick={handleDuplicate}
           disabled={isProcessing}
           title="Duplicate"
@@ -147,7 +147,7 @@ export function ProductTableRowActions({ product }: { product: any }) {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 border-blue-200 bg-blue-50/60 px-2.5 text-xs font-semibold text-blue-600 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+            className="h-8 border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
             title="Edit product"
           >
             <Edit className="mr-1 h-3.5 w-3.5" /> Edit

@@ -163,16 +163,63 @@ export class ProductRepository {
     // Extract category data
     const { category_ids, ...restProductData } = productData;
 
+    const payloadToInsert: Record<string, any> = {
+      ...restProductData,
+      brand_id: restProductData.brand_id || null,
+      description: restProductData.description || '',
+      short_description: restProductData.short_description || '',
+      attributes: restProductData.attributes || {},
+    };
+
+    // If legacy schema has category_id column
+    if (category_ids && category_ids.length > 0) {
+      payloadToInsert.category_id = category_ids[0];
+    }
+
     // Insert product
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('products')
-      .insert([restProductData])
+      .insert([payloadToInsert])
       .select()
       .single();
 
+    // If slug collision occurred, append a unique suffix and retry
+    if (error && (error.code === '23505' || error.message?.includes('slug'))) {
+      payloadToInsert.slug = `${payloadToInsert.slug}-${Math.random().toString(36).substring(2, 6)}`;
+      const retryResult = await supabase
+        .from('products')
+        .insert([payloadToInsert])
+        .select()
+        .single();
+      data = retryResult.data;
+      error = retryResult.error;
+    }
+
+    // If category_id column does not exist on newer schemas, retry without category_id
+    if (error && error.message?.includes('category_id')) {
+      delete payloadToInsert.category_id;
+      const retryResult = await supabase
+        .from('products')
+        .insert([payloadToInsert])
+        .select()
+        .single();
+      data = retryResult.data;
+      error = retryResult.error;
+    }
+
     if (error) {
-      logger.error('Failed to create product', error);
-      throw new DatabaseError('Database error while creating product');
+      logger.error('Failed to create product in database', {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      const errorMsg =
+        error.details ||
+        error.hint ||
+        error.message ||
+        'Database error while creating product';
+      throw new DatabaseError(`Failed to create product: ${errorMsg}`);
     }
 
     // Insert categories if not all categories
@@ -181,17 +228,21 @@ export class ProductRepository {
       category_ids &&
       category_ids.length > 0
     ) {
-      const categoryInserts = category_ids.map((id: string) => ({
-        product_id: data.id,
-        category_id: id,
-      }));
+      try {
+        const categoryInserts = category_ids.map((id: string) => ({
+          product_id: data.id,
+          category_id: id,
+        }));
 
-      const { error: catError } = await supabase
-        .from('product_categories')
-        .insert(categoryInserts);
+        const { error: catError } = await supabase
+          .from('product_categories')
+          .insert(categoryInserts);
 
-      if (catError) {
-        logger.error('Failed to assign product categories', catError);
+        if (catError) {
+          logger.warn('Failed to assign product categories junction', catError);
+        }
+      } catch (catErr) {
+        logger.warn('Error inserting product categories', catErr);
       }
     }
 
@@ -204,37 +255,59 @@ export class ProductRepository {
     // Extract category data
     const { category_ids, ...restProductData } = productData;
 
+    const payloadToUpdate: Record<string, any> = {
+      ...restProductData,
+      brand_id: restProductData.brand_id || null,
+      updated_at: new Date().toISOString(),
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .update({ ...restProductData, updated_at: new Date().toISOString() })
+      .update(payloadToUpdate)
       .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      logger.error(`Failed to update product with id: ${id}`, error);
-      throw new DatabaseError('Database error while updating product');
+      logger.error(`Failed to update product with id: ${id}`, {
+        error,
+        message: error.message,
+        details: error.details,
+      });
+      const errorMsg =
+        error.details ||
+        error.hint ||
+        error.message ||
+        'Database error while updating product';
+      throw new DatabaseError(`Failed to update product: ${errorMsg}`);
     }
 
     // Update categories
     if (category_ids) {
-      // First delete existing
-      await supabase.from('product_categories').delete().eq('product_id', id);
+      try {
+        // First delete existing
+        await supabase.from('product_categories').delete().eq('product_id', id);
 
-      // Then insert new ones if not all categories
-      if (!restProductData.is_all_categories && category_ids.length > 0) {
-        const categoryInserts = category_ids.map((cid: string) => ({
-          product_id: id,
-          category_id: cid,
-        }));
+        // Then insert new ones if not all categories
+        if (!restProductData.is_all_categories && category_ids.length > 0) {
+          const categoryInserts = category_ids.map((cid: string) => ({
+            product_id: id,
+            category_id: cid,
+          }));
 
-        const { error: catError } = await supabase
-          .from('product_categories')
-          .insert(categoryInserts);
+          const { error: catError } = await supabase
+            .from('product_categories')
+            .insert(categoryInserts);
 
-        if (catError) {
-          logger.error('Failed to assign product categories', catError);
+          if (catError) {
+            logger.warn(
+              'Failed to assign product categories on update',
+              catError
+            );
+          }
         }
+      } catch (catErr) {
+        logger.warn('Error updating product categories', catErr);
       }
     }
 

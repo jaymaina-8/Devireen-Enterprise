@@ -87,7 +87,7 @@ export function GlobalSearch() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'product':
-        return <Package className="h-4 w-4 text-blue-500" />;
+        return <Package className="h-4 w-4 text-slate-600" />;
       case 'category':
         return <Tags className="h-4 w-4 text-purple-500" />;
       case 'customer':
@@ -139,7 +139,7 @@ export function GlobalSearch() {
                 onKeyDown={handleKeyDown}
               />
               {loading && (
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-red-600" />
               )}
             </div>
 
@@ -166,7 +166,7 @@ export function GlobalSearch() {
                           onClick={() => setIsOpen(false)}
                           className={`flex items-center gap-3 rounded-xl p-3 transition-colors ${
                             isSelected
-                              ? 'bg-blue-50 font-medium text-blue-900'
+                              ? 'bg-red-50 font-medium text-red-900'
                               : 'text-slate-700 hover:bg-slate-50'
                           }`}
                         >

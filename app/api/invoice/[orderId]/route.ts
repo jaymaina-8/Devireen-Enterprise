@@ -5,6 +5,20 @@ import { generateInvoicePDF } from '@/lib/services/invoice.service';
 import { AppError } from '@/lib/errors/AppError';
 import { logger } from '@/lib/logger';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
+import { hasValidInvoiceAccessToken } from '@/lib/security/invoice-access';
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function hasAdminAccess(): Promise<boolean> {
+  try {
+    await verifyAdminServerAction();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -32,11 +46,23 @@ export async function GET(
 
     const { orderId } = await params;
 
-    if (!orderId) {
-      return NextResponse.json(
-        { error: 'Order ID is required' },
-        { status: 400 }
-      );
+    if (!UUID_PATTERN.test(orderId)) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 400 });
+    }
+
+    const isAdmin = await hasAdminAccess();
+    if (!isAdmin) {
+      const accessRecord = await OrderRepository.getInvoiceAccessHash(orderId);
+      const token = request.nextUrl.searchParams.get('token');
+
+      if (
+        !hasValidInvoiceAccessToken(
+          accessRecord?.invoice_access_token_hash,
+          token
+        )
+      ) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
     }
 
     // Fetch order and settings in parallel
@@ -63,7 +89,7 @@ export async function GET(
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Content-Length': String(pdfBuffer.byteLength),
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error: any) {

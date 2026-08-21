@@ -5,12 +5,14 @@ import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
+import { adminQuoteSchema } from '@/lib/validation/quote.schema';
 
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const fetchCustomerQuotes = createSafeAction(
   'fetchCustomerQuotes',
   async (customerId: string) => {
+    await verifyAdminServerAction();
     return await QuoteRepository.getQuotesByCustomer(customerId);
   }
 );
@@ -38,7 +40,8 @@ export const createQuoteAction = createSafeAction(
     if (!rateLimitResult.success) {
       throw new Error('Too many requests. Please try again later.');
     }
-    await QuoteRepository.createAdminQuote(payload);
+    const validPayload = adminQuoteSchema.parse(payload);
+    await QuoteRepository.createAdminQuote(validPayload);
     revalidatePath('/dashboard/quotes');
     return true;
   }
@@ -55,7 +58,8 @@ export const updateQuoteAction = createSafeAction(
     if (!rateLimitResult.success) {
       throw new Error('Too many requests. Please try again later.');
     }
-    await QuoteRepository.updateAdminQuote(id, payload);
+    const validPayload = adminQuoteSchema.parse(payload);
+    await QuoteRepository.updateAdminQuote(id, validPayload);
     revalidatePath('/dashboard/quotes');
     return true;
   }
@@ -90,5 +94,22 @@ export const convertQuoteToOrderAction = createSafeAction(
     revalidatePath('/dashboard/orders');
 
     return { orderId };
+  }
+);
+
+export const deleteQuoteAction = createSafeAction(
+  'deleteQuoteAction',
+  async (quoteId: string) => {
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
+    await QuoteRepository.deleteQuote(quoteId);
+    revalidatePath('/dashboard/quotes');
+    return true;
   }
 );

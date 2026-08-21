@@ -287,7 +287,7 @@ export function TestimonialModal({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-blue-600 text-xs text-white hover:bg-blue-500"
+              className="rounded-xl bg-blue-600 text-xs text-white shadow-sm hover:bg-blue-700"
             >
               {isSubmitting
                 ? 'Saving...'

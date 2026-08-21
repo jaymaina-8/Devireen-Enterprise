@@ -6,7 +6,6 @@ import { MobileSidebar } from '@/components/dashboard/MobileSidebar';
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { Topbar } from '@/components/dashboard/Topbar';
 import { Toaster } from '@/components/ui/Toaster';
-import { FloatingQuickCreate } from '@/components/dashboard/FloatingQuickCreate';
 import { useSidebarStore } from '@/hooks/use-sidebar';
 import { twMerge } from 'tailwind-merge';
 
@@ -21,7 +20,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const collapsed = mounted ? isCollapsed : false;
 
   return (
-    <div className="relative min-h-screen max-w-full overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased selection:bg-blue-500 selection:text-white">
+    <div className="relative min-h-screen max-w-full overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased selection:bg-red-500 selection:text-white">
       {/* Desktop Fixed Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
@@ -45,9 +44,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       {/* Mobile Fixed Bottom Navigation */}
       <MobileBottomNav />
-
-      {/* Floating Speed Dial Quick Create FAB */}
-      <FloatingQuickCreate />
 
       {/* Global Toast Notifications */}
       <Toaster />

@@ -4,14 +4,12 @@ export const settingsSchema = z.object({
   company_name: z.string().min(1, 'Company name is required'),
   logo_url: z
     .string()
-    .url()
     .optional()
     .or(z.literal(''))
     .nullable()
     .transform((val) => val || ''),
   favicon_url: z
     .string()
-    .url()
     .optional()
     .or(z.literal(''))
     .nullable()
@@ -29,7 +27,6 @@ export const settingsSchema = z.object({
     .transform((val) => val || ''),
   email: z
     .string()
-    .email()
     .optional()
     .or(z.literal(''))
     .nullable()
@@ -42,7 +39,6 @@ export const settingsSchema = z.object({
     .transform((val) => val || ''),
   google_maps_url: z
     .string()
-    .url()
     .optional()
     .or(z.literal(''))
     .nullable()
@@ -67,7 +63,6 @@ export const settingsSchema = z.object({
     .transform((val) => val || ''),
   default_og_image: z
     .string()
-    .url()
     .optional()
     .or(z.literal(''))
     .nullable()
@@ -78,7 +73,7 @@ export const settingsSchema = z.object({
     .or(z.literal(''))
     .nullable()
     .transform((val) => val || ''),
-  vat_rate: z.coerce.number().optional().nullable(),
+  vat_rate: z.coerce.number().min(0).max(100).default(16).optional().nullable(),
   enable_vat: z.boolean().default(true).optional().nullable(),
   business_hours_weekdays: z
     .string()

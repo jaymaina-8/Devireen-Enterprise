@@ -79,6 +79,39 @@ export async function getClientIp(): Promise<string> {
   return '127.0.0.1'; // Fallback
 }
 
+const memoryStore = new Map<string, number[]>();
+
+function checkMemoryRateLimit(
+  key: string,
+  limit: number,
+  intervalSeconds: number
+) {
+  const now = Date.now();
+  const windowStart = now - intervalSeconds * 1000;
+  const timestamps = (memoryStore.get(key) || []).filter(
+    (t) => t > windowStart
+  );
+
+  if (timestamps.length >= limit) {
+    return {
+      success: false,
+      limit,
+      remaining: 0,
+      reset: (timestamps[0] || now) + intervalSeconds * 1000,
+    };
+  }
+
+  timestamps.push(now);
+  memoryStore.set(key, timestamps);
+
+  return {
+    success: true,
+    limit,
+    remaining: limit - timestamps.length,
+    reset: now + intervalSeconds * 1000,
+  };
+}
+
 export async function rateLimit(
   identifier: string, // IP or User ID
   profile: RouteProfile = 'DEFAULT'
@@ -89,33 +122,16 @@ export async function rateLimit(
   reset: number;
 }> {
   const config = RATE_LIMIT_PROFILES[profile];
-  const fallbackResponse = {
-    success: true, // Fail-open by default if Redis is missing/down for most profiles
-    limit: config.limit,
-    remaining: config.limit,
-    reset: Date.now() + config.interval * 1000,
-  };
+  const rateLimitKey = `${profile}:${identifier}`;
 
   const limiter = getLimiter(profile);
 
   if (!limiter) {
-    logger.warn(
-      `Redis is not configured. Falling back to fail-open for profile: ${profile}`
-    );
-
-    // Fail-closed for sensitive operations if Redis is missing
-    if (['ORDER_CREATE', 'QUOTE_CREATE', 'ADMIN_MUTATION'].includes(profile)) {
-      logger.error(
-        'Blocking sensitive mutation because rate limiter is unconfigured.'
-      );
-      return { ...fallbackResponse, success: false, remaining: 0 };
-    }
-
-    return fallbackResponse;
+    return checkMemoryRateLimit(rateLimitKey, config.limit, config.interval);
   }
 
   try {
-    const result = await limiter.limit(`${profile}:${identifier}`);
+    const result = await limiter.limit(rateLimitKey);
 
     if (!result.success) {
       logger.warn(
@@ -129,15 +145,10 @@ export async function rateLimit(
       remaining: result.remaining,
       reset: result.reset,
     };
-  } catch (error) {
-    logger.error('Upstash Redis rate limit error:', error);
-
-    // Fail-closed for sensitive operations on Redis failure
-    if (['ORDER_CREATE', 'QUOTE_CREATE', 'ADMIN_MUTATION'].includes(profile)) {
-      return { ...fallbackResponse, success: false, remaining: 0 };
-    }
-
-    // Fail-open for public reads
-    return fallbackResponse;
+  } catch (error: any) {
+    logger.warn(
+      `Upstash Redis rate limit failed (${error?.message || error?.name}), falling back to memory rate limiting.`
+    );
+    return checkMemoryRateLimit(rateLimitKey, config.limit, config.interval);
   }
 }

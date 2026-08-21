@@ -1,6 +1,11 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { randomBytes } from 'crypto';
 import { DatabaseError } from '@/lib/errors/DatabaseError';
 import { logger } from '@/lib/logger';
+import {
+  createInvoiceAccessToken,
+  hashInvoiceAccessToken,
+} from '@/lib/security/invoice-access';
 
 export interface CreateOrderPayload {
   customerName: string;
@@ -12,12 +17,9 @@ export interface CreateOrderPayload {
   county?: string;
   courierService?: string;
   deliveryNotes?: string;
-  totalAmount: number;
-  invoiceNumber: string;
   items: Array<{
     productId: string;
     quantity: number;
-    unitPrice: number;
   }>;
 }
 
@@ -46,10 +48,16 @@ export class OrderRepository {
     const productMap = new Map(products.map((p) => [p.id, p]));
 
     // 2. Calculate totals and build safe items
-    let calculatedTotal = 0;
+    let subtotalAmount = 0;
     const safeOrderItems = [];
 
     for (const item of payload.items) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+        throw new DatabaseError(
+          'Order quantities must be whole numbers greater than zero'
+        );
+      }
+
       const product = productMap.get(item.productId);
       if (!product) {
         throw new DatabaseError(
@@ -67,7 +75,7 @@ export class OrderRepository {
           ? product.wholesale_price
           : baseRetailPrice;
 
-      calculatedTotal += authoritativePrice * item.quantity;
+      subtotalAmount += Number(authoritativePrice) * item.quantity;
       safeOrderItems.push({
         product_id: item.productId,
         quantity: item.quantity,
@@ -75,8 +83,42 @@ export class OrderRepository {
       });
     }
 
-    // 3. Insert Order and Items Atomically via RPC
+    subtotalAmount = Number(subtotalAmount.toFixed(2));
+
+    // 3. Resolve the tax policy server-side before the atomic insert.
     const adminSupabase = await createAdminClient();
+    let vatRate = 16;
+    try {
+      const { data: settings, error: settingsError } = await adminSupabase
+        .from('settings')
+        .select('enable_vat, vat_rate')
+        .limit(1)
+        .maybeSingle();
+
+      if (settingsError) {
+        logger.warn(
+          'Failed to retrieve VAT settings for order, defaulting to 16%',
+          settingsError
+        );
+      } else if (settings) {
+        vatRate =
+          settings.enable_vat === false ? 0 : Number(settings.vat_rate ?? 16);
+      }
+    } catch (err) {
+      logger.warn('Error connecting to admin client for VAT settings', err);
+    }
+
+    if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 100) {
+      vatRate = 16;
+    }
+
+    const vatAmount = Number(((subtotalAmount * vatRate) / 100).toFixed(2));
+    const totalAmount = Number((subtotalAmount + vatAmount).toFixed(2));
+    const invoiceAccessToken = createInvoiceAccessToken();
+    const invoiceNumber = `INV-${new Date()
+      .toISOString()
+      .slice(0, 10)
+      .replace(/-/g, '')}-${randomBytes(6).toString('hex').toUpperCase()}`;
 
     const orderData: Record<string, any> = {
       customer_name: payload.customerName,
@@ -84,41 +126,86 @@ export class OrderRepository {
       customer_phone: payload.customerPhone,
       fulfillment_type: payload.fulfillmentType,
       pricing_model: payload.pricingModel,
-      total_amount: calculatedTotal,
-      invoice_number: payload.invoiceNumber,
+      subtotal_amount: subtotalAmount,
+      vat_rate: vatRate,
+      vat_amount: vatAmount,
+      total_amount: totalAmount,
+      invoice_number: invoiceNumber,
+      invoice_access_token_hash: hashInvoiceAccessToken(invoiceAccessToken),
       status: 'PENDING',
       payment_status: 'UNPAID',
     };
+
+    orderData.delivery_notes = payload.deliveryNotes || null;
 
     if (payload.fulfillmentType === 'DELIVERY') {
       orderData.delivery_address = payload.deliveryAddress;
       orderData.county = payload.county;
       orderData.courier_service = payload.courierService;
-      orderData.delivery_notes = payload.deliveryNotes || null;
       orderData.shipping_address = payload.deliveryAddress;
     }
 
-    const { data: orderId, error: rpcError } = await adminSupabase.rpc(
-      'create_order_rpc',
-      {
+    let orderId: string | null = null;
+    let rpcError: any = null;
+
+    try {
+      const res = await adminSupabase.rpc('create_order_rpc', {
         p_order_data: orderData,
         p_order_items: safeOrderItems,
-      }
-    );
-
-    if (rpcError || !orderId) {
-      logger.error('Failed to create atomic order via RPC', rpcError);
-      throw new DatabaseError('Failed to create order. Please try again.');
+      });
+      orderId = res.data;
+      rpcError = res.error;
+    } catch (err: any) {
+      rpcError = err;
     }
 
-    return { id: orderId, ...orderData };
+    if (rpcError || !orderId) {
+      try {
+        const clientSupabase = await createClient();
+        const clientRes = await clientSupabase.rpc('create_order_rpc', {
+          p_order_data: orderData,
+          p_order_items: safeOrderItems,
+        });
+        if (clientRes.data && !clientRes.error) {
+          orderId = clientRes.data;
+          rpcError = null;
+        } else if (clientRes.error) {
+          rpcError = clientRes.error;
+        }
+      } catch (clientErr: any) {
+        rpcError = clientErr;
+      }
+    }
+
+    if (rpcError || !orderId) {
+      logger.error('Failed to create atomic order via RPC', {
+        error: rpcError,
+        message: rpcError?.message,
+        details: rpcError?.details,
+        hint: rpcError?.hint,
+      });
+      const errorMsg = rpcError?.message
+        ? `Failed to create order: ${rpcError.message}`
+        : 'Failed to create order. Please try again.';
+      throw new DatabaseError(errorMsg);
+    }
+
+    return {
+      id: orderId,
+      invoiceNumber,
+      invoiceAccessToken,
+      subtotalAmount,
+      vatRate,
+      vatAmount,
+      totalAmount,
+    };
   }
 
   /**
    * Fetches a single order with its items and product info — used by invoice API.
    */
   static async getOrderById(id: string) {
-    const supabase = await createClient();
+    const supabase = await createAdminClient();
 
     const { data: order, error } = await supabase
       .from('orders')
@@ -133,10 +220,29 @@ export class OrderRepository {
 
     const { data: items } = await supabase
       .from('order_items')
-      .select('*, products(name, sku, price, wholesale_price)')
+      .select(
+        '*, products(name, sku, price, wholesale_price, wholesale_unit, attributes, brands(name))'
+      )
       .eq('order_id', id);
 
     return { ...order, items: items || [] };
+  }
+
+  static async getInvoiceAccessHash(id: string) {
+    const supabase = await createAdminClient();
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, invoice_access_token_hash')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (error) {
+      logger.error(`Failed to fetch invoice access token for ${id}`, error);
+      throw new DatabaseError('Order not found');
+    }
+
+    return data;
   }
 
   /**
@@ -206,5 +312,22 @@ export class OrderRepository {
       throw new DatabaseError('Failed to update order payment status');
     }
     return data;
+  }
+
+  /**
+   * Soft deletes an order.
+   */
+  static async deleteOrder(id: string) {
+    const supabase = await createAdminClient();
+    const { error } = await supabase
+      .from('orders')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      logger.error(`Failed to delete order with id: ${id}`, error);
+      throw new DatabaseError('Database error while deleting order');
+    }
+    return true;
   }
 }

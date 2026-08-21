@@ -204,14 +204,14 @@ export function ProductImageManager({
         {...getRootProps()}
         className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
           isDragActive
-            ? 'border-blue-500 bg-blue-50/50'
+            ? 'border-red-500 bg-red-50/50'
             : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
         }`}
       >
         <input {...getInputProps()} />
         {isUploading ? (
           <div className="flex flex-col items-center justify-center">
-            <Loader2 className="mb-3 h-8 w-8 animate-spin text-blue-500" />
+            <Loader2 className="mb-3 h-8 w-8 animate-spin text-red-500" />
             <p className="text-sm font-medium text-gray-900">
               Uploading images...
             </p>
@@ -238,7 +238,7 @@ export function ProductImageManager({
             {images.map((img) => (
               <div
                 key={img.id}
-                className={`group relative aspect-square overflow-hidden rounded-xl border-2 bg-gray-100 ${img.is_primary ? 'border-blue-500 shadow-sm' : 'border-transparent hover:border-gray-300'}`}
+                className={`group relative aspect-square overflow-hidden rounded-xl border-2 bg-gray-100 ${img.is_primary ? 'border-red-500 shadow-sm' : 'border-transparent hover:border-gray-300'}`}
               >
                 <Image
                   src={img.url}
@@ -247,7 +247,7 @@ export function ProductImageManager({
                   className="object-cover"
                 />
 
-                <div className="absolute inset-0 flex flex-col justify-between bg-black/50 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute inset-0 flex flex-col justify-between bg-black/40 p-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                   <div className="flex justify-between">
                     {!img.is_primary && (
                       <button
@@ -256,14 +256,14 @@ export function ProductImageManager({
                           e.stopPropagation();
                           handleSetPrimary(img.id);
                         }}
-                        className="rounded bg-white p-1.5 text-gray-700 shadow-sm transition-colors hover:text-blue-600"
+                        className="rounded bg-white/95 p-1.5 text-gray-700 shadow-sm transition-colors hover:text-red-600 active:scale-95"
                         title="Set as Primary"
                       >
                         <Star className="h-4 w-4" />
                       </button>
                     )}
                     {img.is_primary && (
-                      <div className="flex items-center rounded bg-blue-500 px-2 py-1 text-xs font-semibold text-white shadow-sm">
+                      <div className="flex items-center rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white shadow-sm">
                         <Star className="mr-1 h-3 w-3 fill-current" /> Primary
                       </div>
                     )}
@@ -273,7 +273,7 @@ export function ProductImageManager({
                         e.stopPropagation();
                         confirmDelete(img.id, img.url);
                       }}
-                      className="ml-auto rounded bg-white p-1.5 text-red-600 shadow-sm transition-colors hover:bg-red-50"
+                      className="ml-auto rounded bg-white/95 p-1.5 text-red-600 shadow-sm transition-colors hover:bg-red-50 active:scale-95"
                       title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function ProductImageManager({
                   className="object-cover opacity-70"
                 />
 
-                <div className="absolute inset-0 flex flex-col justify-between bg-black/50 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute inset-0 flex flex-col justify-between bg-black/40 p-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                   <div className="flex justify-end">
                     <button
                       type="button"
@@ -308,7 +308,7 @@ export function ProductImageManager({
                         if (onPendingFilesChange)
                           onPendingFilesChange(newPending);
                       }}
-                      className="rounded bg-white p-1.5 text-red-600 shadow-sm transition-colors hover:bg-red-50"
+                      className="rounded bg-white/95 p-1.5 text-red-600 shadow-sm transition-colors hover:bg-red-50 active:scale-95"
                       title="Remove"
                     >
                       <Trash2 className="h-4 w-4" />

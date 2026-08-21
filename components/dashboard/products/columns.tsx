@@ -12,7 +12,7 @@ export const columns: ColumnDef<any>[] = [
     header: ({ table }) => (
       <input
         type="checkbox"
-        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
         checked={table.getIsAllPageRowsSelected()}
         onChange={(e) => table.toggleAllPageRowsSelected(!!e.target.checked)}
         aria-label="Select all"
@@ -21,7 +21,7 @@ export const columns: ColumnDef<any>[] = [
     cell: ({ row }) => (
       <input
         type="checkbox"
-        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
         checked={row.getIsSelected()}
         onChange={(e) => row.toggleSelected(!!e.target.checked)}
         aria-label="Select row"

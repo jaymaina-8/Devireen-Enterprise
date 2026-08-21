@@ -66,7 +66,7 @@ export function Topbar() {
 
         {/* Mobile Brand / Company Name */}
         <Link href="/dashboard" className="flex items-center gap-2 md:hidden">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-xs font-black text-white shadow-md shadow-blue-500/20">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-xs font-black text-white shadow-md shadow-blue-500/20">
             D
           </div>
           <span className="text-sm font-bold tracking-tight text-slate-900">
@@ -129,7 +129,7 @@ export function Topbar() {
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2 rounded-full p-1 transition-all hover:ring-2 hover:ring-slate-200"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white bg-gradient-to-tr from-blue-600 to-blue-700 text-xs font-bold text-white shadow-xs">
               AD
             </div>
           </button>

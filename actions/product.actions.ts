@@ -44,6 +44,7 @@ export const fetchProductsForAdmin = createSafeAction(
     page?: number;
     pageSize?: number;
   }) => {
+    await verifyAdminServerAction();
     const result = await ProductRepository.getProductsForAdmin(params);
     return { success: true, data: result.data, count: result.count };
   }
@@ -82,7 +83,7 @@ export const updateProductAction = createSafeAction(
     const validData = productSchema.parse(productData);
     const product = await ProductRepository.updateProduct(id, validData);
     revalidatePath('/dashboard/products');
-    revalidatePath(`/products/${productData.slug || product.slug}`);
+    revalidatePath(`/products/${product.slug}`);
     revalidatePath('/products');
     return product;
   }
@@ -181,5 +182,31 @@ export const setPrimaryProductImageRecord = createSafeAction(
     if (error) throw new Error(error.message);
     revalidatePath(`/dashboard/products/${productId}`);
     return true;
+  }
+);
+
+export const toggleProductFeaturedAction = createSafeAction(
+  'toggleProductFeaturedAction',
+  async (id: string, isFeatured: boolean) => {
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
+    const supabase = await createAdminClient();
+    const { data, error } = await supabase
+      .from('products')
+      .update({ is_featured: isFeatured, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id, is_featured')
+      .single();
+
+    if (error) throw new Error(error.message);
+    revalidatePath('/dashboard/products');
+    revalidatePath('/products');
+    return data;
   }
 );

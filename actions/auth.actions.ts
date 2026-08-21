@@ -6,7 +6,14 @@ import { redirect } from 'next/navigation';
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-  const redirectTo = formData.get('redirectTo') as string || '/dashboard';
+  const rawRedirect = formData.get('redirectTo') as string;
+  const redirectTo =
+    rawRedirect &&
+    rawRedirect.startsWith('/') &&
+    !rawRedirect.startsWith('//') &&
+    !rawRedirect.startsWith('/\\')
+      ? rawRedirect
+      : '/dashboard';
 
   if (!email || !password) {
     return { error: 'Email and password are required' };

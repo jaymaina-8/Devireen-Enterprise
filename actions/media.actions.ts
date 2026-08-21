@@ -1,6 +1,9 @@
 'use server';
 
-import { StorageService } from '@/lib/supabase/storage';
+import {
+  assertAllowedStorageLocation,
+  StorageService,
+} from '@/lib/supabase/storage';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
@@ -24,23 +27,51 @@ export const uploadMediaAction = createSafeAction(
       throw new Error('File and bucket are required');
     }
 
-    // Validate size (e.g. 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error('File exceeds 5MB limit');
+    // Validate size (e.g. 15MB for high-res phone cameras)
+    if (file.size > 15 * 1024 * 1024) {
+      throw new Error('File exceeds 15MB limit');
     }
 
-    // Validate type
-    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-      throw new Error('Invalid file type');
-    }
-
-    const fileExt = file.name.split('.').pop();
     const explicitPath = formData.get('path') as string;
-    const fileName =
-      explicitPath ||
-      `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    if (!explicitPath) {
+      throw new Error('An approved storage path is required');
+    }
 
-    const path = await StorageService.uploadFile(bucket, fileName, file);
+    assertAllowedStorageLocation(bucket, explicitPath);
+
+    const extension = explicitPath.split('.').pop()?.toLowerCase();
+    const allowedMimeTypes: Record<string, string[]> = {
+      jpg: [
+        'image/jpeg',
+        'image/jpg',
+        'image/pjpeg',
+        'application/octet-stream',
+        '',
+      ],
+      jpeg: [
+        'image/jpeg',
+        'image/jpg',
+        'image/pjpeg',
+        'application/octet-stream',
+        '',
+      ],
+      png: ['image/png', 'image/x-png', 'application/octet-stream', ''],
+      webp: ['image/webp', 'application/octet-stream', ''],
+      gif: ['image/gif', 'application/octet-stream', ''],
+      heic: ['image/heic', 'image/heif', 'application/octet-stream', ''],
+      heif: ['image/heic', 'image/heif', 'application/octet-stream', ''],
+    };
+
+    if (
+      !extension ||
+      (file.type &&
+        allowedMimeTypes[extension] &&
+        !allowedMimeTypes[extension].includes(file.type.toLowerCase()))
+    ) {
+      throw new Error('File type does not match the approved storage path');
+    }
+
+    const path = await StorageService.uploadFile(bucket, explicitPath, file);
 
     revalidatePath('/dashboard/media');
     return { path };

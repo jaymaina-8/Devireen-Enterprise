@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import {
   deleteProductAction,
-  updateProductAction,
+  toggleProductFeaturedAction,
 } from '@/actions/product.actions';
 import { useToastStore } from '@/lib/store/toast-store';
 
@@ -102,7 +102,7 @@ export function ProductsClientView({
     });
   };
 
-  // Bulk Delete Handler
+  // Bulk Delete Handler with explicit per-item tracking
   const handleBulkDelete = async (selectedRows: any[]) => {
     if (
       !confirm(
@@ -111,23 +111,44 @@ export function ProductsClientView({
     )
       return;
 
-    let deletedCount = 0;
+    const successfullyDeletedIds: string[] = [];
+    let failedCount = 0;
+
     for (const row of selectedRows) {
-      const res = await deleteProductAction(row.id);
-      if (res.success) deletedCount++;
+      try {
+        const res = await deleteProductAction(row.id);
+        if (res.success) {
+          successfullyDeletedIds.push(row.id);
+        } else {
+          failedCount++;
+        }
+      } catch {
+        failedCount++;
+      }
     }
 
-    setProducts((prev) =>
-      prev.filter((p) => !selectedRows.some((sr) => sr.id === p.id))
-    );
-    addToast({
-      title: 'Bulk Delete Complete',
-      description: `Successfully deleted ${deletedCount} products`,
-      variant: 'success',
-    });
+    if (successfullyDeletedIds.length > 0) {
+      setProducts((prev) =>
+        prev.filter((p) => !successfullyDeletedIds.includes(p.id))
+      );
+    }
+
+    if (failedCount === 0) {
+      addToast({
+        title: 'Bulk Delete Complete',
+        description: `Successfully deleted ${successfullyDeletedIds.length} products`,
+        variant: 'success',
+      });
+    } else {
+      addToast({
+        title: 'Partial Delete Notice',
+        description: `Deleted ${successfullyDeletedIds.length} products (${failedCount} failed)`,
+        variant: 'destructive',
+      });
+    }
   };
 
-  // Bulk Actions
+  // Bulk Featured Toggle Handler with explicit per-item tracking
   const renderBulkActions = (selectedRows: any[]) => {
     return (
       <div className="flex items-center gap-2">
@@ -135,16 +156,53 @@ export function ProductsClientView({
           variant="outline"
           size="sm"
           onClick={async () => {
+            const updatedProductsMap = new Map<string, boolean>();
+            let failedCount = 0;
+
             for (const row of selectedRows) {
-              await updateProductAction(row.id, {
-                is_featured: !row.is_featured,
+              try {
+                const targetFeatured = !row.is_featured;
+                const res = await toggleProductFeaturedAction(
+                  row.id,
+                  targetFeatured
+                );
+                if (res.success) {
+                  updatedProductsMap.set(row.id, targetFeatured);
+                } else {
+                  failedCount++;
+                }
+              } catch {
+                failedCount++;
+              }
+            }
+
+            if (updatedProductsMap.size > 0) {
+              setProducts((prev) =>
+                prev.map((p) => {
+                  if (updatedProductsMap.has(p.id)) {
+                    return {
+                      ...p,
+                      is_featured: updatedProductsMap.get(p.id)!,
+                    };
+                  }
+                  return p;
+                })
+              );
+            }
+
+            if (failedCount === 0) {
+              addToast({
+                title: 'Bulk Update Complete',
+                description: `Toggled featured status for ${updatedProductsMap.size} products`,
+                variant: 'success',
+              });
+            } else {
+              addToast({
+                title: 'Partial Update Notice',
+                description: `Updated ${updatedProductsMap.size} products (${failedCount} failed)`,
+                variant: 'destructive',
               });
             }
-            addToast({
-              title: 'Updated',
-              description: 'Toggled featured status for selected items',
-              variant: 'success',
-            });
           }}
           className="h-8 border-slate-700 bg-slate-800 text-xs text-slate-200 hover:bg-slate-700"
         >

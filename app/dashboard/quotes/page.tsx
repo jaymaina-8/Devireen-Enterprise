@@ -14,7 +14,7 @@ async function getQuotes() {
   const { data } = await supabase
     .from('quotes')
     .select(
-      '*, customers(company_name, contact_email, contact_phone, type), items:quote_items(*)'
+      '*, customers(*), items:quote_items(*, products(name, sku, price, wholesale_price, wholesale_unit, brands(name)))'
     )
     .is('deleted_at', null)
     .order('created_at', { ascending: false });

@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: RED50,
-    bquote: `1px solid ${RED}`,
+    border: `1px solid ${RED}`,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: BG,
     borderRadius: 5,
     padding: 12,
-    bquote: `1px solid ${RULE}`,
+    border: `1px solid ${RULE}`,
   },
   infoCardTitle: {
     fontSize: 7.5,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   totalsBox: {
     width: 260,
     marginTop: 8,
-    bquote: `1px solid ${RULE}`,
+    border: `1px solid ${RULE}`,
     borderRadius: 5,
     overflow: 'hidden',
   },
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 14,
     borderLeft: `3px solid ${RED}`,
-    bquote: `1px solid ${RULE}`,
+    border: `1px solid ${RULE}`,
   },
   paymentTitle: {
     fontSize: 9,
@@ -323,12 +323,13 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
   const isWholesale = quote.pricing_model === 'WHOLESALE';
 
   const companyName = settings?.company_name || 'Devireen Enterprise';
-  const companyAddress = settings?.physical_address || 'Nairobi, Kenya';
-  const companyEmail = settings?.email || '';
-  const companyPhone = Array.isArray(settings?.phone_numbers)
-    ? settings.phone_numbers[0]
-    : settings?.phone_numbers || '';
-  const vatRate = settings?.vat_rate || '16%';
+  const companyAddress = settings?.physical_address || 'Nairobi CBD, Kenya';
+  const companyEmail = settings?.email || 'sales@devireen.co.ke';
+  const companyPhone =
+    Array.isArray(settings?.phone_numbers) && settings.phone_numbers[0]
+      ? settings.phone_numbers[0]
+      : settings?.phone_numbers || '+254 708 037929';
+  const vatRate = settings?.vat_rate ? `${settings.vat_rate}%` : '16%';
   const kraPin = settings?.kra_pin || '';
   const logoUrl = settings?.logo_url || null;
 
@@ -340,7 +341,10 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
 
   return React.createElement(
     Document,
-    { title: `Invoice ${quote.invoice_number}`, author: companyName },
+    {
+      title: `Quotation ${quote.quote_number || quote.id?.slice(0, 8) || ''}`,
+      author: companyName,
+    },
     React.createElement(
       Page,
       { size: 'A4', style: styles.page },
@@ -515,32 +519,45 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
         ),
 
         // Data rows
-        ...(quote.items || []).map((item: any, idx: number) =>
-          React.createElement(
+        ...(quote.items || []).map((item: any, idx: number) => {
+          const product = item.products;
+          const brandName = product?.brands?.name;
+          const productName = brandName
+            ? `${product?.name || 'Product'} (${brandName})`
+            : product?.name || 'Product';
+
+          const wholesaleUnit = product?.wholesale_unit;
+          const retailUnit = product?.attributes?.unit || 'pcs';
+          const unit = isWholesale
+            ? wholesaleUnit || 'ctns'
+            : retailUnit || 'pcs';
+          const qtyText = `${item.quantity} ${unit}`;
+
+          return React.createElement(
             View,
             {
               key: String(idx),
               style: [styles.tableRow, idx % 2 !== 0 ? styles.tableRowAlt : {}],
             },
-            // Product name + SKU
+            // Product name + Brand + SKU + Unit
             React.createElement(
               View,
               { style: styles.colProduct },
               React.createElement(
                 Text,
                 { style: [styles.tableCell, styles.tableCellBold] },
-                item.products?.name || 'Product'
+                productName
               ),
               React.createElement(
                 Text,
                 { style: styles.tableCellSku },
-                `SKU: ${item.products?.sku || 'N/A'}`
+                `SKU: ${product?.sku || 'N/A'}${unit ? ` • Unit: ${unit}` : ''}`
               )
             ),
             React.createElement(
               Text,
               { style: [styles.tableCell, styles.colQty] },
-              String(item.quantity)
+              qtyText
             ),
             React.createElement(
               Text,
@@ -558,8 +575,8 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
               },
               fmt(item.quantity * item.unit_price)
             )
-          )
-        )
+          );
+        })
       ),
 
       // ── Totals ───────────────────────────────────────────────────────────

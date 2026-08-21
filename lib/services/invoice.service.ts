@@ -334,19 +334,29 @@ interface InvoiceDocumentProps {
 }
 
 function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
-  const enableVat = settings?.enable_vat !== false;
-  const subtotal = enableVat ? order.total_amount / 1.16 : order.total_amount;
-  const vatAmount = enableVat ? order.total_amount - subtotal : 0;
+  const hasPersistedTax =
+    order.subtotal_amount != null &&
+    order.vat_rate != null &&
+    order.vat_amount != null;
+
+  const subtotal = hasPersistedTax
+    ? Number(order.subtotal_amount)
+    : Number(order.total_amount);
+  const vatAmount = hasPersistedTax ? Number(order.vat_amount) : 0;
+  const vatRate = hasPersistedTax
+    ? `${Number(order.vat_rate)}%`
+    : `${settings?.vat_rate ?? 16}%`;
+  const showVat = vatAmount > 0;
   const isDelivery = order.fulfillment_type === 'DELIVERY';
   const isWholesale = order.pricing_model === 'WHOLESALE';
 
   const companyName = settings?.company_name || 'Devireen Enterprise';
-  const companyAddress = settings?.physical_address || 'Nairobi, Kenya';
-  const companyEmail = settings?.email || '';
-  const companyPhone = Array.isArray(settings?.phone_numbers)
-    ? settings.phone_numbers[0]
-    : settings?.phone_numbers || '';
-  const vatRate = settings?.vat_rate || '16%';
+  const companyAddress = settings?.physical_address || 'Nairobi CBD, Kenya';
+  const companyEmail = settings?.email || 'sales@devireen.co.ke';
+  const companyPhone =
+    Array.isArray(settings?.phone_numbers) && settings.phone_numbers[0]
+      ? settings.phone_numbers[0]
+      : settings?.phone_numbers || '+254 708 037929';
   const kraPin = settings?.kra_pin || '';
   const logoUrl = settings?.logo_url || null;
 
@@ -591,32 +601,45 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
         ),
 
         // Data rows
-        ...(order.items || []).map((item: any, idx: number) =>
-          React.createElement(
+        ...(order.items || []).map((item: any, idx: number) => {
+          const product = item.products;
+          const brandName = product?.brands?.name;
+          const productName = brandName
+            ? `${product?.name || 'Product'} (${brandName})`
+            : product?.name || 'Product';
+
+          const wholesaleUnit = product?.wholesale_unit;
+          const retailUnit = product?.attributes?.unit || 'pcs';
+          const unit = isWholesale
+            ? wholesaleUnit || 'ctns'
+            : retailUnit || 'pcs';
+          const qtyText = `${item.quantity} ${unit}`;
+
+          return React.createElement(
             View,
             {
               key: String(idx),
               style: [styles.tableRow, idx % 2 !== 0 ? styles.tableRowAlt : {}],
             },
-            // Product name + SKU
+            // Product name + Brand + SKU + Unit
             React.createElement(
               View,
               { style: styles.colProduct },
               React.createElement(
                 Text,
                 { style: [styles.tableCell, styles.tableCellBold] },
-                item.products?.name || 'Product'
+                productName
               ),
               React.createElement(
                 Text,
                 { style: styles.tableCellSku },
-                `SKU: ${item.products?.sku || 'N/A'}`
+                `SKU: ${product?.sku || 'N/A'}${unit ? ` • Unit: ${unit}` : ''}`
               )
             ),
             React.createElement(
               Text,
               { style: [styles.tableCell, styles.colQty] },
-              String(item.quantity)
+              qtyText
             ),
             React.createElement(
               Text,
@@ -634,8 +657,8 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
               },
               fmt(item.quantity * item.unit_price)
             )
-          )
-        )
+          );
+        })
       ),
 
       // ── Totals ───────────────────────────────────────────────────────────
@@ -659,7 +682,7 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
               fmt(subtotal)
             )
           ),
-          enableVat
+          showVat
             ? React.createElement(
                 View,
                 { style: styles.totalRow },

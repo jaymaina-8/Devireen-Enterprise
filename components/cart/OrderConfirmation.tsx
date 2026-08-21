@@ -24,6 +24,7 @@ interface OrderConfirmationProps {
   mapsUrl?: string;
   shopAddress?: string;
   pricingModel: 'RETAIL' | 'WHOLESALE';
+  accessToken?: string;
 }
 
 export function OrderConfirmation({
@@ -37,10 +38,13 @@ export function OrderConfirmation({
   mapsUrl,
   shopAddress,
   pricingModel,
+  accessToken,
 }: OrderConfirmationProps) {
   const [whatsappSent, setWhatsappSent] = React.useState(false);
 
-  const invoiceUrl = `/api/invoice/${orderId}`;
+  const invoiceUrl = accessToken
+    ? `/api/invoice/${orderId}?token=${encodeURIComponent(accessToken)}`
+    : `/api/invoice/${orderId}`;
 
   function handleOpenMaps() {
     try {

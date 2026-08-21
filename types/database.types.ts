@@ -69,7 +69,8 @@ export interface Database {
           is_all_categories: boolean;
           price: number;
           sale_price: number | null;
-          bulk_price: number | null;
+          wholesale_price: number | null;
+          wholesale_unit: string | null;
           stock_status:
             'IN_STOCK' | 'OUT_OF_STOCK' | 'PRE_ORDER' | 'DISCONTINUED';
           attributes: Json;
@@ -114,6 +115,9 @@ export interface Database {
             | 'FULFILLED';
           notes: string | null;
           total_amount: number;
+          subtotal_amount: number | null;
+          vat_rate: number | null;
+          vat_amount: number | null;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -157,9 +161,13 @@ export interface Database {
             | 'REFUNDED';
           payment_status: 'UNPAID' | 'PARTIAL' | 'PAID' | 'REFUNDED';
           total_amount: number;
+          subtotal_amount: number | null;
+          vat_rate: number | null;
+          vat_amount: number | null;
           // Invoice
           invoice_number: string | null;
           invoice_url: string | null;
+          invoice_access_token_hash: string | null;
           whatsapp_sent: boolean;
           // Addresses (legacy)
           shipping_address: string | null;
@@ -206,7 +214,7 @@ export interface Database {
         | 'REFUNDED';
       payment_status: 'UNPAID' | 'PARTIAL' | 'PAID' | 'REFUNDED';
       fulfillment_type: 'DELIVERY' | 'PICKUP';
-      pricing_model: 'RETAIL' | 'BULK';
+      pricing_model: 'RETAIL' | 'WHOLESALE';
     };
   };
 }

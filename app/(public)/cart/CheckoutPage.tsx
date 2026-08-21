@@ -33,6 +33,7 @@ interface ConfirmedOrder {
   customerName: string;
   fulfillmentType: FulfillmentType;
   total: number;
+  accessToken?: string;
 }
 
 // ─── Step indicator ───────────────────────────────────────────────────────
@@ -197,9 +198,11 @@ export function CheckoutPage({
   );
 
   const subtotal = rawSubtotal;
-  const isVatApplied = enableVat && requiresVat;
-  const total = isVatApplied ? Math.round(rawSubtotal * 1.16) : rawSubtotal;
-  const vatAmount = isVatApplied ? total - subtotal : 0;
+  const isVatApplied = enableVat;
+  const vatAmount = isVatApplied
+    ? Number(((rawSubtotal * 16) / 100).toFixed(2))
+    : 0;
+  const total = Number((rawSubtotal + vatAmount).toFixed(2));
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
   const hasItems = items.length > 0;
@@ -243,9 +246,10 @@ export function CheckoutPage({
 
     setIsSubmitting(true);
     const invoiceNumber = generateInvoiceNumber();
+    const hasKraPin = requiresVat && kraPin.trim().length > 0;
 
-    const notesAppendedWithPin = isVatApplied
-      ? `${customerData.deliveryNotes || ''}\n[Requested VAT Invoice. KRA PIN: ${kraPin}]`.trim()
+    const notesAppendedWithPin = hasKraPin
+      ? `${customerData.deliveryNotes || ''}\n[Requested VAT Invoice. KRA PIN: ${kraPin.trim()}]`.trim()
       : customerData.deliveryNotes;
 
     const payload = {
@@ -256,17 +260,15 @@ export function CheckoutPage({
       pricingModel: wholesaleMode ? 'WHOLESALE' : 'RETAIL',
       totalAmount: total,
       invoiceNumber,
+      deliveryNotes: hasKraPin
+        ? notesAppendedWithPin ||
+          `[Requested VAT Invoice. KRA PIN: ${kraPin.trim()}]`
+        : customerData.deliveryNotes,
       ...(fulfillmentType === 'DELIVERY' && {
         deliveryAddress: customerData.deliveryAddress,
         county: customerData.county,
         courierService: customerData.courierService,
-        deliveryNotes: notesAppendedWithPin,
       }),
-      ...(fulfillmentType === 'PICKUP' &&
-        isVatApplied && {
-          // If pickup doesn't normally have delivery notes, we still need to store the PIN
-          deliveryNotes: `[Requested VAT Invoice. KRA PIN: ${kraPin}]`,
-        }),
       items: items.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
@@ -286,10 +288,11 @@ export function CheckoutPage({
 
       setConfirmedOrder({
         orderId: result.data.orderId,
-        invoiceNumber,
+        invoiceNumber: result.data.invoiceNumber || invoiceNumber,
         customerName: customerData.fullName,
         fulfillmentType,
-        total,
+        total: result.data.totalAmount ?? total,
+        accessToken: result.data.invoiceAccessToken,
       });
 
       clearCart();
@@ -341,6 +344,7 @@ export function CheckoutPage({
           mapsUrl={mapsUrl}
           shopAddress={shopAddress}
           pricingModel={wholesaleMode ? 'WHOLESALE' : 'RETAIL'}
+          accessToken={confirmedOrder.accessToken}
         />
         <div className="mt-8 text-center">
           <Link href="/">
@@ -493,7 +497,7 @@ export function CheckoutPage({
                         className="text-primary-600 focus:ring-primary-500 mt-0.5 h-4 w-4 rounded border-slate-300"
                       />
                       <span className="text-text-main font-medium">
-                        I require a VAT Invoice
+                        Add KRA PIN to Invoice
                       </span>
                     </label>
                     {requiresVat && (

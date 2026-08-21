@@ -9,24 +9,6 @@ import { createClient } from '@/lib/supabase/server';
 import { verifyAdminServerAction } from '@/lib/auth/authorization';
 import { createSafeAction } from '@/lib/actions/withErrorHandling';
 
-/**
- * Generates a unique, human-readable invoice number.
- */
-export const generateInvoiceNumberAction = createSafeAction(
-  'generateInvoiceNumberAction',
-  async (): Promise<string> => {
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const supabase = await createClient();
-    const { count } = await supabase
-      .from('orders')
-      .select('id', { count: 'exact', head: true })
-      .like('invoice_number', `INV-${dateStr}-%`);
-
-    const seq = 1000 + (count || 0) + Math.floor(Math.random() * 100);
-    return `INV-${dateStr}-${seq}`;
-  }
-);
-
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 /**
@@ -45,13 +27,17 @@ export const createPublicOrderAction = createSafeAction(
     if (!payload.items || payload.items.length === 0) {
       throw new Error('Cart is empty. Please add items before ordering.');
     }
-    if (!payload.totalAmount || payload.totalAmount <= 0) {
-      throw new Error('Invalid order total.');
-    }
-
     const order = await OrderRepository.createOrder(payload);
     revalidatePath('/dashboard/orders');
-    return { orderId: order.id };
+    return {
+      orderId: order.id,
+      invoiceNumber: order.invoiceNumber,
+      invoiceAccessToken: order.invoiceAccessToken,
+      subtotalAmount: order.subtotalAmount,
+      vatRate: order.vatRate,
+      vatAmount: order.vatAmount,
+      totalAmount: order.totalAmount,
+    };
   }
 );
 
@@ -126,5 +112,26 @@ export const updateOrderPaymentStatusAction = createSafeAction(
     );
     revalidatePath('/dashboard/orders');
     return order;
+  }
+);
+
+/**
+ * Deletes an order (soft delete).
+ */
+export const deleteOrderAction = createSafeAction(
+  'deleteOrderAction',
+  async (orderId: string) => {
+    const user = await verifyAdminServerAction();
+    const rateLimitResult = await rateLimit(
+      `admin:${user.id}`,
+      'ADMIN_MUTATION'
+    );
+    if (!rateLimitResult.success) {
+      throw new Error('Too many requests. Please try again later.');
+    }
+    await OrderRepository.deleteOrder(orderId);
+    revalidatePath('/dashboard/orders');
+    revalidatePath('/dashboard');
+    return true;
   }
 );

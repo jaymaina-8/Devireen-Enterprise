@@ -37,7 +37,9 @@ export const columns: ColumnDef<any>[] = [
     header: 'Description',
     cell: ({ row }) => {
       const desc = row.getValue('description') as string;
-      return <div className="text-gray-500 truncate max-w-xs">{desc || '-'}</div>;
+      return (
+        <div className="max-w-xs truncate text-gray-500">{desc || '-'}</div>
+      );
     },
   },
   {
@@ -46,7 +48,7 @@ export const columns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const count = row.getValue('productCount') as number;
       return (
-        <div className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800 text-xs font-medium">
+        <div className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
           {count}
         </div>
       );
@@ -58,9 +60,13 @@ export const columns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const isActive = row.getValue('is_active') as boolean;
       return (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+            isActive
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-600'
+          }`}
+        >
           {isActive ? 'Published' : 'Draft'}
         </span>
       );
@@ -70,7 +76,11 @@ export const columns: ColumnDef<any>[] = [
     accessorKey: 'created_at',
     header: 'Created Date',
     cell: ({ row }) => {
-      return <div className="text-gray-500">{format(new Date(row.getValue('created_at')), 'MMM d, yyyy')}</div>;
+      return (
+        <div className="text-gray-500">
+          {format(new Date(row.getValue('created_at')), 'MMM d, yyyy')}
+        </div>
+      );
     },
   },
   {
@@ -89,21 +99,21 @@ export const columns: ColumnDef<any>[] = [
             addToast({
               title: 'Success',
               description: 'Category deleted successfully',
-              variant: 'success'
+              variant: 'success',
             });
             setConfirmOpen(false);
           } else {
             addToast({
               title: 'Cannot Delete',
               description: result.error || 'Failed to delete category',
-              variant: 'destructive'
+              variant: 'destructive',
             });
           }
         } catch (error: any) {
           addToast({
             title: 'Error',
             description: error.message || 'Operation failed',
-            variant: 'destructive'
+            variant: 'destructive',
           });
         } finally {
           setIsDeleting(false);
@@ -113,15 +123,19 @@ export const columns: ColumnDef<any>[] = [
       return (
         <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/categories/${category.id}/edit`}>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            >
               <span className="sr-only">Edit</span>
               <Edit className="h-4 w-4" />
             </Button>
           </Link>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
             onClick={() => setConfirmOpen(true)}
           >
             <span className="sr-only">Delete</span>

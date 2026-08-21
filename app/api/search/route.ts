@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { verifyAdminServerAction } from '@/lib/auth/authorization';
 
 export async function GET(request: Request) {
+  try {
+    await verifyAdminServerAction();
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const ip = await getClientIp();
   const rateLimitResult = await rateLimit(ip, 'SEARCH');
 

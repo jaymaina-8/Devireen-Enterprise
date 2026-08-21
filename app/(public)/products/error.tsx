@@ -16,13 +16,16 @@ export default function ProductsError({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center px-4 border border-border-subtle rounded-xl bg-surface m-8">
-      <div className="bg-error-50 p-4 rounded-full mb-6">
-        <PackageX className="h-10 w-10 text-error-500" />
+    <div className="border-border-subtle bg-surface m-8 flex flex-col items-center justify-center rounded-xl border px-4 py-24 text-center">
+      <div className="bg-error-50 mb-6 rounded-full p-4">
+        <PackageX className="text-error-500 h-10 w-10" />
       </div>
-      <h2 className="text-2xl font-bold text-text-main mb-3">Unable to load catalog</h2>
-      <p className="text-text-muted max-w-md mb-6">
-        We couldn't retrieve the product catalog at this time. Please check your connection or try again.
+      <h2 className="text-text-main mb-3 text-2xl font-bold">
+        Unable to load catalog
+      </h2>
+      <p className="text-text-muted mb-6 max-w-md">
+        We couldn&apos;t retrieve the product catalog at this time. Please check
+        your connection or try again.
       </p>
       <Button onClick={() => reset()} variant="primary">
         Refresh Catalog

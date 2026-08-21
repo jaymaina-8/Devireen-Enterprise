@@ -8,7 +8,7 @@ body {
 }
 
 @theme {
-  /* ─── Enterprise Red Brand Palette ─── */
+  /* ─── Enterprise Red Brand Palette (Storefront) ─── */
   --color-primary-50: hsl(0 86% 97%); /* #FEF2F2 */
   --color-primary-100: hsl(0 93% 94%); /* #FEE2E2 */
   --color-primary-200: hsl(0 96% 89%); /* #FECACA */

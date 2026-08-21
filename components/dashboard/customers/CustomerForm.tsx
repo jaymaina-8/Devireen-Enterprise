@@ -169,7 +169,7 @@ export function CustomerForm({
         <div className="space-y-4 pt-2">
           <div className="border-b border-slate-100 pb-3">
             <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <Mail className="h-4 w-4 text-blue-600" /> Primary Contact Points
+              <Mail className="h-4 w-4 text-red-600" /> Primary Contact Points
             </h2>
           </div>
 
@@ -224,7 +224,7 @@ export function CustomerForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-xl bg-blue-600 px-5 text-xs font-semibold text-white hover:bg-blue-500"
+            className="rounded-xl bg-red-600 px-5 text-xs font-semibold text-white shadow-sm hover:bg-red-700"
           >
             {isSubmitting
               ? 'Saving...'

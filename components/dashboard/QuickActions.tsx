@@ -34,12 +34,12 @@ export function QuickActions() {
     {
       label: 'New Product',
       href: '/dashboard/products/new',
-      icon: <Package className="h-4 w-4 text-blue-500" />,
+      icon: <Package className="h-4 w-4 text-slate-500" />,
     },
     {
       label: 'New Quote',
       href: '/dashboard/quotes/new',
-      icon: <FileText className="h-4 w-4 text-indigo-500" />,
+      icon: <FileText className="h-4 w-4 text-slate-500" />,
     },
     {
       label: 'New Category',

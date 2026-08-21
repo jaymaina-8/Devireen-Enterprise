@@ -1,16 +1,16 @@
 import { z } from 'zod';
 
-export const quoteItemSchema = z.object({
-  product_id: z.string().uuid(),
-  quantity: z.number().int().min(1),
-  unit_price: z.number().min(0),
+const quoteItemSchema = z.object({
+  product_id: z.string().uuid('Invalid product ID'),
+  quantity: z.coerce.number().int().min(1).max(10_000),
+  unit_price: z.coerce.number().finite().min(0).max(99_999_999.99),
 });
 
-export const quoteSchema = z.object({
-  customer_id: z.string().uuid().optional().nullable(),
-  session_id: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-  items: z.array(quoteItemSchema).min(1, "Quote must contain at least one item"),
+export const adminQuoteSchema = z.object({
+  customer_id: z.string().uuid('Invalid customer ID'),
+  status: z.enum(['DRAFT', 'PENDING', 'REVIEWING', 'APPROVED', 'REJECTED']),
+  notes: z.string().trim().max(5_000).nullable().optional(),
+  items: z.array(quoteItemSchema).min(1).max(100),
 });
 
-export type QuoteInput = z.infer<typeof quoteSchema>;
+export type AdminQuoteInput = z.infer<typeof adminQuoteSchema>;
