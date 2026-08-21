@@ -17,6 +17,7 @@ export interface CreateOrderPayload {
   county?: string;
   courierService?: string;
   deliveryNotes?: string;
+  requiresVat?: boolean;
   items: Array<{
     productId: string;
     quantity: number;
@@ -86,33 +87,40 @@ export class OrderRepository {
     subtotalAmount = Number(subtotalAmount.toFixed(2));
 
     // 3. Resolve the tax policy server-side before the atomic insert.
+    // If the customer opted out of VAT (requiresVat: false), VAT is 0.
     const adminSupabase = await createAdminClient();
-    let vatRate = 16;
-    try {
-      const { data: settings, error: settingsError } = await adminSupabase
-        .from('settings')
-        .select('enable_vat, vat_rate')
-        .limit(1)
-        .maybeSingle();
+    let vatRate = 0;
 
-      if (settingsError) {
-        logger.warn(
-          'Failed to retrieve VAT settings for order, defaulting to 16%',
-          settingsError
-        );
-      } else if (settings) {
-        vatRate =
-          settings.enable_vat === false ? 0 : Number(settings.vat_rate ?? 16);
+    if (payload.requiresVat === true) {
+      try {
+        const { data: settings, error: settingsError } = await adminSupabase
+          .from('settings')
+          .select('enable_vat, vat_rate')
+          .limit(1)
+          .maybeSingle();
+
+        if (settingsError) {
+          logger.warn(
+            'Failed to retrieve VAT settings for order, defaulting to 16%',
+            settingsError
+          );
+          vatRate = 16;
+        } else if (settings) {
+          vatRate =
+            settings.enable_vat === false ? 0 : Number(settings.vat_rate ?? 16);
+        }
+      } catch (err) {
+        logger.warn('Error connecting to admin client for VAT settings', err);
+        vatRate = 16;
       }
-    } catch (err) {
-      logger.warn('Error connecting to admin client for VAT settings', err);
+
+      if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 100) {
+        vatRate = 16;
+      }
     }
 
-    if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 100) {
-      vatRate = 16;
-    }
-
-    const vatAmount = Number(((subtotalAmount * vatRate) / 100).toFixed(2));
+    const vatAmount =
+      vatRate > 0 ? Number(((subtotalAmount * vatRate) / 100).toFixed(2)) : 0;
     const totalAmount = Number((subtotalAmount + vatAmount).toFixed(2));
     const invoiceAccessToken = createInvoiceAccessToken();
     const invoiceNumber = `INV-${new Date()

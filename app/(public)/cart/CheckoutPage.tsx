@@ -112,6 +112,7 @@ function TotalsSidebar({
   total,
   itemCount,
   enableVat,
+  isVatApplied,
   primaryAction,
 }: {
   subtotal: number;
@@ -119,6 +120,7 @@ function TotalsSidebar({
   total: number;
   itemCount: number;
   enableVat: boolean;
+  isVatApplied: boolean;
   primaryAction?: React.ReactNode;
 }) {
   return (
@@ -128,12 +130,14 @@ function TotalsSidebar({
       <div className="space-y-2.5 text-sm">
         <div className="text-text-muted flex justify-between">
           <span>Items ({itemCount})</span>
-          <span className="tabular-nums">KSh {subtotal.toLocaleString()}</span>
+          <span className="text-text-main font-semibold tabular-nums">
+            KSh {subtotal.toLocaleString()}
+          </span>
         </div>
-        {enableVat && (
+        {enableVat && isVatApplied && (
           <div className="text-text-muted flex justify-between">
             <span>VAT (16%)</span>
-            <span className="tabular-nums">
+            <span className="text-text-main font-semibold tabular-nums">
               KSh {vatAmount.toLocaleString()}
             </span>
           </div>
@@ -146,8 +150,14 @@ function TotalsSidebar({
               KSh {total.toLocaleString()}
             </span>
           </div>
-          {vatAmount > 0 && (
-            <p className="text-text-muted mt-1 text-xs">Inclusive of 16% VAT</p>
+          {isVatApplied ? (
+            <p className="mt-1 text-xs font-medium text-emerald-600">
+              ✓ Inclusive of 16% VAT (Tax Invoice)
+            </p>
+          ) : (
+            <p className="text-text-muted mt-1 text-xs">
+              Standard order total (VAT optional)
+            </p>
           )}
         </div>
       </div>
@@ -198,7 +208,7 @@ export function CheckoutPage({
   );
 
   const subtotal = rawSubtotal;
-  const isVatApplied = enableVat;
+  const isVatApplied = enableVat && requiresVat;
   const vatAmount = isVatApplied
     ? Number(((rawSubtotal * 16) / 100).toFixed(2))
     : 0;
@@ -260,6 +270,7 @@ export function CheckoutPage({
       pricingModel: wholesaleMode ? 'WHOLESALE' : 'RETAIL',
       totalAmount: total,
       invoiceNumber,
+      requiresVat: isVatApplied,
       deliveryNotes: hasKraPin
         ? notesAppendedWithPin ||
           `[Requested VAT Invoice. KRA PIN: ${kraPin.trim()}]`
@@ -484,37 +495,43 @@ export function CheckoutPage({
             vatAmount={vatAmount}
             total={total}
             itemCount={itemCount}
-            enableVat={isVatApplied}
+            enableVat={enableVat}
+            isVatApplied={isVatApplied}
             primaryAction={
               <div className="space-y-4">
                 {enableVat && (
-                  <div className="border-border-subtle bg-background rounded-lg border p-3 text-sm">
-                    <label className="flex cursor-pointer items-start space-x-2">
+                  <div className="border-border-subtle bg-background/70 hover:bg-background rounded-xl border p-3.5 text-sm transition-all">
+                    <label className="flex cursor-pointer items-start space-x-2.5">
                       <input
                         type="checkbox"
                         checked={requiresVat}
                         onChange={(e) => setRequiresVat(e.target.checked)}
                         className="text-primary-600 focus:ring-primary-500 mt-0.5 h-4 w-4 rounded border-slate-300"
                       />
-                      <span className="text-text-main font-medium">
-                        Add KRA PIN to Invoice
-                      </span>
+                      <div>
+                        <span className="text-text-main block text-xs font-semibold sm:text-sm">
+                          Add 16% VAT &amp; KRA PIN (Optional)
+                        </span>
+                        <span className="text-text-muted mt-0.5 block text-[11px]">
+                          Check this if you require an official ETR / Tax
+                          invoice for company expense claims.
+                        </span>
+                      </div>
                     </label>
                     {requiresVat && (
-                      <div className="mt-3">
+                      <div className="border-border-subtle animate-in fade-in mt-3 border-t pt-3 duration-200">
                         <label
                           htmlFor="kra_pin"
                           className="text-text-muted mb-1 block text-xs font-medium"
                         >
-                          KRA PIN *
+                          Company / Personal KRA PIN (Optional)
                         </label>
                         <input
                           id="kra_pin"
                           type="text"
-                          required
                           value={kraPin}
                           onChange={(e) => setKraPin(e.target.value)}
-                          placeholder="e.g. P000000000A"
+                          placeholder="e.g. P051234567Z"
                           className="border-border-main bg-surface focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                         />
                       </div>
@@ -525,15 +542,6 @@ export function CheckoutPage({
                   <Button
                     variant="primary"
                     onClick={() => {
-                      if (requiresVat && !kraPin.trim()) {
-                        toast({
-                          title: 'KRA PIN Required',
-                          description:
-                            'Please enter your KRA PIN to get a VAT invoice.',
-                          variant: 'destructive',
-                        });
-                        return;
-                      }
                       setStep('fulfillment');
                     }}
                     className="w-full rounded-xl py-6 text-base shadow-md transition-all hover:shadow-lg"
