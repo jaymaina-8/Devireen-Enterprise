@@ -389,7 +389,7 @@ export default async function WholesalePage({
           {
             question: 'How quickly can a large bulk order be processed?',
             answer:
-              'Standard bulk orders are processed within 1 to 2 business days. Custom sourcing or non-catalog items typically take 3 to 5 business days.',
+              'Delivery is completed the same day within Nairobi and surrounding counties, and the next day for other regions. Custom sourcing or non-catalog items typically take 3 to 5 business days.',
           },
         ]}
       />

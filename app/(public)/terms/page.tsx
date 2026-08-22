@@ -160,7 +160,7 @@ export default function TermsPage() {
             <p className="text-text-muted">Nairobi CBD, Kenya</p>
             <p className="text-text-muted">Phone: +254 708 037929</p>
             <p className="text-text-muted">
-              Email: sales@devireen.co.ke / support@devireen.co.ke
+              Email: devireenenterprise@gmail.com
             </p>
           </div>
         </section>

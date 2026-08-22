@@ -104,7 +104,7 @@ export function Navbar({
               Call us: {settings?.phone_numbers?.[0] || '+254 708 037929'}
             </a>
             <a
-              href={`mailto:${settings?.email || 'sales@devireen.co.ke'}`}
+              href={`mailto:${settings?.email || 'devireenenterprise@gmail.com'}`}
               className="hover:text-primary-600 font-medium transition-colors"
             >
               Email Support
@@ -118,11 +118,11 @@ export function Navbar({
           <div className="flex flex-1 items-center">
             <Link href="/" className="flex shrink-0 items-center gap-3.5">
               <Image
-                src="/images/devireen-logo.png"
+                src={settings?.logo_url || '/images/devireen-logo.png'}
                 alt="Devireen Logo"
                 width={64}
                 height={64}
-                className="h-12 w-auto object-contain"
+                className="h-12 w-12 object-contain"
                 priority
               />
               {/* Divider */}

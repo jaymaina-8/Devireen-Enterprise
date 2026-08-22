@@ -352,7 +352,7 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
 
   const companyName = settings?.company_name || 'Devireen Enterprise';
   const companyAddress = settings?.physical_address || 'Nairobi CBD, Kenya';
-  const companyEmail = settings?.email || 'sales@devireen.co.ke';
+  const companyEmail = settings?.email || 'devireenenterprise@gmail.com';
   const companyPhone =
     Array.isArray(settings?.phone_numbers) && settings.phone_numbers[0]
       ? settings.phone_numbers[0]

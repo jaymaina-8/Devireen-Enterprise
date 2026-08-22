@@ -151,10 +151,10 @@ export default function PrivacyPage() {
             rights or update your business communication preferences, please
             contact our privacy coordinator at{' '}
             <a
-              href="mailto:support@devireen.co.ke"
-              className="text-primary-600 underline"
+              href="mailto:devireenenterprise@gmail.com"
+              className="text-primary-600 hover:text-primary-700 underline transition-colors"
             >
-              support@devireen.co.ke
+              devireenenterprise@gmail.com
             </a>
             .
           </p>
@@ -170,7 +170,9 @@ export default function PrivacyPage() {
             <p className="text-text-main font-bold">Devireen Enterprise</p>
             <p className="text-text-muted">Nairobi CBD, Kenya</p>
             <p className="text-text-muted">Phone: +254 708 037929</p>
-            <p className="text-text-muted">Email: support@devireen.co.ke</p>
+            <p className="text-text-muted">
+              Email: devireenenterprise@gmail.com
+            </p>
           </div>
         </section>
       </div>

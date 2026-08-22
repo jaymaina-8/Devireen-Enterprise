@@ -235,9 +235,8 @@ const homepageSeoSections = [
     content: (
       <p>
         Based in Nairobi CBD, Devireen Enterprise operates a dedicated retail
-        and wholesale storefront. Orders can be dispatched directly to your
-        doorstep in Nairobi within 1 to 2 business days or shipped via verified
-        courier partners to all 47 counties in Kenya.
+        and wholesale storefront. Delivery is completed the same day within
+        Nairobi and surrounding counties, and the next day for other regions.
       </p>
     ),
   },

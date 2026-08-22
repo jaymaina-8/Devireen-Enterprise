@@ -17,19 +17,23 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const formData = new FormData(e.currentTarget);
     const result = await loginAction(formData);
 
     if (result?.error) {
-      addToast({ title: 'Error', description: result.error, variant: 'destructive' });
+      addToast({
+        title: 'Error',
+        description: result.error,
+        variant: 'destructive',
+      });
       setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Staff Login
@@ -50,7 +54,7 @@ function LoginForm() {
                 autoComplete="email"
                 required
                 className="mt-1"
-                placeholder="admin@devireen.co.ke"
+                placeholder="devireenenterprise@gmail.com"
               />
             </div>
             <div>
@@ -80,7 +84,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

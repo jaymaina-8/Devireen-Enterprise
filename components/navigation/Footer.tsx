@@ -24,11 +24,11 @@ export function Footer({ settings }: { settings?: any }) {
           <div className="sm:col-span-2 lg:col-span-2">
             <Link href="/" className="mb-8 flex items-center gap-4">
               <Image
-                src="/images/devireen-logo.png"
+                src={settings?.logo_url || '/images/devireen-logo.png'}
                 alt="Devireen Logo"
                 width={72}
                 height={72}
-                className="h-16 w-auto object-contain"
+                className="h-16 w-16 object-contain"
               />
               <div className="flex flex-col justify-center">
                 <span className="text-[26px] leading-[1.1] font-extrabold tracking-[0.02em] text-white uppercase">
@@ -342,10 +342,10 @@ export function Footer({ settings }: { settings?: any }) {
               <li className="flex items-center gap-3">
                 <Mail className="text-primary-500 h-4 w-4 shrink-0" />
                 <a
-                  href={`mailto:${settings?.email || 'sales@devireen.co.ke'}`}
+                  href={`mailto:${settings?.email || 'devireenenterprise@gmail.com'}`}
                   className="transition-colors hover:text-white"
                 >
-                  {settings?.email || 'sales@devireen.co.ke'}
+                  {settings?.email || 'devireenenterprise@gmail.com'}
                 </a>
               </li>
             </ul>

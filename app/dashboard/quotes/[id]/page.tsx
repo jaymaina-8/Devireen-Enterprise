@@ -104,9 +104,15 @@ export default async function QuoteDetailsPage({
             quoteId={quote.id}
             currentStatus={quote.status}
           />
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
+          <Button variant="outline" asChild>
+            <a
+              href={`/api/quote/${quote.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export PDF
+            </a>
           </Button>
         </div>
       </div>

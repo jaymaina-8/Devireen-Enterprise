@@ -37,28 +37,28 @@ const departments = [
     icon: <ShoppingCart className="h-5 w-5" />,
     name: 'Sales',
     description: 'Product inquiries, quotes, and new accounts',
-    email: 'sales@devireen.co.ke',
+    email: 'devireenenterprise@gmail.com',
     phone: '+254 708 037929',
   },
   {
     icon: <HeadphonesIcon className="h-5 w-5" />,
     name: 'Support',
     description: 'Order tracking, returns, and issues',
-    email: 'support@devireen.co.ke',
+    email: 'devireenenterprise@gmail.com',
     phone: '+254 708 037929',
   },
   {
     icon: <CreditCard className="h-5 w-5" />,
     name: 'Accounts',
     description: 'Invoicing, payments, and statements',
-    email: 'accounts@devireen.co.ke',
+    email: 'devireenenterprise@gmail.com',
     phone: '+254 708 037929',
   },
   {
     icon: <Building2 className="h-5 w-5" />,
     name: 'Procurement',
     description: 'Bulk orders and corporate accounts',
-    email: 'procurement@devireen.co.ke',
+    email: 'devireenenterprise@gmail.com',
     phone: '+254 708 037929',
   },
 ];
@@ -66,7 +66,7 @@ const departments = [
 export default async function ContactPage() {
   const settings = await SettingsRepository.getSettings();
   const phone = settings?.phone_numbers?.[0] || '+254 708 037929';
-  const email = settings?.email || 'sales@devireen.co.ke';
+  const email = settings?.email || 'devireenenterprise@gmail.com';
   const whatsapp = settings?.whatsapp_number || '+254 708 037929';
   const rawWhatsapp = whatsapp.replace(/[^\d]/g, '');
   const cleanPhone = phone.replace(/\s/g, '');
@@ -315,7 +315,7 @@ export default async function ContactPage() {
             question:
               'How can I contact customer support regarding an existing order?',
             answer:
-              'Call our support line at +254 708 037929 or email support@devireen.co.ke with your order reference number for rapid assistance.',
+              'Call our support line at +254 708 037929 or email devireenenterprise@gmail.com with your order reference number for rapid assistance.',
           },
         ]}
       />

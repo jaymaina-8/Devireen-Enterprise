@@ -234,7 +234,7 @@ interface CatalogDocumentProps {
 function CatalogDocument({ products, settings }: CatalogDocumentProps) {
   const companyName = settings?.company_name || 'Devireen Enterprise';
   const companyAddress = settings?.physical_address || 'Nairobi, Kenya';
-  const companyEmail = settings?.email || 'sales@devireen.co.ke';
+  const companyEmail = settings?.email || 'devireenenterprise@gmail.com';
   const companyPhone = Array.isArray(settings?.phone_numbers)
     ? settings.phone_numbers[0]
     : settings?.phone_numbers || '+254 708 037929';
@@ -549,7 +549,7 @@ function CatalogDocument({ products, settings }: CatalogDocumentProps) {
         React.createElement(
           Text,
           { style: styles.termsLine },
-          '• Nationwide delivery available to all 47 counties. Custom procurement available on request.'
+          '• Delivery is completed the same day within Nairobi and surrounding counties, and the next day for other regions. Custom procurement available on request.'
         ),
         React.createElement(
           Text,

@@ -9,6 +9,23 @@ import {
   renderToBuffer,
 } from '@react-pdf/renderer';
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
+
+// Helper to load logo as base64 for reliable PDF generation across environments
+let logoBase64 = '';
+try {
+  const logoPath = path.join(
+    process.cwd(),
+    'public',
+    'images',
+    'devireen-logo.png'
+  );
+  const logoBuffer = fs.readFileSync(logoPath);
+  logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+} catch (e) {
+  console.error('Failed to load logo for PDF:', e);
+}
 
 // ─── Brand tokens ──────────────────────────────────────────────────────────
 const RED = '#DC2626'; // Devireen primary red
@@ -324,7 +341,7 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
 
   const companyName = settings?.company_name || 'Devireen Enterprise';
   const companyAddress = settings?.physical_address || 'Nairobi CBD, Kenya';
-  const companyEmail = settings?.email || 'sales@devireen.co.ke';
+  const companyEmail = settings?.email || 'devireenenterprise@gmail.com';
   const companyPhone =
     Array.isArray(settings?.phone_numbers) && settings.phone_numbers[0]
       ? settings.phone_numbers[0]
@@ -359,8 +376,11 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
           View,
           { style: styles.headerLeft },
           // Logo image (when available) – falls back to styled text
-          logoUrl
-            ? React.createElement(Image, { src: logoUrl, style: styles.logo })
+          logoBase64 || logoUrl
+            ? React.createElement(Image, {
+                src: logoBase64 || logoUrl,
+                style: styles.logo,
+              })
             : React.createElement(
                 Text,
                 { style: styles.companyName },
@@ -681,9 +701,9 @@ function QuoteDocument({ quote, settings }: QuoteDocumentProps) {
         React.createElement(
           View,
           { style: styles.footerLeft },
-          logoUrl
+          logoBase64 || logoUrl
             ? React.createElement(Image, {
-                src: logoUrl,
+                src: logoBase64 || logoUrl,
                 style: styles.footerLogoSmall,
               })
             : null,

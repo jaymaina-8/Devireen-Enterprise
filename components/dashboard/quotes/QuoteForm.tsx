@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useToastStore } from '@/lib/store/toast-store';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, StickyNote } from 'lucide-react';
 import {
   createQuoteAction,
   updateQuoteAction,
@@ -26,6 +27,9 @@ export function QuoteForm({
   products?: any[];
   defaultCustomerId?: string;
 }) {
+  const [customerId, setCustomerId] = useState<string>(
+    initialData?.customer_id || defaultCustomerId || ''
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -178,24 +182,20 @@ export function QuoteForm({
                   key={index}
                   className="flex items-end gap-3 rounded-lg border border-gray-100 bg-gray-50/30 p-4"
                 >
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <Label className="mb-1 text-xs text-gray-500">
                       Product
                     </Label>
-                    <Select
+                    <SearchableSelect
                       value={item.product_id}
-                      onChange={(e) =>
-                        handleProductChange(index, e.target.value)
-                      }
+                      onChange={(val) => handleProductChange(index, val)}
+                      options={products.map((p) => ({
+                        value: p.id,
+                        label: `${p.name} (SKU: ${p.sku})`,
+                      }))}
+                      placeholder="Select Product..."
                       required
-                    >
-                      <option value="">Select Product...</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} (SKU: {p.sku})
-                        </option>
-                      ))}
-                    </Select>
+                    />
                   </div>
                   <div className="w-28">
                     <Label className="mb-1 text-xs text-gray-500">
@@ -268,20 +268,18 @@ export function QuoteForm({
               <Label htmlFor="customer_id" className="text-gray-600">
                 Customer
               </Label>
-              <Select
-                id="customer_id"
+              <SearchableSelect
                 name="customer_id"
-                defaultValue={initialData?.customer_id || defaultCustomerId}
-                required
+                value={customerId}
+                onChange={setCustomerId}
+                options={customers.map((c) => ({
+                  value: c.id,
+                  label: `${c.company_name || 'Individual'} (${c.contact_email})`,
+                }))}
+                placeholder="Select Customer..."
                 className="mt-1"
-              >
-                <option value="">Select Customer...</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.company_name} ({c.contact_email})
-                  </option>
-                ))}
-              </Select>
+                required
+              />
               <div className="mt-2 text-right">
                 <Link
                   href="/dashboard/customers/new"
@@ -313,17 +311,26 @@ export function QuoteForm({
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="notes" className="text-gray-600">
+            <div className="relative mt-2">
+              <Label
+                htmlFor="notes"
+                className="mb-2 flex items-center gap-2 font-semibold text-gray-700"
+              >
+                <StickyNote className="h-4 w-4 text-amber-500" />
                 Internal Notes
               </Label>
               <textarea
                 id="notes"
                 name="notes"
-                placeholder="Visible only to staff..."
-                className="mt-1 min-h-[120px] w-full resize-y rounded-md border border-gray-300 p-3 text-sm outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Add special instructions, payment terms, or staff-only reminders here..."
+                className="min-h-[120px] w-full resize-y rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-sm text-amber-900 shadow-inner transition-all duration-200 placeholder:text-amber-700/50 focus:border-amber-400 focus:bg-amber-50 focus:ring-4 focus:ring-amber-400/20 focus:outline-none"
                 defaultValue={initialData?.notes || ''}
               />
+              <div className="pointer-events-none absolute right-3 bottom-3">
+                <span className="rounded-md bg-amber-200/40 px-2 py-1 text-[10px] font-bold tracking-wider text-amber-600/60 uppercase backdrop-blur-sm">
+                  Staff Only
+                </span>
+              </div>
             </div>
           </div>
 
