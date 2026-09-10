@@ -12,6 +12,7 @@ import {
 import { useQuoteCart } from '@/lib/store/quote-cart';
 import { toast } from '@/lib/store/toast-store';
 import { cn } from '@/lib/utils';
+import type { PricingMode } from '@/types/database.types';
 import Link from 'next/link';
 
 interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -21,6 +22,8 @@ interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
   sku: string;
   price: number;
   wholesalePrice?: number | null;
+  wholesaleUnit?: string | null;
+  pricingMode?: PricingMode;
   originalPrice?: number;
   imageUrl?: string | null;
   stockStatus: StockStatus;
@@ -35,6 +38,8 @@ export function ProductCard({
   sku,
   price,
   wholesalePrice,
+  wholesaleUnit,
+  pricingMode = 'RETAIL',
   originalPrice,
   imageUrl,
   stockStatus,
@@ -45,7 +50,20 @@ export function ProductCard({
 }: ProductCardProps) {
   const addItem = useQuoteCart((state) => state.addItem);
   const items = useQuoteCart((state) => state.items);
-  const isInCart = items.some((item) => item.id === id);
+  const existingCartItem = items.find(
+    (item) => item.id === id && (item.pricingMode ?? 'RETAIL') === pricingMode
+  );
+  const isInCart = Boolean(existingCartItem);
+  const matchingOtherModeItem = items.find(
+    (item) => item.id === id && (item.pricingMode ?? 'RETAIL') !== pricingMode
+  );
+
+  const isWholesale = pricingMode === 'WHOLESALE';
+  const effectiveDisplayPrice =
+    isWholesale && wholesalePrice != null ? wholesalePrice : price;
+  const effectiveOriginalPrice = isWholesale
+    ? (originalPrice ?? price)
+    : originalPrice;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -55,6 +73,8 @@ export function ProductCard({
       sku,
       price,
       wholesalePrice: wholesalePrice ?? null,
+      wholesaleUnit: wholesaleUnit ?? null,
+      pricingMode,
       imageUrl,
       quantity: addQuantity,
     });
@@ -90,16 +110,22 @@ export function ProductCard({
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
           <StockIndicator status={stockStatus} />
-          {hasWholesalePrice && (
+          {(isWholesale || hasWholesalePrice) && (
             <div className="w-fit rounded bg-emerald-500 px-2 py-1 text-[10px] font-bold text-white shadow-sm">
               WHOLESALE PRICE
             </div>
           )}
-          {originalPrice && originalPrice > price && (
-            <div className="bg-primary-600 w-fit rounded px-2 py-1 text-xs font-bold text-white shadow-sm">
-              {Math.round(((originalPrice - price) / originalPrice) * 100)}% OFF
-            </div>
-          )}
+          {effectiveOriginalPrice &&
+            effectiveOriginalPrice > effectiveDisplayPrice && (
+              <div className="bg-primary-600 w-fit rounded px-2 py-1 text-xs font-bold text-white shadow-sm">
+                {Math.round(
+                  ((effectiveOriginalPrice - effectiveDisplayPrice) /
+                    effectiveOriginalPrice) *
+                    100
+                )}
+                % OFF
+              </div>
+            )}
         </div>
 
         {/* Quick View Hint */}
@@ -125,8 +151,22 @@ export function ProductCard({
           </h3>
         </Link>
         <div className="mt-2">
-          <Price amount={price} originalAmount={originalPrice} showVat={true} />
-          {hasWholesalePrice && (
+          <Price
+            amount={effectiveDisplayPrice}
+            originalAmount={
+              effectiveOriginalPrice &&
+              effectiveOriginalPrice > effectiveDisplayPrice
+                ? effectiveOriginalPrice
+                : undefined
+            }
+            showVat={true}
+          />
+          {wholesaleUnit && isWholesale && (
+            <p className="text-text-muted mt-0.5 text-[10px] font-medium">
+              Unit: {wholesaleUnit}
+            </p>
+          )}
+          {!isWholesale && hasWholesalePrice && (
             <p className="mt-0.5 text-[10px] font-medium text-emerald-600">
               Wholesale: KSh {wholesalePrice!.toLocaleString()}
             </p>
@@ -148,13 +188,19 @@ export function ProductCard({
             <>
               <Check className="mr-2 h-4 w-4 shrink-0" />
               <span>
-                {addQuantity > 1 ? `Added ${addQuantity}` : 'Added to Cart'}
+                {existingCartItem && existingCartItem.quantity > 1
+                  ? `In Cart (${existingCartItem.quantity})`
+                  : 'Added to Cart'}
               </span>
             </>
           ) : (
             <>
               <ShoppingCart className="mr-2 h-4 w-4 shrink-0" />
-              <span>{addLabel}</span>
+              <span>
+                {matchingOtherModeItem
+                  ? `Add ${isWholesale ? 'Wholesale' : 'Retail'}`
+                  : addLabel}
+              </span>
             </>
           )}
         </Button>

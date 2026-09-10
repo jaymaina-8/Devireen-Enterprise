@@ -5,11 +5,16 @@ import Image from 'next/image';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { CartItem } from '@/lib/store/quote-cart';
 import { cn } from '@/lib/utils';
+import type { PricingMode } from '@/types/database.types';
 
 interface CartItemRowProps {
   item: CartItem;
-  onUpdateQuantity: (id: string, quantity: number) => void;
-  onRemove: (id: string) => void;
+  onUpdateQuantity: (
+    id: string,
+    quantity: number,
+    pricingMode?: PricingMode
+  ) => void;
+  onRemove: (id: string, pricingMode?: PricingMode) => void;
 }
 
 export function CartItemRow({
@@ -17,12 +22,13 @@ export function CartItemRow({
   onUpdateQuantity,
   onRemove,
 }: CartItemRowProps) {
+  const isWholesale = (item.pricingMode ?? 'RETAIL') === 'WHOLESALE';
   const effectivePrice =
-    item.wholesalePrice != null ? item.wholesalePrice : item.price;
+    isWholesale && item.wholesalePrice != null
+      ? item.wholesalePrice
+      : item.price;
   const subtotal = effectivePrice * item.quantity;
-  const hasWholesalePrice =
-    item.wholesalePrice != null && item.wholesalePrice !== item.price;
-  const showWholesaleTag = hasWholesalePrice;
+  const showWholesaleTag = isWholesale;
 
   return (
     <div className="border-border-subtle border-b py-5 last:border-b-0">
@@ -58,7 +64,11 @@ export function CartItemRow({
               <span className="text-text-main text-sm font-bold">
                 KSh {effectivePrice.toLocaleString()}
               </span>
-              <span className="text-text-muted text-xs">each</span>
+              <span className="text-text-muted text-xs">
+                {isWholesale && item.wholesaleUnit
+                  ? `per ${item.wholesaleUnit}`
+                  : 'each'}
+              </span>
               {showWholesaleTag && (
                 <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                   Wholesale price
@@ -70,7 +80,7 @@ export function CartItemRow({
           {/* Remove button — top-right, always visible */}
           <button
             type="button"
-            onClick={() => onRemove(item.id)}
+            onClick={() => onRemove(item.id, item.pricingMode)}
             className="text-text-muted flex-shrink-0 rounded-lg p-2 transition-all hover:bg-red-50 hover:text-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
             aria-label={`Remove ${item.name}`}
           >
@@ -86,10 +96,11 @@ export function CartItemRow({
         <div className="border-border-main bg-background flex items-center overflow-hidden rounded-xl border shadow-sm">
           <button
             type="button"
-            onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+            onClick={() =>
+              onUpdateQuantity(item.id, item.quantity - 1, item.pricingMode)
+            }
             disabled={item.quantity <= 1}
             className={cn(
-              // 44px on mobile (touch-compliant), 36px on desktop
               'bg-background flex h-10 w-10 items-center justify-center transition-colors sm:h-9 sm:w-9',
               'hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:ring-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset'
@@ -105,7 +116,9 @@ export function CartItemRow({
 
           <button
             type="button"
-            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+            onClick={() =>
+              onUpdateQuantity(item.id, item.quantity + 1, item.pricingMode)
+            }
             className={cn(
               'bg-background flex h-10 w-10 items-center justify-center transition-colors sm:h-9 sm:w-9',
               'hover:bg-surface',

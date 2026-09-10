@@ -1,15 +1,18 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { QuotesClientView } from '@/components/dashboard/quotes/QuotesClientView';
 import { FileText, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Quotes Workspace | Devireen Enterprise OS',
 };
 
 async function getQuotes() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   const { data } = await supabase
     .from('quotes')

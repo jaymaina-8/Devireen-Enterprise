@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -13,12 +13,15 @@ import {
 import Link from 'next/link';
 import { format } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'Customer Details | Devireen Enterprise',
 };
 
 async function getCustomerData(id: string) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   const { data: customer } = await supabase
     .from('customers')

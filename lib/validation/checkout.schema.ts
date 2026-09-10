@@ -10,7 +10,12 @@ export const deliveryFormSchema = z.object({
     .min(9, 'Please enter a valid phone number')
     .max(20, 'Phone number is too long')
     .regex(/^[\+\d\s\-\(\)]+$/, 'Phone number contains invalid characters'),
-  email: z.string().email('Please enter a valid email address'),
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid email address')
+    .optional()
+    .or(z.literal('')),
   deliveryAddress: z
     .string()
     .min(5, 'Please enter a full delivery address')
@@ -19,9 +24,7 @@ export const deliveryFormSchema = z.object({
     .string()
     .min(2, 'Please select your county / area')
     .max(100, 'County name is too long'),
-  courierService: z
-    .string()
-    .min(1, 'Please select a courier service'),
+  courierService: z.string().min(1, 'Please select a courier service'),
   deliveryNotes: z.string().max(500, 'Notes are too long').optional(),
 });
 
@@ -35,7 +38,12 @@ export const pickupFormSchema = z.object({
     .min(9, 'Please enter a valid phone number')
     .max(20, 'Phone number is too long')
     .regex(/^[\+\d\s\-\(\)]+$/, 'Phone number contains invalid characters'),
-  email: z.string().email('Please enter a valid email address'),
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid email address')
+    .optional()
+    .or(z.literal('')),
 });
 
 export type DeliveryFormData = z.infer<typeof deliveryFormSchema>;
@@ -70,7 +78,7 @@ export const KENYA_COUNTIES = [
   'Meru',
   'Migori',
   'Mombasa',
-  'Murang\'a',
+  "Murang'a",
   'Nairobi',
   'Nakuru',
   'Nandi',
@@ -104,4 +112,3 @@ export const COURIER_SERVICES = [
   'Glovo Courier',
   'Own Transport',
 ];
-

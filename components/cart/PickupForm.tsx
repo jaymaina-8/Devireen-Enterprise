@@ -1,7 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { pickupFormSchema, PickupFormData } from '@/lib/validation/checkout.schema';
+import {
+  pickupFormSchema,
+  PickupFormData,
+} from '@/lib/validation/checkout.schema';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Loader2, MapPin } from 'lucide-react';
@@ -19,17 +22,35 @@ function FieldError({ message }: { message?: string }) {
   return <p className="mt-1 text-sm text-red-500">{message}</p>;
 }
 
-function FormLabel({ htmlFor, children, required }: { htmlFor: string; children: React.ReactNode; required?: boolean }) {
+function FormLabel({
+  htmlFor,
+  children,
+  required,
+}: {
+  htmlFor: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
   return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-text-main mb-1.5">
+    <label
+      htmlFor={htmlFor}
+      className="text-text-main mb-1.5 block text-sm font-medium"
+    >
       {children}
-      {required && <span className="text-red-500 ml-0.5">*</span>}
+      {required && <span className="ml-0.5 text-red-500">*</span>}
     </label>
   );
 }
 
-export function PickupForm({ onSubmit, isSubmitting, shopAddress, mapsUrl }: PickupFormProps) {
-  const [errors, setErrors] = React.useState<Partial<Record<keyof PickupFormData, string>>>({});
+export function PickupForm({
+  onSubmit,
+  isSubmitting,
+  shopAddress,
+  mapsUrl,
+}: PickupFormProps) {
+  const [errors, setErrors] = React.useState<
+    Partial<Record<keyof PickupFormData, string>>
+  >({});
   const [formData, setFormData] = React.useState<PickupFormData>({
     fullName: '',
     phone: '',
@@ -68,7 +89,11 @@ export function PickupForm({ onSubmit, isSubmitting, shopAddress, mapsUrl }: Pic
         window.open(mapsUrl, '_blank', 'noopener,noreferrer');
       } else if (shopAddress) {
         const query = encodeURIComponent(shopAddress);
-        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer');
+        window.open(
+          `https://www.google.com/maps/search/?api=1&query=${query}`,
+          '_blank',
+          'noopener,noreferrer'
+        );
       }
     } catch {
       // Silently fail map open
@@ -79,14 +104,16 @@ export function PickupForm({ onSubmit, isSubmitting, shopAddress, mapsUrl }: Pic
     <div className="space-y-6">
       {/* Shop location info */}
       {(shopAddress || mapsUrl) && (
-        <div className="flex items-start gap-3 rounded-xl border border-border-subtle bg-background p-4">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+        <div className="border-border-subtle bg-background flex items-start gap-3 rounded-xl border p-4">
+          <span className="bg-primary-100 text-primary-600 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full">
             <MapPin className="h-4 w-4" />
           </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-text-main">Our Location</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-text-main text-sm font-medium">Our Location</p>
             {shopAddress && (
-              <p className="text-sm text-text-muted mt-0.5 leading-snug">{shopAddress}</p>
+              <p className="text-text-muted mt-0.5 text-sm leading-snug">
+                {shopAddress}
+              </p>
             )}
           </div>
           <Button
@@ -104,9 +131,11 @@ export function PickupForm({ onSubmit, isSubmitting, shopAddress, mapsUrl }: Pic
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {/* Name + Phone */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <FormLabel htmlFor="fullName" required>Full Name</FormLabel>
+            <FormLabel htmlFor="fullName" required>
+              Full Name
+            </FormLabel>
             <Input
               id="fullName"
               name="fullName"
@@ -118,7 +147,9 @@ export function PickupForm({ onSubmit, isSubmitting, shopAddress, mapsUrl }: Pic
             <FieldError message={errors.fullName} />
           </div>
           <div>
-            <FormLabel htmlFor="phone" required>Phone Number</FormLabel>
+            <FormLabel htmlFor="phone" required>
+              Phone Number
+            </FormLabel>
             <Input
               id="phone"
               name="phone"
@@ -132,22 +163,32 @@ export function PickupForm({ onSubmit, isSubmitting, shopAddress, mapsUrl }: Pic
           </div>
         </div>
 
-        {/* Email */}
+        {/* Email (Optional) */}
         <div>
-          <FormLabel htmlFor="email" required>Email Address</FormLabel>
+          <FormLabel htmlFor="email">
+            Email Address{' '}
+            <span className="text-text-muted text-xs font-normal">
+              (Optional)
+            </span>
+          </FormLabel>
           <Input
             id="email"
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="jane@example.com"
+            placeholder="jane@example.com (optional)"
             className={errors.email ? 'border-red-400' : ''}
           />
           <FieldError message={errors.email} />
         </div>
 
-        <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

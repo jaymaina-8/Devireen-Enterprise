@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/Button';
 
 export function QuoteCartContainer() {
   const router = useRouter();
-  const { items, isOpen, setIsOpen, updateQuantity, removeItem, getSummary } = useQuoteCart();
+  const { items, isOpen, setIsOpen, updateQuantity, removeItem, getSummary } =
+    useQuoteCart();
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -62,11 +63,14 @@ export function QuoteCartContainer() {
         <div className="flex flex-col">
           {items.map((item) => (
             <QuoteItem
-              key={item.id}
+              key={`${item.id}:${item.pricingMode ?? 'RETAIL'}`}
               id={item.id}
               name={item.name}
               sku={item.sku}
               price={item.price}
+              wholesalePrice={item.wholesalePrice}
+              wholesaleUnit={item.wholesaleUnit}
+              pricingMode={item.pricingMode}
               imageUrl={item.imageUrl}
               quantity={item.quantity}
               onUpdateQuantity={updateQuantity}

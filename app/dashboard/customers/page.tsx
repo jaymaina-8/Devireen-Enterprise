@@ -1,15 +1,18 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { CustomersClientView } from '@/components/dashboard/customers/CustomersClientView';
 import { Users, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Customer Directory & CRM | Devireen Enterprise OS',
 };
 
 async function getCustomers() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from('customers')
     .select('*')

@@ -1,12 +1,15 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { OrdersClientView } from '@/components/dashboard/orders/OrdersClientView';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Orders | Devireen Enterprise',
 };
 
 async function getOrders() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from('orders')
     .select('*, customers(company_name, contact_email)')

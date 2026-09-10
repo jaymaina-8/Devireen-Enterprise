@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { PricingMode } from '@/types/database.types';
 
 export interface CartItem {
   id: string;
@@ -7,6 +8,8 @@ export interface CartItem {
   sku: string;
   price: number; // retail price
   wholesalePrice?: number | null; // wholesale price if available
+  wholesaleUnit?: string | null;
+  pricingMode: PricingMode;
   imageUrl?: string | null;
   quantity: number;
 }
@@ -23,9 +26,18 @@ interface QuoteCartState {
   items: CartItem[];
   isOpen: boolean;
   wholesaleMode: boolean;
-  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addItem: (
+    item: Omit<CartItem, 'quantity' | 'pricingMode'> & {
+      quantity?: number;
+      pricingMode?: PricingMode;
+    }
+  ) => void;
+  removeItem: (id: string, pricingMode?: PricingMode) => void;
+  updateQuantity: (
+    id: string,
+    quantity: number,
+    pricingMode?: PricingMode
+  ) => void;
   clearCart: () => void;
   setIsOpen: (isOpen: boolean) => void;
   toggleCart: () => void;
@@ -43,30 +55,52 @@ export const useQuoteCart = create<QuoteCartState>()(
 
       addItem: (item) =>
         set((state) => {
-          const existingItem = state.items.find((i) => i.id === item.id);
+          const itemMode: PricingMode = item.pricingMode ?? 'RETAIL';
+          const existingItem = state.items.find(
+            (i) => i.id === item.id && (i.pricingMode ?? 'RETAIL') === itemMode
+          );
+
           if (existingItem) {
             return {
               items: state.items.map((i) =>
-                i.id === item.id
+                i.id === item.id && (i.pricingMode ?? 'RETAIL') === itemMode
                   ? { ...i, quantity: i.quantity + (item.quantity || 1) }
                   : i
               ),
             };
           }
+
           return {
-            items: [...state.items, { ...item, quantity: item.quantity || 1 }],
+            items: [
+              ...state.items,
+              {
+                ...item,
+                pricingMode: itemMode,
+                quantity: item.quantity || 1,
+              },
+            ],
           };
         }),
 
-      removeItem: (id) =>
+      removeItem: (id, pricingMode) =>
         set((state) => ({
-          items: state.items.filter((i) => i.id !== id),
+          items: state.items.filter((i) =>
+            pricingMode
+              ? !(i.id === id && (i.pricingMode ?? 'RETAIL') === pricingMode)
+              : i.id !== id
+          ),
         })),
 
-      updateQuantity: (id, quantity) =>
+      updateQuantity: (id, quantity, pricingMode) =>
         set((state) => ({
           items: state.items.map((i) =>
-            i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i
+            (
+              pricingMode
+                ? i.id === id && (i.pricingMode ?? 'RETAIL') === pricingMode
+                : i.id === id
+            )
+              ? { ...i, quantity: Math.max(1, quantity) }
+              : i
           ),
         })),
 
@@ -83,7 +117,10 @@ export const useQuoteCart = create<QuoteCartState>()(
 
       getSummary: (): CartSummary => {
         const state = get();
-        const pricingModel: 'RETAIL' | 'WHOLESALE' = state.wholesaleMode
+        const allWholesale =
+          state.items.length > 0 &&
+          state.items.every((i) => (i.pricingMode ?? 'RETAIL') === 'WHOLESALE');
+        const pricingModel: 'RETAIL' | 'WHOLESALE' = allWholesale
           ? 'WHOLESALE'
           : 'RETAIL';
 
@@ -93,9 +130,9 @@ export const useQuoteCart = create<QuoteCartState>()(
         );
 
         const rawSubtotal = state.items.reduce((acc, item) => {
-          // Use wholesale price if wholesaleMode is active AND wholesale price exists
           const effectivePrice =
-            state.wholesaleMode && item.wholesalePrice != null
+            (item.pricingMode ?? 'RETAIL') === 'WHOLESALE' &&
+            item.wholesalePrice != null
               ? item.wholesalePrice
               : item.price;
           return acc + effectivePrice * item.quantity;
@@ -111,8 +148,24 @@ export const useQuoteCart = create<QuoteCartState>()(
     }),
     {
       name: 'devireen-quote-cart',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2 && persistedState?.items) {
+          return {
+            ...persistedState,
+            items: persistedState.items.map((item: any) => ({
+              ...item,
+              pricingMode: item.pricingMode ?? 'RETAIL',
+            })),
+          };
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
-        items: state.items,
+        items: state.items.map((item) => ({
+          ...item,
+          pricingMode: item.pricingMode ?? 'RETAIL',
+        })),
         wholesaleMode: state.wholesaleMode,
       }),
     }

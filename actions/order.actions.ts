@@ -27,6 +27,23 @@ export const createPublicOrderAction = createSafeAction(
     if (!payload.items || payload.items.length === 0) {
       throw new Error('Cart is empty. Please add items before ordering.');
     }
+
+    for (const item of payload.items) {
+      if (!item.productId || typeof item.productId !== 'string') {
+        throw new Error('Invalid product in order.');
+      }
+      if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+        throw new Error('Quantity must be a positive whole number.');
+      }
+      if (
+        item.pricingMode !== undefined &&
+        item.pricingMode !== 'RETAIL' &&
+        item.pricingMode !== 'WHOLESALE'
+      ) {
+        throw new Error('Invalid pricing mode specified.');
+      }
+    }
+
     const order = await OrderRepository.createOrder(payload);
     revalidatePath('/dashboard/orders');
     return {
@@ -37,6 +54,7 @@ export const createPublicOrderAction = createSafeAction(
       vatRate: order.vatRate,
       vatAmount: order.vatAmount,
       totalAmount: order.totalAmount,
+      items: order.items,
     };
   }
 );

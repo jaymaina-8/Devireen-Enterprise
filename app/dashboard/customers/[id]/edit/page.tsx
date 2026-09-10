@@ -1,16 +1,19 @@
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { CustomerForm } from '@/components/dashboard/customers/CustomerForm';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Edit Customer | Devireen Enterprise',
 };
 
 async function getCustomer(id: string) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: customer } = await supabase
     .from('customers')
     .select('*')

@@ -33,7 +33,12 @@ interface ConfirmedOrder {
   customerName: string;
   fulfillmentType: FulfillmentType;
   total: number;
+  subtotal: number;
+  vatAmount: number;
+  vatRate: number;
   accessToken?: string;
+  pricingModel: 'RETAIL' | 'WHOLESALE';
+  purchasedItems: any[];
 }
 
 // ─── Step indicator ───────────────────────────────────────────────────────
@@ -195,17 +200,35 @@ export function CheckoutPage({
 
   React.useEffect(() => {
     setMounted(true);
+    try {
+      const saved = sessionStorage.getItem('devireen_last_confirmed_order');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (
+          parsed?.order &&
+          Date.now() - (parsed.savedAt || 0) < 2 * 60 * 60 * 1000
+        ) {
+          if (items.length === 0) {
+            setConfirmedOrder(parsed.order);
+            setStep('confirmation');
+          }
+        }
+      }
+    } catch {
+      // Ignore storage read errors
+    }
   }, []);
 
   if (!mounted) return null;
 
-  const rawSubtotal = items.reduce(
-    (acc, item) =>
-      acc +
-      (item.wholesalePrice != null ? item.wholesalePrice : item.price) *
-        item.quantity,
-    0
-  );
+  const rawSubtotal = items.reduce((acc, item) => {
+    const isWholesale = (item.pricingMode ?? 'RETAIL') === 'WHOLESALE';
+    const effectivePrice =
+      isWholesale && item.wholesalePrice != null
+        ? item.wholesalePrice
+        : item.price;
+    return acc + effectivePrice * item.quantity;
+  }, 0);
 
   const subtotal = rawSubtotal;
   const isVatApplied = enableVat && requiresVat;
@@ -246,7 +269,7 @@ export function CheckoutPage({
   async function submitOrder(customerData: {
     fullName: string;
     phone: string;
-    email: string;
+    email?: string;
     deliveryAddress?: string;
     county?: string;
     courierService?: string;
@@ -262,12 +285,19 @@ export function CheckoutPage({
       ? `${customerData.deliveryNotes || ''}\n[Requested VAT Invoice. KRA PIN: ${kraPin.trim()}]`.trim()
       : customerData.deliveryNotes;
 
+    const allWholesale =
+      items.length > 0 &&
+      items.every((item) => (item.pricingMode ?? 'RETAIL') === 'WHOLESALE');
+    const orderPricingModel: 'RETAIL' | 'WHOLESALE' = allWholesale
+      ? 'WHOLESALE'
+      : 'RETAIL';
+
     const payload = {
       customerName: customerData.fullName,
-      customerEmail: customerData.email,
+      customerEmail: customerData.email?.trim() || undefined,
       customerPhone: customerData.phone,
       fulfillmentType,
-      pricingModel: wholesaleMode ? 'WHOLESALE' : 'RETAIL',
+      pricingModel: orderPricingModel,
       totalAmount: total,
       invoiceNumber,
       requiresVat: isVatApplied,
@@ -280,14 +310,19 @@ export function CheckoutPage({
         county: customerData.county,
         courierService: customerData.courierService,
       }),
-      items: items.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-        unitPrice:
-          wholesaleMode && item.wholesalePrice != null
+      items: items.map((item) => {
+        const isWholesale = (item.pricingMode ?? 'RETAIL') === 'WHOLESALE';
+        const effectivePrice =
+          isWholesale && item.wholesalePrice != null
             ? item.wholesalePrice
-            : item.price,
-      })),
+            : item.price;
+        return {
+          productId: item.id,
+          quantity: item.quantity,
+          pricingMode: item.pricingMode ?? 'RETAIL',
+          unitPrice: effectivePrice,
+        };
+      }),
     };
 
     try {
@@ -297,14 +332,38 @@ export function CheckoutPage({
         throw new Error(result.error || 'Order creation failed');
       }
 
-      setConfirmedOrder({
+      const purchasedItemsSnapshot =
+        (result.data as any).items && (result.data as any).items.length > 0
+          ? (result.data as any).items
+          : items.map((i) => ({ ...i }));
+
+      const orderData: ConfirmedOrder = {
         orderId: result.data.orderId,
         invoiceNumber: result.data.invoiceNumber || invoiceNumber,
         customerName: customerData.fullName,
         fulfillmentType,
         total: result.data.totalAmount ?? total,
+        subtotal: rawSubtotal,
+        vatAmount: vatAmount,
+        vatRate: isVatApplied ? 16 : 0,
         accessToken: result.data.invoiceAccessToken,
-      });
+        pricingModel: orderPricingModel,
+        purchasedItems: purchasedItemsSnapshot,
+      };
+
+      setConfirmedOrder(orderData);
+
+      try {
+        sessionStorage.setItem(
+          'devireen_last_confirmed_order',
+          JSON.stringify({
+            order: orderData,
+            savedAt: Date.now(),
+          })
+        );
+      } catch {
+        // Ignore storage errors
+      }
 
       clearCart();
       setStep('confirmation');
@@ -317,6 +376,33 @@ export function CheckoutPage({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleRestoreCart(purchasedItems: any[]) {
+    const addItem = useQuoteCart.getState().addItem;
+    for (const it of purchasedItems) {
+      addItem({
+        id: it.id,
+        name: it.name,
+        sku: it.sku,
+        price: it.price,
+        wholesalePrice: it.wholesalePrice,
+        wholesaleUnit: it.wholesaleUnit,
+        pricingMode: it.pricingMode,
+        imageUrl: it.imageUrl,
+        quantity: it.quantity,
+      });
+    }
+    toast({
+      title: 'Items Restored to Cart',
+      description: 'Your previous items are now back in your cart.',
+      variant: 'success',
+    });
+    try {
+      sessionStorage.removeItem('devireen_last_confirmed_order');
+    } catch {}
+    setConfirmedOrder(null);
+    setStep('cart');
   }
 
   async function handleDeliverySubmit(data: DeliveryFormData) {
@@ -349,17 +435,41 @@ export function CheckoutPage({
           invoiceNumber={confirmedOrder.invoiceNumber}
           customerName={confirmedOrder.customerName}
           fulfillmentType={confirmedOrder.fulfillmentType}
-          items={items.length > 0 ? items : []}
+          items={confirmedOrder.purchasedItems || []}
           total={confirmedOrder.total}
+          subtotal={confirmedOrder.subtotal}
+          vatAmount={confirmedOrder.vatAmount}
+          vatRate={confirmedOrder.vatRate}
           whatsappNumber={whatsappNumber}
           mapsUrl={mapsUrl}
           shopAddress={shopAddress}
-          pricingModel={wholesaleMode ? 'WHOLESALE' : 'RETAIL'}
+          pricingModel={confirmedOrder.pricingModel}
           accessToken={confirmedOrder.accessToken}
+          onRestoreCart={() =>
+            handleRestoreCart(confirmedOrder.purchasedItems || [])
+          }
         />
-        <div className="mt-8 text-center">
-          <Link href="/">
-            <Button variant="outline">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-center">
+          <Button
+            variant="outline"
+            onClick={() => {
+              try {
+                sessionStorage.removeItem('devireen_last_confirmed_order');
+              } catch {}
+              setConfirmedOrder(null);
+              setStep('cart');
+            }}
+          >
+            Start a New Order
+          </Button>
+          <Link
+            href={
+              confirmedOrder.pricingModel === 'WHOLESALE'
+                ? '/wholesale'
+                : '/products'
+            }
+          >
+            <Button variant="primary">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Continue Shopping
             </Button>
@@ -417,7 +527,13 @@ export function CheckoutPage({
               <div className="border-border-subtle bg-background/50 flex items-center justify-between rounded-t-2xl border-b p-5">
                 <h3 className="text-text-main text-lg font-bold">Cart Items</h3>
                 <Link
-                  href="/products"
+                  href={
+                    items.some(
+                      (i) => (i.pricingMode ?? 'RETAIL') === 'WHOLESALE'
+                    )
+                      ? '/wholesale'
+                      : '/products'
+                  }
                   className="text-primary-600 hover:text-primary-700 bg-primary-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -427,7 +543,7 @@ export function CheckoutPage({
               <div className="px-4 py-3 sm:px-6">
                 {items.map((item) => (
                   <CartItemRow
-                    key={item.id}
+                    key={`${item.id}:${item.pricingMode ?? 'RETAIL'}`}
                     item={item}
                     onUpdateQuantity={updateQuantity}
                     onRemove={removeItem}

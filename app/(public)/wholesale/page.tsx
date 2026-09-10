@@ -287,7 +287,10 @@ export default async function WholesalePage({
                       slug={product.slug}
                       name={product.name}
                       sku={product.sku}
-                      price={product.wholesale_price}
+                      price={product.price}
+                      wholesalePrice={product.wholesale_price}
+                      wholesaleUnit={product.wholesale_unit}
+                      pricingMode="WHOLESALE"
                       originalPrice={product.price}
                       imageUrl={primaryImage?.url || '/placeholder.svg'}
                       stockStatus={product.stock_status}

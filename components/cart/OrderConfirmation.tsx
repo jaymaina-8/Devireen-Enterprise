@@ -8,6 +8,8 @@ import {
   MapPin,
   Package,
   Smartphone,
+  ShoppingBag,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { markOrderWhatsAppSentAction } from '@/actions/order.actions';
@@ -20,11 +22,15 @@ interface OrderConfirmationProps {
   fulfillmentType: 'DELIVERY' | 'PICKUP';
   items: CartItem[];
   total: number;
+  subtotal?: number;
+  vatAmount?: number;
+  vatRate?: number;
   whatsappNumber?: string;
   mapsUrl?: string;
   shopAddress?: string;
   pricingModel: 'RETAIL' | 'WHOLESALE';
   accessToken?: string;
+  onRestoreCart?: () => void;
 }
 
 export function OrderConfirmation({
@@ -32,13 +38,17 @@ export function OrderConfirmation({
   invoiceNumber,
   customerName,
   fulfillmentType,
-  items,
+  items = [],
   total,
+  subtotal,
+  vatAmount,
+  vatRate,
   whatsappNumber,
   mapsUrl,
   shopAddress,
   pricingModel,
   accessToken,
+  onRestoreCart,
 }: OrderConfirmationProps) {
   const [whatsappSent, setWhatsappSent] = React.useState(false);
 
@@ -113,6 +123,131 @@ export function OrderConfirmation({
           <span className="text-text-main text-sm font-medium">
             Order #{invoiceNumber}
           </span>
+        </div>
+      </div>
+
+      {/* ── Purchased Products Section (Prominently displayed) ── */}
+      <div className="mx-2 mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-3.5">
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="text-primary-600 h-5 w-5" />
+            <h3 className="text-sm font-bold text-gray-900">
+              Purchased Products
+            </h3>
+          </div>
+          {items.length > 0 && (
+            <span className="bg-primary-50 text-primary-700 rounded-full px-2.5 py-0.5 text-xs font-semibold">
+              {items.length} {items.length === 1 ? 'item' : 'items'}
+            </span>
+          )}
+        </div>
+
+        {items.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {items.map((item, idx) => {
+              const isWholesale =
+                (item.pricingMode ?? 'RETAIL') === 'WHOLESALE';
+              const effectiveUnitPrice =
+                isWholesale && item.wholesalePrice != null
+                  ? item.wholesalePrice
+                  : item.price;
+              const lineSubtotal = effectiveUnitPrice * item.quantity;
+
+              return (
+                <div
+                  key={`${item.id}:${item.pricingMode ?? 'RETAIL'}-${idx}`}
+                  className="flex items-start gap-3.5 p-4 transition-colors hover:bg-gray-50/60"
+                >
+                  {/* Thumbnail / Icon */}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="h-full w-full object-contain p-1"
+                      />
+                    ) : (
+                      <Package className="h-5 w-5 text-gray-400" />
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <h4 className="line-clamp-2 text-sm font-semibold text-gray-900">
+                        {item.name}
+                      </h4>
+                      {isWholesale && (
+                        <span className="inline-flex items-center rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                          ★ Wholesale
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span>SKU: {item.sku || 'N/A'}</span>
+                      {isWholesale && item.wholesaleUnit && (
+                        <span className="font-medium text-emerald-700">
+                          • Unit: {item.wholesaleUnit}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-gray-600">
+                        <strong className="font-mono text-gray-900">
+                          KSh {effectiveUnitPrice.toLocaleString()}
+                        </strong>
+                        {isWholesale && item.wholesaleUnit
+                          ? ` / ${item.wholesaleUnit}`
+                          : ''}{' '}
+                        × {item.quantity}
+                      </span>
+                      <span className="font-mono text-sm font-bold text-gray-900">
+                        KSh {lineSubtotal.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-5 text-center text-sm text-gray-600">
+            <p className="font-semibold text-gray-800">
+              Order #{invoiceNumber}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Your itemized purchase list is ready. Download your invoice PDF
+              below for full details.
+            </p>
+          </div>
+        )}
+
+        {/* Financial Summary */}
+        <div className="space-y-1.5 border-t border-gray-100 bg-gray-50/50 p-4 text-xs">
+          <div className="flex justify-between text-gray-600">
+            <span>Subtotal (excl. VAT)</span>
+            <span className="font-mono font-medium text-gray-900">
+              KSh {(subtotal ?? total).toLocaleString()}
+            </span>
+          </div>
+
+          {vatAmount && vatAmount > 0 ? (
+            <div className="flex justify-between text-gray-600">
+              <span>VAT ({vatRate ?? 16}%)</span>
+              <span className="font-mono font-medium text-gray-900">
+                KSh {vatAmount.toLocaleString()}
+              </span>
+            </div>
+          ) : null}
+
+          <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold text-gray-900">
+            <span>Total Amount</span>
+            <span className="font-mono text-emerald-700">
+              KSh {total.toLocaleString()}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -267,31 +402,31 @@ export function OrderConfirmation({
         </button>
       </div>
 
-      {/* Order summary */}
-      <div className="border-border-subtle bg-background mx-2 mt-6 rounded-xl border p-4">
-        <h3 className="text-text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
-          Order Summary
-        </h3>
-        <div className="space-y-1.5">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between text-sm"
-            >
-              <span className="text-text-muted">
-                {item.name} × {item.quantity}
-              </span>
-              <span className="text-text-main font-medium">
-                KSh {(item.price * item.quantity).toLocaleString()}
-              </span>
+      {/* ── Re-add / Add More Items banner ── */}
+      {onRestoreCart && items.length > 0 && (
+        <div className="border-primary-200 bg-primary-50/60 mx-2 mt-4 rounded-xl border p-4">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Want to add more products to this cart?
+              </p>
+              <p className="mt-0.5 text-xs text-gray-600">
+                Keep all your ordered items in your cart so you can continue
+                shopping without starting over.
+              </p>
             </div>
-          ))}
-          <div className="border-border-subtle text-text-main mt-2 flex items-center justify-between border-t pt-2 text-sm font-bold">
-            <span>Total</span>
-            <span>KSh {total.toLocaleString()}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRestoreCart}
+              className="border-primary-300 text-primary-700 hover:bg-primary-50 shrink-0 bg-white font-semibold shadow-sm"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Re-add Items & Shop
+            </Button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

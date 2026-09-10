@@ -1,5 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { QuoteForm } from '@/components/dashboard/quotes/QuoteForm';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Create Quote | Devireen Enterprise',
@@ -12,7 +15,7 @@ export default async function NewQuotePage({
 }) {
   const params = await searchParams;
   const initialCustomerId = params.customer_id || params.customerId || '';
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   // Fetch available customers
   const { data: customers } = await supabase

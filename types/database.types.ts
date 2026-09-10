@@ -6,6 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type PricingMode = 'RETAIL' | 'WHOLESALE';
+
 export interface Database {
   public: {
     Tables: {
@@ -185,8 +187,29 @@ export interface Database {
           product_id: string;
           quantity: number;
           unit_price: number;
+          pricing_mode: PricingMode;
           created_at: string;
           updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_id: string;
+          quantity?: number;
+          unit_price: number;
+          pricing_mode?: PricingMode;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          product_id?: string;
+          quantity?: number;
+          unit_price?: number;
+          pricing_mode?: PricingMode;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };

@@ -608,9 +608,12 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
             ? `${product?.name || 'Product'} (${brandName})`
             : product?.name || 'Product';
 
+          const isItemWholesale =
+            item.pricing_mode === 'WHOLESALE' ||
+            (item.pricing_mode === undefined && isWholesale);
           const wholesaleUnit = product?.wholesale_unit;
           const retailUnit = product?.attributes?.unit || 'pcs';
-          const unit = isWholesale
+          const unit = isItemWholesale
             ? wholesaleUnit || 'ctns'
             : retailUnit || 'pcs';
           const qtyText = `${item.quantity} ${unit}`;
@@ -633,7 +636,7 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
               React.createElement(
                 Text,
                 { style: styles.tableCellSku },
-                `SKU: ${product?.sku || 'N/A'}${unit ? ` • Unit: ${unit}` : ''}`
+                `SKU: ${product?.sku || 'N/A'}${unit ? ` • Unit: ${unit}` : ''}${isItemWholesale ? ' • Wholesale' : ''}`
               )
             ),
             React.createElement(
@@ -698,7 +701,10 @@ function InvoiceDocument({ order, settings }: InvoiceDocumentProps) {
                 )
               )
             : null,
-          isWholesale
+          isWholesale ||
+            (order.items || []).some(
+              (it: any) => it.pricing_mode === 'WHOLESALE'
+            )
             ? React.createElement(
                 View,
                 { style: styles.wholesaleRow },

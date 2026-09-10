@@ -7,9 +7,11 @@ import {
   hashInvoiceAccessToken,
 } from '@/lib/security/invoice-access';
 
+import type { PricingMode } from '@/types/database.types';
+
 export interface CreateOrderPayload {
   customerName: string;
-  customerEmail: string;
+  customerEmail?: string;
   customerPhone: string;
   fulfillmentType: 'DELIVERY' | 'PICKUP';
   pricingModel: 'RETAIL' | 'WHOLESALE';
@@ -21,6 +23,7 @@ export interface CreateOrderPayload {
   items: Array<{
     productId: string;
     quantity: number;
+    pricingMode?: PricingMode;
   }>;
 }
 
@@ -32,11 +35,13 @@ export class OrderRepository {
   static async createOrder(payload: CreateOrderPayload) {
     const supabase = await createClient();
 
-    // 1. Fetch authoritative product prices
+    // 1. Fetch authoritative product prices and wholesale eligibility metadata
     const productIds = payload.items.map((i) => i.productId);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, price, sale_price, wholesale_price')
+      .select(
+        'id, name, sku, price, sale_price, wholesale_price, wholesale_unit, show_in_wholesale, is_active, stock_status'
+      )
       .in('id', productIds)
       .eq('is_active', true)
       .is('deleted_at', null);
@@ -48,9 +53,10 @@ export class OrderRepository {
 
     const productMap = new Map(products.map((p) => [p.id, p]));
 
-    // 2. Calculate totals and build safe items
+    // 2. Calculate totals and build safe items with independent per-item pricing validation
     let subtotalAmount = 0;
     const safeOrderItems = [];
+    const enrichedItems = [];
 
     for (const item of payload.items) {
       if (!Number.isInteger(item.quantity) || item.quantity < 1) {
@@ -66,21 +72,48 @@ export class OrderRepository {
         );
       }
 
-      const baseRetailPrice =
-        product.sale_price !== null && product.sale_price > 0
-          ? product.sale_price
-          : product.price;
+      const itemMode: PricingMode = item.pricingMode ?? 'RETAIL';
+      let authoritativePrice: number;
 
-      const authoritativePrice =
-        payload.pricingModel === 'WHOLESALE' && product.wholesale_price !== null
-          ? product.wholesale_price
-          : baseRetailPrice;
+      if (itemMode === 'WHOLESALE') {
+        // Enforce strict wholesale eligibility
+        if (
+          !product.show_in_wholesale ||
+          product.wholesale_price === null ||
+          product.wholesale_price === undefined ||
+          product.wholesale_price <= 0 ||
+          product.is_active === false ||
+          product.stock_status === 'DISCONTINUED'
+        ) {
+          throw new DatabaseError(
+            `Product "${product.name}" is not eligible for wholesale purchase.`
+          );
+        }
+        authoritativePrice = product.wholesale_price;
+      } else {
+        // Authoritative retail pricing rule: sale_price if active > 0, otherwise base price
+        authoritativePrice =
+          product.sale_price !== null && product.sale_price > 0
+            ? product.sale_price
+            : product.price;
+      }
 
       subtotalAmount += Number(authoritativePrice) * item.quantity;
       safeOrderItems.push({
         product_id: item.productId,
         quantity: item.quantity,
         unit_price: authoritativePrice,
+        pricing_mode: itemMode,
+      });
+      enrichedItems.push({
+        id: item.productId,
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        wholesalePrice: product.wholesale_price,
+        wholesaleUnit: product.wholesale_unit,
+        pricingMode: itemMode,
+        quantity: item.quantity,
       });
     }
 
@@ -130,7 +163,7 @@ export class OrderRepository {
 
     const orderData: Record<string, any> = {
       customer_name: payload.customerName,
-      customer_email: payload.customerEmail,
+      customer_email: payload.customerEmail || null,
       customer_phone: payload.customerPhone,
       fulfillment_type: payload.fulfillmentType,
       pricing_model: payload.pricingModel,
@@ -206,6 +239,7 @@ export class OrderRepository {
       vatRate,
       vatAmount,
       totalAmount,
+      items: enrichedItems,
     };
   }
 

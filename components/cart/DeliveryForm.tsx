@@ -1,7 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { deliveryFormSchema, DeliveryFormData, KENYA_COUNTIES, COURIER_SERVICES } from '@/lib/validation/checkout.schema';
+import {
+  deliveryFormSchema,
+  DeliveryFormData,
+  KENYA_COUNTIES,
+  COURIER_SERVICES,
+} from '@/lib/validation/checkout.schema';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
@@ -17,17 +22,30 @@ function FieldError({ message }: { message?: string }) {
   return <p className="mt-1 text-sm text-red-500">{message}</p>;
 }
 
-function FormLabel({ htmlFor, children, required }: { htmlFor: string; children: React.ReactNode; required?: boolean }) {
+function FormLabel({
+  htmlFor,
+  children,
+  required,
+}: {
+  htmlFor: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
   return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-text-main mb-1.5">
+    <label
+      htmlFor={htmlFor}
+      className="text-text-main mb-1.5 block text-sm font-medium"
+    >
       {children}
-      {required && <span className="text-red-500 ml-0.5">*</span>}
+      {required && <span className="ml-0.5 text-red-500">*</span>}
     </label>
   );
 }
 
 export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
-  const [errors, setErrors] = React.useState<Partial<Record<keyof DeliveryFormData, string>>>({});
+  const [errors, setErrors] = React.useState<
+    Partial<Record<keyof DeliveryFormData, string>>
+  >({});
   const [formData, setFormData] = React.useState<DeliveryFormData>({
     fullName: '',
     phone: '',
@@ -39,7 +57,9 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
   });
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -78,9 +98,11 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {/* Name + Phone */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <FormLabel htmlFor="fullName" required>Full Name</FormLabel>
+          <FormLabel htmlFor="fullName" required>
+            Full Name
+          </FormLabel>
           <Input
             id="fullName"
             name="fullName"
@@ -94,7 +116,9 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
           <FieldError message={errors.fullName} />
         </div>
         <div>
-          <FormLabel htmlFor="phone" required>Phone Number</FormLabel>
+          <FormLabel htmlFor="phone" required>
+            Phone Number
+          </FormLabel>
           <Input
             id="phone"
             name="phone"
@@ -108,16 +132,21 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
         </div>
       </div>
 
-      {/* Email */}
+      {/* Email (Optional) */}
       <div>
-        <FormLabel htmlFor="email" required>Email Address</FormLabel>
+        <FormLabel htmlFor="email">
+          Email Address{' '}
+          <span className="text-text-muted text-xs font-normal">
+            (Optional)
+          </span>
+        </FormLabel>
         <Input
           id="email"
           name="email"
           type="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="jane@example.com"
+          placeholder="jane@example.com (optional)"
           className={errors.email ? 'border-red-400' : ''}
         />
         <FieldError message={errors.email} />
@@ -125,7 +154,9 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
 
       {/* Delivery Address */}
       <div>
-        <FormLabel htmlFor="deliveryAddress" required>Delivery Address</FormLabel>
+        <FormLabel htmlFor="deliveryAddress" required>
+          Delivery Address
+        </FormLabel>
         <textarea
           id="deliveryAddress"
           name="deliveryAddress"
@@ -139,9 +170,11 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
       </div>
 
       {/* County + Courier */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <FormLabel htmlFor="county" required>County / Area</FormLabel>
+          <FormLabel htmlFor="county" required>
+            County / Area
+          </FormLabel>
           <select
             id="county"
             name="county"
@@ -151,13 +184,17 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
           >
             <option value="">Select county...</option>
             {KENYA_COUNTIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
           <FieldError message={errors.county} />
         </div>
         <div>
-          <FormLabel htmlFor="courierService" required>Courier Service</FormLabel>
+          <FormLabel htmlFor="courierService" required>
+            Courier Service
+          </FormLabel>
           <select
             id="courierService"
             name="courierService"
@@ -167,7 +204,9 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
           >
             <option value="">Select courier...</option>
             {COURIER_SERVICES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
           <FieldError message={errors.courierService} />
@@ -176,7 +215,10 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
 
       {/* Notes */}
       <div>
-        <FormLabel htmlFor="deliveryNotes">Delivery Instructions <span className="text-text-muted font-normal">(optional)</span></FormLabel>
+        <FormLabel htmlFor="deliveryNotes">
+          Delivery Instructions{' '}
+          <span className="text-text-muted font-normal">(optional)</span>
+        </FormLabel>
         <textarea
           id="deliveryNotes"
           name="deliveryNotes"
@@ -189,7 +231,12 @@ export function DeliveryForm({ onSubmit, isSubmitting }: DeliveryFormProps) {
         <FieldError message={errors.deliveryNotes} />
       </div>
 
-      <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        variant="primary"
+        className="w-full"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

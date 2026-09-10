@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -19,12 +19,15 @@ import { OrderTimeline } from '@/components/dashboard/orders/OrderTimeline';
 import { DeleteOrderButton } from '@/components/dashboard/orders/DeleteOrderButton';
 import { SettingsRepository } from '@/lib/supabase/repositories/settings.repository';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'Order Details | Devireen Enterprise',
 };
 
 async function getOrderById(id: string) {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: order } = await supabase
     .from('orders')
     .select('*, customers(*)')
@@ -35,7 +38,7 @@ async function getOrderById(id: string) {
 
   const { data: items } = await supabase
     .from('order_items')
-    .select('*, products(name, sku, price, wholesale_price)')
+    .select('*, products(name, sku, price, wholesale_price, wholesale_unit)')
     .eq('order_id', id);
 
   return { ...order, items: items || [] };
@@ -58,7 +61,10 @@ export default async function OrderDetailsPage({
 
   const isDelivery = order.fulfillment_type === 'DELIVERY';
   const isPickup = order.fulfillment_type === 'PICKUP';
-  const isWholesale = order.pricing_model === 'WHOLESALE';
+  const hasWholesaleItems = order.items?.some(
+    (i: any) => i.pricing_mode === 'WHOLESALE'
+  );
+  const isWholesale = order.pricing_model === 'WHOLESALE' || hasWholesaleItems;
 
   const customerName =
     order.customer_name ||
@@ -199,15 +205,34 @@ export default async function OrderDetailsPage({
                     order.items.map((item: any, idx: number) => (
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900">
-                            {item.products?.name || 'Unknown Product'}
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">
+                              {item.products?.name || 'Unknown Product'}
+                            </span>
+                            {item.pricing_mode === 'WHOLESALE' && (
+                              <span className="inline-flex items-center rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-800">
+                                Wholesale
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-gray-500">
                             SKU: {item.products?.sku || 'N/A'}
+                            {item.pricing_mode === 'WHOLESALE' &&
+                              item.products?.wholesale_unit && (
+                                <span className="ml-2 font-medium text-emerald-700">
+                                  ({item.products.wholesale_unit})
+                                </span>
+                              )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right font-mono">
                           KSh {item.unit_price?.toLocaleString()}
+                          {item.pricing_mode === 'WHOLESALE' &&
+                            item.products?.wholesale_unit && (
+                              <span className="block font-sans text-xs text-gray-500">
+                                per {item.products.wholesale_unit}
+                              </span>
+                            )}
                         </td>
                         <td className="px-6 py-4 text-right">
                           {item.quantity}

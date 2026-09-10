@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import {
   Package,
@@ -30,12 +30,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { format, startOfDay } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'Command Center | Devireen Enterprise OS',
 };
 
 async function getDashboardData() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const today = startOfDay(new Date()).toISOString();
 
   const safeQuery = async (queryFn: () => PromiseLike<any>, fallback: any) => {
@@ -123,7 +126,7 @@ async function getDashboardData() {
         supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
-          .in('status', ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED'])
+          .in('status', ['PENDING', 'PROCESSING', 'SHIPPED'])
           .is('deleted_at', null),
       { count: 0 }
     ),
@@ -132,6 +135,7 @@ async function getDashboardData() {
         supabase
           .from('orders')
           .select('*, customers(company_name, contact_email)')
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(5),
       { data: [] }
@@ -141,6 +145,7 @@ async function getDashboardData() {
         supabase
           .from('quotes')
           .select('*, customers(company_name)')
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(5),
       { data: [] }
@@ -159,7 +164,7 @@ async function getDashboardData() {
       () =>
         supabase
           .from('activity_logs')
-          .select('*, profiles:user_id(full_name, email)')
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(8),
       { data: [] }
@@ -213,8 +218,11 @@ async function getDashboardData() {
     ),
     safeQuery(
       async () => {
-        const res = await supabase.auth.getUser();
-        return { ok: !res.error && !!res.data?.user };
+        const res = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1,
+        });
+        return { ok: !res.error };
       },
       { ok: false }
     ),
@@ -229,26 +237,34 @@ async function getDashboardData() {
     ),
   ]);
 
-  // Total estimated volume calculated from quotes (via RPC with fallback)
+  // Total estimated pipeline volume calculated from active quotes and active orders
   let totalVolume = 0;
   try {
-    const { data: rpcVolume, error: rpcError } = await supabase.rpc(
-      'dashboard_quote_total_volume'
-    );
-    if (!rpcError && rpcVolume != null) {
-      totalVolume = Number(rpcVolume);
-    } else {
-      const { data: totalVolumeData } = await supabase
-        .from('quotes')
-        .select('total_amount')
-        .is('deleted_at', null)
-        .limit(500);
+    const [{ data: quoteVolumeData }, { data: orderVolumeData }] =
+      await Promise.all([
+        supabase
+          .from('quotes')
+          .select('total_amount')
+          .is('deleted_at', null)
+          .limit(500),
+        supabase
+          .from('orders')
+          .select('total_amount')
+          .in('status', ['PENDING', 'PROCESSING', 'SHIPPED'])
+          .is('deleted_at', null)
+          .limit(500),
+      ]);
 
-      totalVolume = (totalVolumeData || []).reduce(
-        (sum, item) => sum + Number(item.total_amount || 0),
-        0
-      );
-    }
+    const quotesVolume = (quoteVolumeData || []).reduce(
+      (sum, item) => sum + Number(item.total_amount || 0),
+      0
+    );
+    const ordersVolume = (orderVolumeData || []).reduce(
+      (sum, item) => sum + Number(item.total_amount || 0),
+      0
+    );
+
+    totalVolume = quotesVolume + ordersVolume;
   } catch {}
 
   return {
@@ -398,8 +414,8 @@ export default async function DashboardOverview() {
           value={`KSh ${data.stats.totalVolume.toLocaleString()}`}
           icon={<DollarSign className="h-5 w-5" />}
           variant="default"
-          href="/dashboard/quotes"
-          description="Across all quotations"
+          href="/dashboard/orders"
+          description="Active quotes & orders"
         />
       </div>
 
@@ -569,7 +585,10 @@ export default async function DashboardOverview() {
                   >
                     <div className="space-y-0.5">
                       <span className="block font-bold text-slate-900 transition-colors group-hover:text-emerald-600">
-                        Order #{order.order_number || order.id.slice(0, 8)}
+                        Order #
+                        {order.invoice_number ||
+                          order.order_number ||
+                          order.id.slice(0, 8)}
                       </span>
                       <span className="text-slate-500">
                         {order.customers?.company_name ||
@@ -631,7 +650,10 @@ export default async function DashboardOverview() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-slate-900">
                       <span className="font-semibold">
-                        {log.profiles?.full_name || 'Admin User'}
+                        {log.details?.customer_name ||
+                          log.details?.company_name ||
+                          log.profiles?.full_name ||
+                          'Admin'}
                       </span>{' '}
                       {log.action} a {log.entity_type}
                     </p>
