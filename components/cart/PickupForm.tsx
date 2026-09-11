@@ -7,7 +7,7 @@ import {
 } from '@/lib/validation/checkout.schema';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, ArrowLeft, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PickupFormProps {
@@ -15,6 +15,7 @@ interface PickupFormProps {
   isSubmitting: boolean;
   shopAddress?: string;
   mapsUrl?: string;
+  onBack?: () => void;
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -47,6 +48,7 @@ export function PickupForm({
   isSubmitting,
   shopAddress,
   mapsUrl,
+  onBack,
 }: PickupFormProps) {
   const [errors, setErrors] = React.useState<
     Partial<Record<keyof PickupFormData, string>>
@@ -183,21 +185,40 @@ export function PickupForm({
           <FieldError message={errors.email} />
         </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing Order...
-            </>
+        <div className="border-border-subtle flex flex-col-reverse items-center justify-between gap-3 border-t pt-4 sm:flex-row">
+          {onBack ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Fulfillment
+            </Button>
           ) : (
-            'Confirm Pickup & Generate Invoice'
+            <div />
           )}
-        </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full py-3 text-base font-semibold shadow-md transition-all hover:shadow-lg sm:w-auto sm:px-8"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing Order...
+              </>
+            ) : (
+              <>
+                Next: Complete Order
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   );

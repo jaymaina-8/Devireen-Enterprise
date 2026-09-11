@@ -10,7 +10,7 @@ import { PickupForm } from '@/components/cart/PickupForm';
 import { OrderConfirmation } from '@/components/cart/OrderConfirmation';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
-import { ShoppingCart, ArrowLeft, Zap, PackageCheck } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, ArrowRight } from 'lucide-react';
 import { createPublicOrderAction } from '@/actions/order.actions';
 import { toast } from '@/lib/store/toast-store';
 import { cn } from '@/lib/utils';
@@ -41,71 +41,100 @@ interface ConfirmedOrder {
   purchasedItems: any[];
 }
 
-// ─── Step indicator ───────────────────────────────────────────────────────
+// ─── Page Header with Page 1-4 indicator ─────────────────────────────────
 
-const STEPS: Array<{ id: CheckoutStep; label: string }> = [
-  { id: 'cart', label: 'Cart' },
-  { id: 'fulfillment', label: 'Fulfillment' },
-  { id: 'details', label: 'Details' },
-  { id: 'confirmation', label: 'Confirmation' },
-];
+const PAGE_METADATA: Record<
+  CheckoutStep,
+  {
+    pageNumber: number;
+    title: string;
+    description: string;
+  }
+> = {
+  cart: {
+    pageNumber: 1,
+    title: 'Page 1: Review Your Cart',
+    description: 'Review your items and adjust quantities before proceeding.',
+  },
+  fulfillment: {
+    pageNumber: 2,
+    title: 'Page 2: Choose Fulfillment',
+    description:
+      'Select whether you would like delivery to your door or personal pickup.',
+  },
+  details: {
+    pageNumber: 3,
+    title: 'Page 3: Contact & Delivery Details',
+    description: 'Provide your contact information and destination details.',
+  },
+  confirmation: {
+    pageNumber: 4,
+    title: 'Page 4: Order Confirmation',
+    description:
+      'Your order has been placed successfully and your invoice is ready.',
+  },
+};
 
-function StepBar({ current }: { current: CheckoutStep }) {
-  const currentIndex = STEPS.findIndex((s) => s.id === current);
-  const activeStep = STEPS[currentIndex];
+function PageHeader({
+  current,
+  onBack,
+}: {
+  current: CheckoutStep;
+  onBack?: () => void;
+}) {
+  const meta = PAGE_METADATA[current];
+  const pageList: CheckoutStep[] = [
+    'cart',
+    'fulfillment',
+    'details',
+    'confirmation',
+  ];
+  const currentIndex = meta.pageNumber - 1;
 
   return (
-    <nav aria-label="Checkout progress" className="mb-6 sm:mb-8">
-      <ol className="flex items-center">
-        {STEPS.map((step, idx) => {
-          const isDone = idx < currentIndex;
-          const isActive = idx === currentIndex;
-          return (
-            <React.Fragment key={step.id}>
-              <li className="flex shrink-0 flex-col items-center">
-                <span
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all sm:h-9 sm:w-9',
-                    isDone
-                      ? 'bg-emerald-500 text-white'
-                      : isActive
-                        ? 'bg-primary-600 shadow-primary-200 ring-primary-100 text-white shadow-md ring-4'
-                        : 'bg-border-subtle text-text-muted'
-                  )}
-                >
-                  {isDone ? '✓' : idx + 1}
-                </span>
-                {/* Step labels: visible on sm+, hidden on mobile */}
-                <span
-                  className={cn(
-                    'mt-1.5 hidden max-w-[3.75rem] text-center text-xs leading-tight font-medium sm:block',
-                    isActive
-                      ? 'text-primary-600 font-semibold'
-                      : isDone
-                        ? 'text-emerald-600'
-                        : 'text-text-muted'
-                  )}
-                >
-                  {step.label}
-                </span>
-              </li>
-              {idx < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    'mx-1.5 h-0.5 flex-1 transition-all sm:mx-2 sm:mb-6',
-                    idx < currentIndex ? 'bg-emerald-400' : 'bg-border-subtle'
-                  )}
-                />
+    <div className="mb-6 sm:mb-8">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="border-border-main hover:bg-surface flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors"
+              aria-label="Go to previous page"
+            >
+              <ArrowLeft className="text-text-muted h-4 w-4" />
+            </button>
+          )}
+          <span className="bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300 border-primary-200 dark:border-primary-800 inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold tracking-wide">
+            Page {meta.pageNumber} of 4
+          </span>
+        </div>
+
+        {/* Minimal visual progress pills */}
+        <div className="flex items-center gap-1.5" aria-hidden="true">
+          {pageList.map((stepKey, idx) => (
+            <div
+              key={stepKey}
+              className={cn(
+                'h-2 rounded-full transition-all duration-300',
+                idx === currentIndex
+                  ? 'bg-primary-600 w-8 shadow-sm'
+                  : idx < currentIndex
+                    ? 'w-3 bg-emerald-500'
+                    : 'bg-border-subtle w-3'
               )}
-            </React.Fragment>
-          );
-        })}
-      </ol>
-      {/* Active step indicator on mobile (replaces clipped labels) */}
-      <p className="text-primary-600 mt-3 text-center text-xs font-semibold sm:hidden">
-        Step {currentIndex + 1} of {STEPS.length} — {activeStep.label}
+            />
+          ))}
+        </div>
+      </div>
+
+      <h1 className="text-text-main text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
+        {meta.title}
+      </h1>
+      <p className="text-text-muted mt-1.5 text-sm sm:text-base">
+        {meta.description}
       </p>
-    </nav>
+    </div>
   );
 }
 
@@ -219,6 +248,12 @@ export function CheckoutPage({
     }
   }, []);
 
+  React.useEffect(() => {
+    if (mounted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [step, mounted]);
+
   if (!mounted) return null;
 
   const rawSubtotal = items.reduce((acc, item) => {
@@ -243,7 +278,7 @@ export function CheckoutPage({
   // ── Empty cart ──
   if (!hasItems && step !== 'confirmation') {
     return (
-      <div className="py-16">
+      <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <EmptyState
           icon={ShoppingCart}
           title="Your cart is empty"
@@ -429,7 +464,8 @@ export function CheckoutPage({
 
   if (step === 'confirmation' && confirmedOrder) {
     return (
-      <div className="py-4">
+      <div className="container mx-auto px-4 py-6 pb-32 sm:px-6 sm:py-10 sm:pb-10 lg:px-8">
+        <PageHeader current="confirmation" />
         <OrderConfirmation
           orderId={confirmedOrder.orderId}
           invoiceNumber={confirmedOrder.invoiceNumber}
@@ -483,49 +519,30 @@ export function CheckoutPage({
 
   return (
     // pb-32 ensures content is never hidden under the WhatsApp widget on mobile
-    <div className="py-6 pb-32 sm:py-10 sm:pb-10">
-      {/* Page header: back button + title unified */}
-      <div className="mb-6 flex items-start gap-3">
-        {step !== 'cart' && (
-          <button
-            type="button"
-            onClick={() =>
-              setStep(
-                step === 'details'
-                  ? 'fulfillment'
-                  : step === 'fulfillment'
-                    ? 'cart'
-                    : 'cart'
-              )
-            }
-            className="border-border-main hover:bg-surface mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="text-text-muted h-4 w-4" />
-          </button>
-        )}
-        <div>
-          <h1 className="text-text-main text-2xl font-extrabold tracking-tight sm:text-4xl">
-            Checkout
-          </h1>
-          <p className="text-text-muted mt-1 text-sm sm:text-base">
-            Review your items and complete your order.
-          </p>
-        </div>
-      </div>
-
-      {/* Step bar */}
-      <StepBar current={step} />
+    <div className="container mx-auto px-4 py-6 pb-32 sm:px-6 sm:py-10 sm:pb-10 lg:px-8">
+      {/* Page Header with dynamic Page 1-4 indicator */}
+      <PageHeader
+        current={step}
+        onBack={
+          step === 'details'
+            ? () => setStep('fulfillment')
+            : step === 'fulfillment'
+              ? () => setStep('cart')
+              : undefined
+        }
+      />
 
       {/* Main grid */}
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left: main content */}
         <div className="lg:col-span-2">
-          {/* ── STEP: Cart ─────────────────────────────── */}
+          {/* ── PAGE 1: Cart ─────────────────────────────── */}
           {step === 'cart' && (
             <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-sm">
               <div className="border-border-subtle bg-background/50 flex items-center justify-between rounded-t-2xl border-b p-5">
-                <h3 className="text-text-main text-lg font-bold">Cart Items</h3>
+                <h3 className="text-text-main text-lg font-bold">
+                  Cart Items ({itemCount})
+                </h3>
                 <Link
                   href={
                     items.some(
@@ -550,55 +567,120 @@ export function CheckoutPage({
                   />
                 ))}
               </div>
-              <div className="bg-background/50 border-border-subtle rounded-b-2xl border-t px-4 py-4 text-right sm:px-6">
-                <p className="text-text-muted text-xs">
-                  Prices are inclusive of VAT where applicable.
-                </p>
+
+              {/* Page 1 Bottom Navigation */}
+              <div className="bg-background/50 border-border-subtle flex flex-col items-center justify-between gap-4 rounded-b-2xl border-t p-4 sm:flex-row sm:p-6">
+                <Link
+                  href={
+                    items.some(
+                      (i) => (i.pricingMode ?? 'RETAIL') === 'WHOLESALE'
+                    )
+                      ? '/wholesale'
+                      : '/products'
+                  }
+                  className="text-text-muted hover:text-text-main order-2 flex items-center gap-1.5 text-sm font-medium transition-colors sm:order-1"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Continue Shopping
+                </Link>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => setStep('fulfillment')}
+                  className="order-1 w-full px-8 py-3.5 text-base font-semibold shadow-md transition-all hover:shadow-lg sm:order-2 sm:w-auto"
+                >
+                  Next: Fulfillment
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </div>
             </div>
           )}
 
-          {/* ── STEP: Fulfillment ──────────────────────── */}
+          {/* ── PAGE 2: Fulfillment ──────────────────────── */}
           {step === 'fulfillment' && (
-            <div className="border-border-subtle bg-surface space-y-6 rounded-xl border p-6">
+            <div className="border-border-subtle bg-surface space-y-6 rounded-xl border p-6 shadow-sm">
+              <div>
+                <h3 className="text-text-main text-lg font-bold">
+                  Select Delivery or Personal Pickup
+                </h3>
+                <p className="text-text-muted mt-1 text-sm">
+                  Choose how you would like to receive your items.
+                </p>
+              </div>
+
               <FulfillmentSelector
                 value={fulfillmentType}
                 onChange={(type) => setFulfillmentType(type)}
               />
-              <Button
-                variant="primary"
-                className="w-full"
-                disabled={!fulfillmentType}
-                onClick={() => setStep('details')}
-              >
-                <PackageCheck className="mr-2 h-4 w-4" />
-                Continue with{' '}
-                {fulfillmentType === 'DELIVERY'
-                  ? 'Delivery'
-                  : fulfillmentType === 'PICKUP'
-                    ? 'Pickup'
-                    : '...'}
-              </Button>
+
+              {!fulfillmentType && (
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  * Please select one of the fulfillment options above to
+                  continue.
+                </p>
+              )}
+
+              {/* Page 2 Bottom Navigation */}
+              <div className="border-border-subtle flex flex-col-reverse items-center justify-between gap-4 border-t pt-6 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep('cart')}
+                  className="w-full sm:w-auto"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Cart
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  disabled={!fulfillmentType}
+                  onClick={() => setStep('details')}
+                  className="w-full px-8 py-3.5 text-base font-semibold shadow-md transition-all hover:shadow-lg sm:w-auto"
+                >
+                  Next: Enter Details
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* ── STEP: Details ──────────────────────────── */}
+          {/* ── PAGE 3: Details ──────────────────────────── */}
           {step === 'details' && fulfillmentType === 'DELIVERY' && (
-            <div className="border-border-subtle bg-surface rounded-xl border p-6">
+            <div className="border-border-subtle bg-surface rounded-xl border p-6 shadow-sm">
+              <div className="mb-5">
+                <h3 className="text-text-main text-lg font-bold">
+                  Delivery &amp; Contact Details
+                </h3>
+                <p className="text-text-muted mt-1 text-sm">
+                  Provide your delivery address and recipient contact details.
+                </p>
+              </div>
               <DeliveryForm
                 onSubmit={handleDeliverySubmit}
                 isSubmitting={isSubmitting}
+                onBack={() => setStep('fulfillment')}
               />
             </div>
           )}
 
           {step === 'details' && fulfillmentType === 'PICKUP' && (
-            <div className="border-border-subtle bg-surface rounded-xl border p-6">
+            <div className="border-border-subtle bg-surface rounded-xl border p-6 shadow-sm">
+              <div className="mb-5">
+                <h3 className="text-text-main text-lg font-bold">
+                  Pickup &amp; Contact Details
+                </h3>
+                <p className="text-text-muted mt-1 text-sm">
+                  Confirm your contact details for store pickup at our premises.
+                </p>
+              </div>
               <PickupForm
                 onSubmit={handlePickupSubmit}
                 isSubmitting={isSubmitting}
                 shopAddress={shopAddress}
                 mapsUrl={mapsUrl}
+                onBack={() => setStep('fulfillment')}
               />
             </div>
           )}
@@ -660,10 +742,10 @@ export function CheckoutPage({
                     onClick={() => {
                       setStep('fulfillment');
                     }}
-                    className="w-full rounded-xl py-6 text-base shadow-md transition-all hover:shadow-lg"
+                    className="w-full rounded-xl py-4 text-base font-semibold shadow-md transition-all hover:shadow-lg"
                   >
-                    <Zap className="mr-2 h-5 w-5" />
-                    Proceed to Checkout
+                    Next: Fulfillment
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 )}
               </div>
