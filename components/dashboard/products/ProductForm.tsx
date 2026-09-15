@@ -44,7 +44,11 @@ export function ProductForm({
     initialData?.wholesale_unit || 'Dozen'
   );
   const [categoryIds, setCategoryIds] = useState<string[]>(
-    initialData?.categories?.map((c: any) => c.id).filter(Boolean) || []
+    initialData?.product_categories
+      ?.map((pc: any) => pc.category_id || pc.categories?.id)
+      .filter(Boolean) ||
+      initialData?.categories?.map((c: any) => c.id).filter(Boolean) ||
+      []
   );
   const [isAllCategories, setIsAllCategories] = useState<boolean>(
     initialData?.is_all_categories || false
@@ -238,7 +242,13 @@ export function ProductForm({
                       type="checkbox"
                       id="is_all_categories"
                       checked={isAllCategories}
-                      onChange={(e) => setIsAllCategories(e.target.checked)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsAllCategories(checked);
+                        if (checked) {
+                          setCategoryIds(categories.map((c) => c.id));
+                        }
+                      }}
                       className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                     />
                     <Label

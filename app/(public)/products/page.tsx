@@ -22,7 +22,7 @@ export async function generateMetadata(props: {
 
   const { data: categories = [] } = await fetchCategories();
   const activeCategory = (categories || []).find(
-    (c: any) => c.slug === category
+    (c: any) => c.slug?.toLowerCase() === category?.toLowerCase()
   );
 
   let title = 'Product Catalogue | Devireen Enterprise';
@@ -81,7 +81,9 @@ export default async function ProductsPage({
   const { data: categoriesData = [] } = await fetchCategories();
   const categories = categoriesData || [];
 
-  const activeCategory = categories.find((c: any) => c.slug === category);
+  const activeCategory = categories.find(
+    (c: any) => c.slug?.toLowerCase() === category?.toLowerCase()
+  );
 
   const breadcrumbItems = [
     { name: 'Home', url: '/' },
@@ -158,7 +160,7 @@ export default async function ProductsPage({
                 >
                   <span
                     className={`inline-block cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      category === c.slug
+                      category?.toLowerCase() === c.slug?.toLowerCase()
                         ? 'bg-primary-600 border-primary-600 text-white'
                         : 'bg-surface text-text-muted border-border-subtle hover:border-border-strong'
                     }`}
@@ -215,7 +217,7 @@ export default async function ProductsPage({
                     <Link
                       href={`/products?category=${c.slug}${q ? `&q=${q}` : ''}`}
                       className={`block rounded-md px-3 py-2 text-sm transition-colors ${
-                        category === c.slug
+                        category?.toLowerCase() === c.slug?.toLowerCase()
                           ? 'bg-primary-50 text-primary-600 font-medium'
                           : 'text-text-muted hover:bg-background hover:text-text-main'
                       }`}

@@ -11,10 +11,20 @@ async function getProductById(id: string) {
   const supabase = await createAdminClient();
   const { data } = await supabase
     .from('products')
-    .select('*, product_images(*)')
+    .select(
+      '*, product_images(*), product_categories(category_id, categories(id, name, slug))'
+    )
     .eq('id', id)
     .single();
-  return data;
+
+  if (!data) return null;
+
+  return {
+    ...data,
+    categories: (data.product_categories || [])
+      .map((pc: any) => pc.categories)
+      .filter(Boolean),
+  };
 }
 
 export default async function EditProductPage({

@@ -19,11 +19,13 @@ export class ProductRepository {
     // Actually, a simpler way is to query products matching the category OR is_all_categories = true.
     // Since we are moving to product_categories, let's fetch the category_id first.
     let targetCategoryId: string | null = null;
-    if (params?.categorySlug) {
+    const normalizedCategorySlug = params?.categorySlug?.trim().toLowerCase();
+    if (normalizedCategorySlug && normalizedCategorySlug !== 'all') {
       const { data: catData } = await supabase
         .from('categories')
         .select('id')
-        .eq('slug', params.categorySlug)
+        .ilike('slug', normalizedCategorySlug)
+        .is('deleted_at', null)
         .single();
       if (catData) targetCategoryId = catData.id;
     }
@@ -60,14 +62,14 @@ export class ProductRepository {
 
     // Filter and map in memory for the category logic
     let filteredData = data;
-    if (targetCategoryId) {
+    if (targetCategoryId && normalizedCategorySlug) {
       filteredData = data.filter(
         (p: any) =>
-          p.is_all_categories ||
-          (p.product_categories &&
-            p.product_categories.some(
-              (pc: any) => pc.categories?.slug === params?.categorySlug
-            ))
+          p.product_categories &&
+          p.product_categories.some(
+            (pc: any) =>
+              pc.categories?.slug?.toLowerCase() === normalizedCategorySlug
+          )
       );
     }
 
