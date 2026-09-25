@@ -5,7 +5,6 @@ import {
   View,
   Image,
   StyleSheet,
-  Font,
   renderToBuffer,
 } from '@react-pdf/renderer';
 import React from 'react';

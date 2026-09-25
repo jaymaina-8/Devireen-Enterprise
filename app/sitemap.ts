@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { fetchProducts } from '@/actions/product.actions';
+import { createAdminClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/config/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -53,9 +53,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Dynamic product pages
   try {
-    const { data: products } = await fetchProducts();
+    const supabase = await createAdminClient();
+    const { data: products } = await supabase
+      .from('products')
+      .select('slug, updated_at')
+      .eq('is_active', true)
+      .is('deleted_at', null);
 
-    if (products) {
+    if (products && products.length > 0) {
       const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
         url: `${baseUrl}/products/${product.slug}`,
         lastModified: product.updated_at
