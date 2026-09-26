@@ -11,6 +11,7 @@ const clientSchema = z.object({
 
 const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Service role key is required'),
+  ADMIN_EMAIL: z.string().email().default('admin@devireenenterprise.com'),
   COMPANY_NAME: z.string().min(1).default('Devireen Enterprise'),
   WHATSAPP_NUMBER: z.string().min(1).default('+254708037929'),
   UPSTASH_REDIS_REST_URL: z.string().url('Must be a valid URL'),
@@ -24,6 +25,7 @@ const processEnv = {
   ...(typeof window === 'undefined'
     ? {
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL,
         COMPANY_NAME: process.env.COMPANY_NAME,
         WHATSAPP_NUMBER: process.env.WHATSAPP_NUMBER,
         UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
@@ -66,6 +68,10 @@ export const env = {
     typeof window === 'undefined'
       ? processEnv.SUPABASE_SERVICE_ROLE_KEY || 'placeholder'
       : '',
+  ADMIN_EMAIL:
+    typeof window === 'undefined'
+      ? processEnv.ADMIN_EMAIL || 'admin@devireenenterprise.com'
+      : 'admin@devireenenterprise.com',
   COMPANY_NAME:
     typeof window === 'undefined'
       ? processEnv.COMPANY_NAME || 'Devireen Enterprise'

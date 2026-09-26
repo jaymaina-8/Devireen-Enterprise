@@ -50,8 +50,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    const adminEmail =
-      process.env.ADMIN_EMAIL || 'admin@devireenenterprice.com';
+    const adminEmail = env.ADMIN_EMAIL;
     let isAdmin = user.email === adminEmail;
 
     if (!isAdmin) {

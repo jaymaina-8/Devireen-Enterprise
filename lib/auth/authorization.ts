@@ -66,7 +66,8 @@ export async function verifyAdminServerAction() {
   }
 
   // 1. Check if email matches bootstrap ADMIN_EMAIL
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@devireenenterprice.com';
+  const { env } = await import('@/lib/env');
+  const adminEmail = env.ADMIN_EMAIL;
   if (user.email === adminEmail) {
     return user;
   }
