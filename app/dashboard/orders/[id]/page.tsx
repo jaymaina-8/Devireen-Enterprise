@@ -261,15 +261,19 @@ export default async function OrderDetailsPage({
             <div className="space-y-2 border-t border-gray-100 bg-gray-50/50 px-6 py-5">
               <div className="flex items-center justify-between text-sm text-gray-600">
                 <span>Subtotal (excl. VAT)</span>
-                <span>KSh {(order.total_amount / 1.16).toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>VAT (16%)</span>
                 <span>
                   KSh{' '}
-                  {(order.total_amount - order.total_amount / 1.16).toFixed(2)}
+                  {(
+                    order.subtotal_amount ?? order.total_amount
+                  )?.toLocaleString()}
                 </span>
               </div>
+              {order.vat_rate != null && order.vat_rate > 0 && (
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>VAT ({order.vat_rate}%)</span>
+                  <span>KSh {(order.vat_amount ?? 0)?.toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between border-t border-gray-200 pt-3 text-lg font-bold text-gray-900">
                 <span>Grand Total</span>
                 <span>KSh {order.total_amount?.toLocaleString() || 0}</span>

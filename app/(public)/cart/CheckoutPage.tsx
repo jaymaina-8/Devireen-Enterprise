@@ -378,8 +378,10 @@ export function CheckoutPage({
         customerName: customerData.fullName,
         fulfillmentType,
         total: result.data.totalAmount ?? total,
-        subtotal: rawSubtotal,
-        vatAmount: vatAmount,
+        // Use server-returned subtotal so it always matches total (e.g. sale_price applied)
+        subtotal: result.data.subtotalAmount ?? rawSubtotal,
+        // Use server-returned VAT amount for consistency
+        vatAmount: result.data.vatAmount ?? vatAmount,
         vatRate: isVatApplied ? 16 : 0,
         accessToken: result.data.invoiceAccessToken,
         pricingModel: orderPricingModel,

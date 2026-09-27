@@ -109,7 +109,10 @@ export class OrderRepository {
         id: item.productId,
         name: product.name,
         sku: product.sku,
-        price: product.price,
+        // Use authoritativePrice so the confirmation page shows the actual price
+        // charged (e.g. sale_price for retail, wholesale_price for wholesale),
+        // not the raw base price which would produce a subtotal mismatch.
+        price: authoritativePrice,
         wholesalePrice: product.wholesale_price,
         wholesaleUnit: product.wholesale_unit,
         pricingMode: itemMode,
